@@ -12,8 +12,8 @@
 #include <functional>
 #include <memory>
 #include <set>
+#include <string>
 #include <vector>
-
 namespace optiweave::core {
 /**
     @brief Configuration for AST transformation
