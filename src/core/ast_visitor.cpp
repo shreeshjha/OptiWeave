@@ -69,7 +69,8 @@ ModernASTVisitor::ModernASTVisitor(clang::Rewriter &rewriter,
                                    const TransformationConfig &config)
     : rewriter_(rewriter), context_(context), config_(config) {}
 
-bool ModernASTVisitor::VisitArraySubscriptExpr(clang::ArraySubscriptExpr *expr) {
+bool ModernASTVisitor::VisitArraySubscriptExpr(clang::ArraySubscriptExpr *
+                                               expr) {
   if (shouldSkipExpression(expr)) {
     return true;
   }
@@ -127,7 +128,8 @@ bool ModernASTVisitor::VisitUnaryOperator(clang::UnaryOperator *expr) {
   return true;
 }
 
-bool ModernASTVisitor::VisitCXXOperatorCallExpr(clang::CXXOperatorCallExpr *expr) {
+bool ModernASTVisitor::VisitCXXOperatorCallExpr(clang::CXXOperatorCallExpr *
+                                                expr) {
   // TODO: Implement overloaded operator transformation
   return true;
 }
@@ -183,7 +185,8 @@ void ModernASTVisitor::markAsProcessed(const clang::Expr *expr) {
   processed_ranges_.insert(std::make_pair(begin_offset, end_offset));
 }
 
-bool ModernASTVisitor::transformArraySubscript(clang::ArraySubscriptExpr *expr) {
+bool ModernASTVisitor::transformArraySubscript(clang::ArraySubscriptExpr *
+                                               expr) {
   try {
     auto lhs = expr->getLHS();
     auto rhs = expr->getRHS();
@@ -263,14 +266,14 @@ std::string ModernASTVisitor::generateArraySubscriptInstrumentation(
   if (isTemplateDependentType(lhs_type)) {
     // Template-dependent case - use runtime type detection
     oss << "__maybe_primop_subscript<"
-        << "decltype(" << lhs_text << "), "
-        << "!__has_subscript_overload<decltype(" << lhs_text << ")>::value"
-        << ">()(" << lhs_text << ", " << rhs_text << ")";
+        << "decltype(" << lhs_text.str() << "), "
+        << "!__has_subscript_overload<decltype(" << lhs_text.str() << ")>::value"
+        << ">()(" << lhs_text.str() << ", " << rhs_text.str() << ")";
   } else {
     // Non-template case - use compile-time type
     std::string type_str = lhs_type.getAsString(context_.getPrintingPolicy());
     oss << "__primop_subscript<" << type_str << ">()"
-        << "(" << lhs_text << ", " << rhs_text << ")";
+        << "(" << lhs_text.str() << ", " << rhs_text.str() << ")";
   }
 
   return oss.str();
@@ -288,9 +291,9 @@ std::string ModernASTVisitor::generateBinaryOperatorInstrumentation(
       isTemplateDependentType(rhs_type)) {
     // Template-dependent case
     oss << "__maybe_primop_" << op_name << "<"
-        << "decltype(" << lhs_text << "), "
-        << "decltype(" << rhs_text << ")"
-        << ">()(" << lhs_text << ", " << rhs_text << ")";
+        << "decltype(" << lhs_text.str() << "), "
+        << "decltype(" << rhs_text.str() << ")"
+        << ">()(" << lhs_text.str() << ", " << rhs_text.str() << ")";
   } else {
     // Non-template case
     std::string lhs_type_str =
@@ -299,7 +302,7 @@ std::string ModernASTVisitor::generateBinaryOperatorInstrumentation(
         rhs_type.getAsString(context_.getPrintingPolicy());
     oss << "__primop_" << op_name << "<" << lhs_type_str << ", "
         << rhs_type_str << ">()"
-        << "(" << lhs_text << ", " << rhs_text << ")";
+        << "(" << lhs_text.str() << ", " << rhs_text.str() << ")";
   }
 
   return oss.str();
@@ -336,7 +339,8 @@ TransformationConsumer::TransformationConsumer(
   visitor_ = std::make_unique<ModernASTVisitor>(rewriter, context, config);
 }
 
-void TransformationConsumer::HandleTranslationUnit(clang::ASTContext &context) {
+void TransformationConsumer::HandleTranslationUnit(clang::ASTContext &
+                                                   context) {
   // Set traversal scope to the entire translation unit
   context.setTraversalScope({context.getTranslationUnitDecl()});
 

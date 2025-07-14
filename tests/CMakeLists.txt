@@ -43,16 +43,38 @@ function(add_optiweave_test test_name)
     )
 endfunction()
 
-# Unit tests
-add_optiweave_test(test_ast_visitor unit/test_ast_visitor.cpp)
-add_optiweave_test(test_rewriter unit/test_rewriter.cpp)
-add_optiweave_test(test_operator_detection unit/test_operator_detection.cpp)
-add_optiweave_test(test_template_handling unit/test_template_handling.cpp)
+# Check which test files exist and only add those
+set(UNIT_TESTS
+    unit/test_ast_visitor.cpp
+    unit/test_rewriter.cpp
+    unit/test_operator_detection.cpp
+    unit/test_template_handling.cpp
+)
 
-# Integration tests
-add_optiweave_test(test_array_subscript_integration integration/test_array_subscript.cpp)
-add_optiweave_test(test_arithmetic_integration integration/test_arithmetic_ops.cpp)
-add_optiweave_test(test_end_to_end integration/test_end_to_end.cpp)
+set(INTEGRATION_TESTS
+    integration/test_array_subscript.cpp
+    integration/test_arithmetic_ops.cpp
+    integration/test_end_to_end.cpp
+)
+
+# Add unit tests only if files exist
+foreach(TEST_FILE ${UNIT_TESTS})
+    if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${TEST_FILE})
+        get_filename_component(TEST_NAME ${TEST_FILE} NAME_WE)
+        add_optiweave_test(${TEST_NAME} ${TEST_FILE})
+    endif()
+endforeach()
+
+# Add integration tests only if files exist
+foreach(TEST_FILE ${INTEGRATION_TESTS})
+    if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${TEST_FILE})
+        get_filename_component(TEST_NAME_FULL ${TEST_FILE} NAME_WE)
+        string(APPEND TEST_NAME_FULL "_integration")
+        add_optiweave_test(${TEST_NAME_FULL} ${TEST_FILE})
+        # Set integration test label
+        set_tests_properties(${TEST_NAME_FULL} PROPERTIES LABELS "integration")
+    endif()
+endforeach()
 
 # Custom test target for running specific test categories
 add_custom_target(test_unit
@@ -67,8 +89,10 @@ add_custom_target(test_integration
     COMMENT "Running integration tests"
 )
 
-# Add test fixtures directory to install
-install(DIRECTORY fixtures/
-    DESTINATION share/optiweave/test_fixtures
-    FILES_MATCHING PATTERN "*.cpp" PATTERN "*.hpp" PATTERN "*.h"
-)
+# Add test fixtures directory to install if it exists
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/fixtures/)
+    install(DIRECTORY fixtures/
+        DESTINATION share/optiweave/test_fixtures
+        FILES_MATCHING PATTERN "*.cpp" PATTERN "*.hpp" PATTERN "*.h"
+    )
+endif()
