@@ -1,32 +1,43 @@
 #include "../../include/optiweave/matchers/type_matchers.hpp"
 #include <clang/ASTMatchers/ASTMatchers.h>
+#include <clang/AST/ASTContext.h>
+
+using namespace clang::ast_matchers;
+
+namespace clang {
+    namespace ast_matchers {
+        AST_MATCHER(QualType, isDependentType) {
+            return Node->isDependentType();
+        }
+    }
+}
 
 namespace optiweave::matchers {
 
-using namespace clang::ast_matchers;
+
 
 clang::ast_matchers::TypeMatcher TypeMatchers::dependentTypeMatcher() {
     return qualType(isDependentType());
 }
 
 clang::ast_matchers::TypeMatcher TypeMatchers::pointerTypeMatcher() {
-    return qualType(isPointerType());
+    return qualType(pointerType());
 }
 
 clang::ast_matchers::TypeMatcher TypeMatchers::arrayTypeMatcher() {
-    return qualType(isArrayType());
+    return qualType(arrayType());
 }
 
 clang::ast_matchers::TypeMatcher TypeMatchers::integralTypeMatcher() {
-    return qualType(isIntegralType());
+    return qualType(isInteger());
 }
 
 clang::ast_matchers::TypeMatcher TypeMatchers::floatingTypeMatcher() {
-    return qualType(isFloatingType());
+    return qualType(realFloatingPointType());
 }
 
 clang::ast_matchers::TypeMatcher TypeMatchers::arithmeticTypeMatcher() {
-    return qualType(isArithmeticType());
+    return qualType(anyOf(isInteger(), realFloatingPointType()));
 }
 
 clang::ast_matchers::TypeMatcher TypeMatchers::templateSpecializationMatcher() {
@@ -63,7 +74,8 @@ bool TypeMatchers::isArithmeticType(clang::QualType type) {
 }
 
 bool TypeMatchers::isIntegralType(clang::QualType type) {
-    return type->isIntegralType(clang::ASTContext::getASTContext());
+    // Use isIntegerType() which doesn't require ASTContext
+    return type->isIntegerType();
 }
 
 bool TypeMatchers::hasOperatorOverload(clang::QualType type, 

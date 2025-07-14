@@ -14,6 +14,10 @@ ENABLE_TESTS="${ENABLE_TESTS:-ON}"
 ENABLE_EXAMPLES="${ENABLE_EXAMPLES:-ON}"
 ENABLE_DOCS="${ENABLE_DOCS:-OFF}"
 
+# LLVM version constraints
+LLVM_MIN_VERSION="13"
+LLVM_MAX_VERSION="17"
+
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -65,6 +69,12 @@ ENVIRONMENT VARIABLES:
     CC                      C compiler
     CXX                     C++ compiler
     LLVM_DIR                Path to LLVM installation
+
+REQUIREMENTS:
+    LLVM version: ${LLVM_MIN_VERSION}.x - ${LLVM_MAX_VERSION}.x (REQUIRED)
+    Clang version: ${LLVM_MIN_VERSION}.x - ${LLVM_MAX_VERSION}.x (REQUIRED)
+    CMake: 3.20+
+    C++20 compatible compiler
 
 EXAMPLES:
     $0                      # Basic release build
@@ -188,22 +198,47 @@ else
     log_info "Using compiler: $CXX"
 fi
 
-# Check for LLVM
-if [[ -z "$LLVM_DIR" ]]; then
-    if command -v llvm-config &> /dev/null; then
-        LLVM_VERSION=$(llvm-config --version | cut -d. -f1)
-        if [[ $LLVM_VERSION -lt 13 ]]; then
-            log_warning "LLVM version $LLVM_VERSION detected, recommend 13+"
+# Check for LLVM with version validation
+check_llvm_version() {
+    if [[ -z "$LLVM_DIR" ]]; then
+        if command -v llvm-config &> /dev/null; then
+            LLVM_VERSION=$(llvm-config --version | cut -d. -f1)
+            LLVM_FULL_VERSION=$(llvm-config --version)
+            
+            if [[ $LLVM_VERSION -lt $LLVM_MIN_VERSION ]]; then
+                log_error "LLVM version $LLVM_FULL_VERSION is too old"
+                log_error "OptiWeave requires LLVM ${LLVM_MIN_VERSION}.x - ${LLVM_MAX_VERSION}.x"
+                log_info "Installation instructions:"
+                log_info "  Ubuntu/Debian: sudo apt install llvm-${LLVM_MIN_VERSION}-dev clang-${LLVM_MIN_VERSION}-dev"
+                log_info "  macOS: brew install llvm@${LLVM_MIN_VERSION}"
+                log_info "  Or set LLVM_DIR environment variable to a compatible installation"
+                exit 1
+            elif [[ $LLVM_VERSION -gt $LLVM_MAX_VERSION ]]; then
+                log_error "LLVM version $LLVM_FULL_VERSION is too new"
+                log_error "OptiWeave requires LLVM ${LLVM_MIN_VERSION}.x - ${LLVM_MAX_VERSION}.x"
+                log_error "Found LLVM $LLVM_FULL_VERSION which is not yet supported"
+                log_info "Please install a compatible LLVM version:"
+                log_info "  Ubuntu/Debian: sudo apt install llvm-${LLVM_MAX_VERSION}-dev clang-${LLVM_MAX_VERSION}-dev"
+                log_info "  macOS: brew install llvm@${LLVM_MAX_VERSION}"
+                log_info "  Or check for an updated OptiWeave version that supports LLVM $LLVM_VERSION"
+                exit 1
+            else
+                log_success "Found compatible LLVM version: $LLVM_FULL_VERSION"
+            fi
+        else
+            log_error "LLVM not found. Please install LLVM development packages"
+            log_info "  Ubuntu/Debian: sudo apt install llvm-${LLVM_MIN_VERSION}-dev clang-${LLVM_MIN_VERSION}-dev"
+            log_info "  macOS: brew install llvm@${LLVM_MIN_VERSION}"
+            log_info "  Or set LLVM_DIR environment variable"
+            exit 1
         fi
-        log_info "Found LLVM version: $(llvm-config --version)"
     else
-        log_error "LLVM not found. Please install LLVM development packages"
-        log_info "  Ubuntu/Debian: sudo apt install llvm-dev clang-dev"
-        log_info "  macOS: brew install llvm"
-        log_info "  Or set LLVM_DIR environment variable"
-        exit 1
+        log_info "Using LLVM_DIR: $LLVM_DIR"
+        # TODO: Add version check for custom LLVM_DIR
     fi
-fi
+}
+
+check_llvm_version
 
 # Clean build directory if requested
 if [[ "$CLEAN_BUILD" == true ]]; then
@@ -240,6 +275,8 @@ fi
 # Run CMake configuration
 if ! cmake "${CMAKE_ARGS[@]}" "$PROJECT_ROOT"; then
     log_error "CMake configuration failed"
+    log_info "This might be due to incompatible LLVM/Clang versions"
+    log_info "OptiWeave requires LLVM ${LLVM_MIN_VERSION}.x - ${LLVM_MAX_VERSION}.x"
     exit 1
 fi
 
@@ -249,6 +286,8 @@ log_success "Configuration completed"
 log_info "Building with $PARALLEL_JOBS parallel jobs..."
 if ! cmake --build . --parallel "$PARALLEL_JOBS"; then
     log_error "Build failed"
+    log_info "If you see API-related errors, please verify your LLVM/Clang version:"
+    log_info "  Current requirement: LLVM ${LLVM_MIN_VERSION}.x - ${LLVM_MAX_VERSION}.x"
     exit 1
 fi
 
@@ -302,5 +341,7 @@ Build completed! You can now:
 
 4. View build artifacts:
    ls -la $BUILD_DIR/
+
+For more information about LLVM version requirements, see README.md
 
 EOF

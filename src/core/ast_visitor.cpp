@@ -51,6 +51,26 @@ const char *getBinaryOperatorSpelling(clang::BinaryOperatorKind op) {
     return "unknown";
   }
 }
+
+// Helper functions to check operator types - fixed for LLVM 17
+bool isArithmeticOp(clang::BinaryOperatorKind op) {
+    return op == clang::BO_Add || op == clang::BO_Sub || 
+           op == clang::BO_Mul || op == clang::BO_Div || 
+           op == clang::BO_Rem;
+}
+
+bool isAssignmentOp(clang::BinaryOperatorKind op) {
+    return op == clang::BO_Assign || op == clang::BO_AddAssign || 
+           op == clang::BO_SubAssign || op == clang::BO_MulAssign || 
+           op == clang::BO_DivAssign || op == clang::BO_RemAssign;
+}
+
+bool isComparisonOp(clang::BinaryOperatorKind op) {
+    return op == clang::BO_EQ || op == clang::BO_NE || 
+           op == clang::BO_LT || op == clang::BO_GT || 
+           op == clang::BO_LE || op == clang::BO_GE;
+}
+
 } // namespace
 
 void TransformationStats::print(llvm::raw_ostream &os) const {
@@ -101,12 +121,13 @@ bool ModernASTVisitor::VisitBinaryOperator(clang::BinaryOperator *expr) {
 
   // Check if we should transform this operator type
   bool should_transform = false;
-  if (expr->isArithmeticOp() && config_.transform_arithmetic_operators) {
+  auto opcode = expr->getOpcode();
+  if (isArithmeticOp(opcode) && config_.transform_arithmetic_operators) {
     should_transform = true;
-  } else if (expr->isAssignmentOp() &&
+  } else if (isAssignmentOp(opcode) &&
              config_.transform_assignment_operators) {
     should_transform = true;
-  } else if (expr->isComparisonOp() &&
+  } else if (isComparisonOp(opcode) &&
              config_.transform_comparisons_operators) {
     should_transform = true;
   }

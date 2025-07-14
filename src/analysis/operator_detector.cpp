@@ -1,5 +1,6 @@
 #include "../../include/optiweave/analysis/operator_detector.hpp"
 #include <clang/AST/RecursiveASTVisitor.h>
+#include <clang/Basic/SourceManager.h>
 #include <llvm/Support/raw_ostream.h>
 
 namespace optiweave::analysis {
@@ -37,11 +38,19 @@ bool OperatorDetector::VisitArraySubscriptExpr(clang::ArraySubscriptExpr *expr) 
 
 bool OperatorDetector::VisitBinaryOperator(clang::BinaryOperator *expr) {
     if (shouldAnalyzeExpression(expr)) {
-        if (expr->isArithmeticOp()) {
+        // Check operator types manually - fixed for LLVM 17
+        auto opcode = expr->getOpcode();
+        if (opcode == clang::BO_Add || opcode == clang::BO_Sub || 
+            opcode == clang::BO_Mul || opcode == clang::BO_Div || 
+            opcode == clang::BO_Rem) {
             ++stats_.arithmetic_operator_count;
-        } else if (expr->isAssignmentOp()) {
+        } else if (opcode == clang::BO_Assign || opcode == clang::BO_AddAssign || 
+                   opcode == clang::BO_SubAssign || opcode == clang::BO_MulAssign || 
+                   opcode == clang::BO_DivAssign || opcode == clang::BO_RemAssign) {
             ++stats_.assignment_operator_count;
-        } else if (expr->isComparisonOp()) {
+        } else if (opcode == clang::BO_EQ || opcode == clang::BO_NE || 
+                   opcode == clang::BO_LT || opcode == clang::BO_GT || 
+                   opcode == clang::BO_LE || opcode == clang::BO_GE) {
             ++stats_.comparison_operator_count;
         }
         

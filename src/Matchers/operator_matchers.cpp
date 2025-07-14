@@ -1,9 +1,17 @@
 #include "../../include/optiweave/matchers/operator_matchers.hpp"
 #include <clang/ASTMatchers/ASTMatchers.h>
 
-namespace optiweave::matchers {
-
 using namespace clang::ast_matchers;
+
+namespace clang {
+    namespace ast_matchers {
+        AST_MATCHER(QualType, isDependentType) {
+            return Node->isDependentType();
+        }
+    }
+}
+
+namespace optiweave::matchers {
 
 clang::ast_matchers::StatementMatcher OperatorMatchers::arraySubscriptMatcher() {
     return arraySubscriptExpr(
@@ -160,15 +168,9 @@ clang::ast_matchers::StatementMatcher OperatorMatchers::createCombinedMatcher(
     }
     
     // Combine all matchers with anyOf
-    clang::ast_matchers::StatementMatcher combined;
-    if (matchers.size() == 1) {
-        combined = matchers[0];
-    } else {
-        // For multiple matchers, we need to create anyOf manually
-        combined = stmt(anyOf(matchers[0], matchers[1]));
-        for (size_t i = 2; i < matchers.size(); ++i) {
-            combined = stmt(anyOf(combined, matchers[i]));
-        }
+    clang::ast_matchers::StatementMatcher combined = matchers[0];
+    for (size_t i = 1; i < matchers.size(); ++i) {
+        combined = stmt(anyOf(combined, matchers[i]));
     }
     
     // Apply filters

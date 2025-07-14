@@ -33,18 +33,14 @@ bool isValidLocation(clang::SourceLocation location) {
     return location.isValid() && !location.isInvalid();
 }
 
-std::string getFileName(clang::SourceLocation location,
+std::string getFilename(clang::SourceLocation location,
                        const clang::SourceManager &source_manager) {
     if (!isValidLocation(location)) {
         return "";
     }
     
-    auto file_entry = source_manager.getFileEntryForLoc(location);
-    if (!file_entry) {
-        return "";
-    }
-    
-    return file_entry->getName().str();
+    llvm::StringRef name = source_manager.getFilename(location);
+    return name.empty() ? "" : name.str();
 }
 
 unsigned getLineNumber(clang::SourceLocation location,
@@ -85,7 +81,7 @@ std::string formatLocation(clang::SourceLocation location,
         return "<invalid location>";
     }
     
-    auto filename = getFileName(location, source_manager);
+    auto filename = getFilename(location, source_manager);
     auto line = getLineNumber(location, source_manager);
     auto column = getColumnNumber(location, source_manager);
     

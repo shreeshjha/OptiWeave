@@ -19,13 +19,38 @@ if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)
 endif()
 
-# Find LLVM and Clang first to get their include directories
+# LLVM/Clang version constraints
+set(LLVM_MIN_VERSION_MAJOR 13)
+set(LLVM_MAX_VERSION_MAJOR 17)
+
+# Find LLVM and Clang without strict version constraints first
 find_package(LLVM REQUIRED CONFIG)
+
+# Then check if the version is within our supported range
+if(LLVM_VERSION_MAJOR LESS ${LLVM_MIN_VERSION_MAJOR})
+    message(FATAL_ERROR 
+        "LLVM version ${LLVM_PACKAGE_VERSION} is too old. "
+        "OptiWeave requires LLVM ${LLVM_MIN_VERSION_MAJOR}.x to ${LLVM_MAX_VERSION_MAJOR}.x. "
+        "Please install a newer LLVM version:\n"
+        "  macOS: brew install llvm@${LLVM_MIN_VERSION_MAJOR} or llvm@${LLVM_MAX_VERSION_MAJOR}\n"
+        "  Ubuntu: sudo apt install llvm-${LLVM_MIN_VERSION_MAJOR}-dev clang-${LLVM_MIN_VERSION_MAJOR}-dev")
+elseif(LLVM_VERSION_MAJOR GREATER ${LLVM_MAX_VERSION_MAJOR})
+    message(FATAL_ERROR 
+        "LLVM version ${LLVM_PACKAGE_VERSION} is too new. "
+        "OptiWeave requires LLVM ${LLVM_MIN_VERSION_MAJOR}.x to ${LLVM_MAX_VERSION_MAJOR}.x. "
+        "Found LLVM ${LLVM_PACKAGE_VERSION} which may have incompatible APIs. "
+        "Please install a compatible LLVM version:\n"
+        "  macOS: brew install llvm@${LLVM_MAX_VERSION_MAJOR}\n"
+        "  Ubuntu: sudo apt install llvm-${LLVM_MAX_VERSION_MAJOR}-dev clang-${LLVM_MAX_VERSION_MAJOR}-dev\n"
+        "Or check for an updated OptiWeave version that supports LLVM ${LLVM_VERSION_MAJOR}")
+endif()
+
 find_package(Clang REQUIRED CONFIG)
 
 message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
 message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
 message(STATUS "Found Clang ${CLANG_PACKAGE_VERSION}")
+message(STATUS "LLVM version ${LLVM_PACKAGE_VERSION} is compatible (${LLVM_MIN_VERSION_MAJOR}.x - ${LLVM_MAX_VERSION_MAJOR}.x)")
 
 # LLVM definitions and include directories
 add_definitions(${LLVM_DEFINITIONS})
@@ -168,6 +193,12 @@ include(CMakeFindDependencyMacro)
 find_dependency(LLVM REQUIRED CONFIG)
 find_dependency(Clang REQUIRED CONFIG)
 
+# Verify LLVM version compatibility
+if(LLVM_VERSION_MAJOR LESS 13 OR LLVM_VERSION_MAJOR GREATER 17)
+    message(FATAL_ERROR 
+        "OptiWeave requires LLVM 13.x to 17.x, but found ${LLVM_PACKAGE_VERSION}")
+endif()
+
 include("${CMAKE_CURRENT_LIST_DIR}/OptiWeaveTargets.cmake")
 
 check_required_components(OptiWeave)
@@ -231,6 +262,13 @@ if(NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/README.md)
     file(WRITE ${CMAKE_CURRENT_SOURCE_DIR}/README.md "# OptiWeave
 
 Modern C++ source-to-source transformation tool for operator instrumentation.
+
+## Requirements
+
+- LLVM 13.x - 17.x
+- Clang 13.x - 17.x  
+- CMake 3.20+
+- C++20 compatible compiler
 
 ## Building
 
