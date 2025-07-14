@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.20)
 project(OptiWeave
     VERSION 1.0.0
     DESCRIPTION "Modern C++ source-to-source transformation tool for operator instrumentation"
-    LANGUAGES CXX C  # Added C language support
+    LANGUAGES CXX C
 )
 
 # Set C++ standard
@@ -19,14 +19,20 @@ if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)
 endif()
 
+# Options for controlling what to build
+option(ENABLE_TESTING "Enable building and running tests" OFF)
+option(BUILD_TESTING "Enable building tests" OFF)
+option(BUILD_EXAMPLES "Enable building examples" ON)
+option(BUILD_DOCUMENTATION "Enable building documentation" OFF)
+
 # LLVM/Clang version constraints
 set(LLVM_MIN_VERSION_MAJOR 13)
 set(LLVM_MAX_VERSION_MAJOR 17)
 
-# Find LLVM and Clang without strict version constraints first
+# Find LLVM and Clang
 find_package(LLVM REQUIRED CONFIG)
 
-# Then check if the version is within our supported range
+# Check version compatibility
 if(LLVM_VERSION_MAJOR LESS ${LLVM_MIN_VERSION_MAJOR})
     message(FATAL_ERROR 
         "LLVM version ${LLVM_PACKAGE_VERSION} is too old. "
@@ -52,26 +58,21 @@ message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
 message(STATUS "Found Clang ${CLANG_PACKAGE_VERSION}")
 message(STATUS "LLVM version ${LLVM_PACKAGE_VERSION} is compatible (${LLVM_MIN_VERSION_MAJOR}.x - ${LLVM_MAX_VERSION_MAJOR}.x)")
 
-# LLVM definitions and include directories
+# LLVM definitions
 add_definitions(${LLVM_DEFINITIONS})
 
-# Compiler-specific options (after finding LLVM to avoid affecting LLVM headers)
+# Compiler-specific options
 if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    # Use more permissive warnings to avoid LLVM header issues
     add_compile_options(
         -Wall 
         -Wextra 
         -Wpedantic 
-        -Wno-unused-parameter  # Disable unused parameter warnings for LLVM headers
+        -Wno-unused-parameter
         -Wno-error=unused-parameter
     )
     
-    # Remove -Werror entirely to avoid build failures from external headers
-    # add_compile_options(-Werror)
-    
     if(CMAKE_BUILD_TYPE STREQUAL "Debug")
         add_compile_options(-g -O0)
-        # Only enable sanitizers if requested explicitly
         if(ENABLE_SANITIZERS)
             add_compile_options(-fsanitize=address -fsanitize=undefined)
             add_link_options(-fsanitize=address -fsanitize=undefined)
@@ -79,26 +80,34 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU
     endif()
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     add_compile_options(/W4)
-    # Remove /WX to avoid warnings as errors
-    # add_compile_options(/WX)
+endif()
+
+# Fix for macOS archiver - use system tools instead of LLVM tools
+if(APPLE)
+    # Force use of system archiver tools
+    set(CMAKE_AR "/usr/bin/ar" CACHE FILEPATH "Archiver" FORCE)
+    set(CMAKE_RANLIB "/usr/bin/ranlib" CACHE FILEPATH "Ranlib" FORCE)
+    
+    message(STATUS "Forced system archiver: ${CMAKE_AR}")
+    message(STATUS "Forced system ranlib: ${CMAKE_RANLIB}")
 endif()
 
 # Include directories - use SYSTEM to suppress warnings from external headers
 include_directories(SYSTEM ${LLVM_INCLUDE_DIRS})
 include_directories(SYSTEM ${CLANG_INCLUDE_DIRS})
 
-# Separate the libraries
+# LLVM libraries
 llvm_map_components_to_libnames(llvm_libs support core irreader)
 
-# Project include directories (our own code)
+# Project include directories
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 
-# Create missing source files as empty if they don't exist
+# Core source files
 set(CORE_SOURCES
     src/core/ast_visitor.cpp
 )
 
-# Check which optional source files exist and add them
+# Optional source files
 set(OPTIONAL_SOURCES
     src/core/rewriter.cpp
     src/core/transformer.cpp
@@ -124,7 +133,6 @@ target_include_directories(optiweave_core PUBLIC
     $<INSTALL_INTERFACE:include>
 )
 
-# Use SYSTEM includes for external libraries to suppress their warnings
 target_include_directories(optiweave_core SYSTEM PUBLIC
     ${LLVM_INCLUDE_DIRS}
     ${CLANG_INCLUDE_DIRS}
@@ -154,7 +162,6 @@ target_link_libraries(optiweave_core PUBLIC
     ${llvm_libs}
 )
 
-# Apply compile flags only to our own code, not external libraries
 target_compile_options(optiweave_core PRIVATE
     $<$<COMPILE_LANGUAGE:CXX>:-Wno-unused-parameter>
     $<$<COMPILE_LANGUAGE:CXX>:-Wno-error>
@@ -164,7 +171,6 @@ target_compile_options(optiweave_core PRIVATE
 add_executable(optiweave src/main.cpp)
 target_link_libraries(optiweave PRIVATE optiweave_core)
 
-# Apply the same warning suppressions to the main executable
 target_compile_options(optiweave PRIVATE
     $<$<COMPILE_LANGUAGE:CXX>:-Wno-unused-parameter>
     $<$<COMPILE_LANGUAGE:CXX>:-Wno-error>
@@ -180,6 +186,34 @@ install(TARGETS optiweave optiweave_core
 
 install(DIRECTORY include/ DESTINATION include)
 
+# Package configuration
+include(CMakePackageConfigHelpers)
+
+# Enable testing ONLY if explicitly requested AND tests directory exists
+if(ENABLE_TESTING OR BUILD_TESTING)
+    if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/tests/CMakeLists.txt)
+        message(STATUS "Tests enabled - building test suite")
+        enable_testing()
+        add_subdirectory(tests)
+    else()
+        message(WARNING "Tests requested but tests/CMakeLists.txt not found")
+    endif()
+else()
+    message(STATUS "Tests disabled - skipping test suite")
+endif()
+
+# Add examples only if enabled AND they exist
+if(BUILD_EXAMPLES)
+    if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/examples/CMakeLists.txt)
+        message(STATUS "Examples enabled - building examples")
+        add_subdirectory(examples)
+    else()
+        message(WARNING "Examples requested but examples/CMakeLists.txt not found")
+    endif()
+else()
+    message(STATUS "Examples disabled - skipping examples")
+endif()
+
 # Create cmake directory if it doesn't exist
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
@@ -193,7 +227,6 @@ include(CMakeFindDependencyMacro)
 find_dependency(LLVM REQUIRED CONFIG)
 find_dependency(Clang REQUIRED CONFIG)
 
-# Verify LLVM version compatibility
 if(LLVM_VERSION_MAJOR LESS 13 OR LLVM_VERSION_MAJOR GREATER 17)
     message(FATAL_ERROR 
         "OptiWeave requires LLVM 13.x to 17.x, but found ${LLVM_PACKAGE_VERSION}")
@@ -205,8 +238,6 @@ check_required_components(OptiWeave)
 ]])
 endif()
 
-# Package configuration
-include(CMakePackageConfigHelpers)
 write_basic_package_version_file(
     OptiWeaveConfigVersion.cmake
     VERSION ${PROJECT_VERSION}
@@ -221,18 +252,7 @@ configure_file(
 
 export(EXPORT OptiWeaveTargets FILE OptiWeaveTargets.cmake)
 
-# Enable testing only if tests directory exists
-if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/tests/CMakeLists.txt)
-    enable_testing()
-    add_subdirectory(tests)
-endif()
-
-# Add examples only if they exist
-if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/examples/CMakeLists.txt)
-    add_subdirectory(examples)
-endif()
-
-# Create LICENSE file if it doesn't exist
+# Auto-create LICENSE if missing
 if(NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/LICENSE)
     file(WRITE ${CMAKE_CURRENT_SOURCE_DIR}/LICENSE "MIT License
 
@@ -257,7 +277,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.")
 endif()
 
-# Create README.md if it doesn't exist
+# Auto-create README if missing
 if(NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/README.md)
     file(WRITE ${CMAKE_CURRENT_SOURCE_DIR}/README.md "# OptiWeave
 
@@ -288,9 +308,8 @@ MIT License - see LICENSE file for details.
 ")
 endif()
 
-# Only include CPack if both LICENSE and README.md exist
+# CPack configuration (only if files exist)
 if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/LICENSE AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/README.md)
-    # CPack configuration
     set(CPACK_PACKAGE_NAME "OptiWeave")
     set(CPACK_PACKAGE_VERSION ${PROJECT_VERSION})
     set(CPACK_PACKAGE_DESCRIPTION_SUMMARY ${PROJECT_DESCRIPTION})

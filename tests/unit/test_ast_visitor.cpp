@@ -29,7 +29,7 @@ TEST_F(ASTVisitorTest, DefaultConfiguration) {
   EXPECT_TRUE(default_config.transform_array_subscripts);
   EXPECT_FALSE(default_config.transform_arithmetic_operators);
   EXPECT_FALSE(default_config.transform_assignment_operators);
-  EXPECT_FALSE(default_config.transform_comparison_operators);
+  EXPECT_FALSE(default_config.transform_comparisons_operators);
   EXPECT_TRUE(default_config.preserve_templates);
   EXPECT_TRUE(default_config.skip_system_headers);
 }
@@ -95,23 +95,23 @@ TEST_F(ASTVisitorTest, ConfigurationCombinations) {
   config.transform_array_subscripts = true;
   config.transform_arithmetic_operators = true;
   config.transform_assignment_operators = true;
-  config.transform_comparison_operators = true;
+  config.transform_comparisons_operators = true;
 
   EXPECT_TRUE(config.transform_array_subscripts);
   EXPECT_TRUE(config.transform_arithmetic_operators);
   EXPECT_TRUE(config.transform_assignment_operators);
-  EXPECT_TRUE(config.transform_comparison_operators);
+  EXPECT_TRUE(config.transform_comparisons_operators);
 
   // Test all operators disabled
   config.transform_array_subscripts = false;
   config.transform_arithmetic_operators = false;
   config.transform_assignment_operators = false;
-  config.transform_comparison_operators = false;
+  config.transform_comparisons_operators = false;
 
   EXPECT_FALSE(config.transform_array_subscripts);
   EXPECT_FALSE(config.transform_arithmetic_operators);
   EXPECT_FALSE(config.transform_assignment_operators);
-  EXPECT_FALSE(config.transform_comparison_operators);
+  EXPECT_FALSE(config.transform_comparisons_operators);
 }
 
 // Test path handling

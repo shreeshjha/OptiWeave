@@ -4,6 +4,7 @@
 #include <clang/Frontend/CompilerInstance.h>
 #include <clang/Frontend/FrontendActions.h>
 #include <clang/Tooling/ArgumentsAdjusters.h>
+#include <clang/Basic/Version.h>
 #include <clang/Tooling/CommonOptionsParser.h>
 #include <clang/Tooling/Tooling.h>
 #include <llvm/Support/CommandLine.h>
@@ -228,7 +229,7 @@ bool validateOutputDirectory() {
 void printVersion() {
   llvm::outs()
       << "OptiWeave v1.0.0 - Modern C++ Operator Instrumentation Tool\n";
-  llvm::outs() << "Built with Clang " << CLANG_VERSION_STRING << "\n";
+  llvm::outs() << "Built with Clang " << clang::getClangFullVersion() << "\n";
   llvm::outs() << "Copyright (c) 2024 OptiWeave Contributors\n";
 }
 
@@ -298,7 +299,7 @@ int main(int argc, const char **argv) {
   config.transform_array_subscripts = TransformArraySubscripts;
   config.transform_arithmetic_operators = TransformArithmetic;
   config.transform_assignment_operators = TransformAssignment;
-  config.transform_comparison_operators = TransformComparison;
+  config.transform_comparisons_operators = TransformComparison;
   config.skip_system_headers = SkipSystemHeaders;
   config.prelude_path = prelude_path;
 
@@ -313,7 +314,7 @@ int main(int argc, const char **argv) {
                  << (config.transform_assignment_operators ? "ON" : "OFF")
                  << "\n";
     llvm::errs() << "  Comparison ops: "
-                 << (config.transform_comparison_operators ? "ON" : "OFF")
+                 << (config.transform_comparisons_operators ? "ON" : "OFF")
                  << "\n";
     llvm::errs() << "  Skip system headers: "
                  << (config.skip_system_headers ? "ON" : "OFF") << "\n";
@@ -333,11 +334,11 @@ int main(int argc, const char **argv) {
   if (!prelude_path.empty()) {
     auto prelude_dir = llvm::sys::path::parent_path(prelude_path);
     std::string include_arg = "-I" + prelude_dir.str();
-    Tool.appendArgumentsAdjuster(getInsertArgumentAdjuster(include_arg));
+    Tool.appendArgumentsAdjuster(getInsertArgumentAdjuster(include_arg.c_str(), clang::tooling::ArgumentInsertPosition::BEGIN));
   }
 
   // Add C++20 standard if not specified
-  Tool.appendArgumentsAdjuster(getInsertArgumentAdjuster("-std=c++20"));
+  Tool.appendArgumentsAdjuster(getInsertArgumentAdjuster("-std=c++20", clang::tooling::ArgumentInsertPosition::BEGIN));
 
   // Create factory and run tool
   optiweave::OptiWeaveFrontendActionFactory factory(config);
