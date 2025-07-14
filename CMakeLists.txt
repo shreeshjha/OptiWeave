@@ -51,13 +51,20 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 # Core library
 add_library(optiweave_core
+    # Core components
     src/core/ast_visitor.cpp
     src/core/rewriter.cpp
     src/core/transformer.cpp
+    
+    # Matchers
     src/matchers/operator_matchers.cpp
     src/matchers/type_matchers.cpp
+    
+    # Analysis
     src/analysis/operator_detector.cpp
     src/analysis/template_analyzer.cpp
+    
+    # Utilities
     src/utils/source_utils.cpp
     src/utils/diagnostic_utils.cpp
 )
@@ -104,6 +111,7 @@ install(TARGETS optiweave optiweave_core
 )
 
 install(DIRECTORY include/ DESTINATION include)
+install(DIRECTORY templates/ DESTINATION share/optiweave/templates)
 
 # Package configuration
 include(CMakePackageConfigHelpers)
@@ -115,6 +123,63 @@ write_basic_package_version_file(
 
 export(EXPORT OptiWeaveTargets FILE OptiWeaveTargets.cmake)
 
+# Configuration file
+configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/cmake/OptiWeaveConfig.cmake.in
+    ${CMAKE_CURRENT_BINARY_DIR}/OptiWeaveConfig.cmake
+    @ONLY
+)
+
+install(FILES
+    ${CMAKE_CURRENT_BINARY_DIR}/OptiWeaveConfig.cmake
+    ${CMAKE_CURRENT_BINARY_DIR}/OptiWeaveConfigVersion.cmake
+    DESTINATION lib/cmake/OptiWeave
+)
+
+install(EXPORT OptiWeaveTargets
+    FILE OptiWeaveTargets.cmake
+    NAMESPACE OptiWeave::
+    DESTINATION lib/cmake/OptiWeave
+)
+
 # Enable testing
-enable_testing()
-add_subdirectory(tests)
+option(ENABLE_TESTING "Enable testing" ON)
+if(ENABLE_TESTING)
+    enable_testing()
+    add_subdirectory(tests)
+endif()
+
+# Examples
+option(BUILD_EXAMPLES "Build examples" ON)
+if(BUILD_EXAMPLES)
+    add_subdirectory(examples)
+endif()
+
+# Documentation
+option(BUILD_DOCUMENTATION "Build documentation" OFF)
+if(BUILD_DOCUMENTATION)
+    find_package(Doxygen)
+    if(DOXYGEN_FOUND)
+        add_subdirectory(docs)
+    endif()
+endif()
+
+# CPack configuration
+set(CPACK_PACKAGE_NAME "OptiWeave")
+set(CPACK_PACKAGE_VERSION ${PROJECT_VERSION})
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY ${PROJECT_DESCRIPTION})
+set(CPACK_PACKAGE_VENDOR "OptiWeave Contributors")
+set(CPACK_PACKAGE_CONTACT "contact@optiweave.org")
+set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE")
+set(CPACK_RESOURCE_FILE_README "${CMAKE_CURRENT_SOURCE_DIR}/README.md")
+
+# Platform-specific packaging
+if(WIN32)
+    set(CPACK_GENERATOR "ZIP;NSIS")
+elseif(APPLE)
+    set(CPACK_GENERATOR "ZIP;DragNDrop")
+else()
+    set(CPACK_GENERATOR "TGZ;DEB;RPM")
+endif()
+
+include(CPack)

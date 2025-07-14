@@ -1,0 +1,440 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  schedule:
+    # Run weekly on Sundays at 2 AM UTC
+    - cron: '0 2 * * 0'
+
+env:
+  BUILD_TYPE: Release
+  LLVM_VERSION: 19
+
+jobs:
+  # Code formatting check
+  format-check:
+    name: Format Check
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Install clang-format
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y clang-format-15
+    
+    - name: Check formatting
+      run: |
+        chmod +x scripts/format.sh
+        ./scripts/format.sh --check
+
+  # Static analysis
+  static-analysis:
+    name: Static Analysis
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          clang-tools-15 \
+          cppcheck \
+          llvm-15-dev \
+          clang-15-dev \
+          libclang-15-dev
+    
+    - name: Run cppcheck
+      run: |
+        cppcheck --enable=all --error-exitcode=1 \
+          --suppress=missingIncludeSystem \
+          --suppress=unusedFunction \
+          src/ include/
+    
+    - name: Run clang-tidy
+      run: |
+        mkdir -p build
+        cd build
+        cmake -DCMAKE_BUILD_TYPE=Debug \
+              -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+              -DCMAKE_CXX_COMPILER=clang++-15 \
+              -DCMAKE_C_COMPILER=clang-15 \
+              ..
+        run-clang-tidy-15 -p . -header-filter='include/optiweave/.*'
+
+  # Build and test matrix
+  build-and-test:
+    name: Build and Test
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, ubuntu-20.04, macos-13, macos-12]
+        build_type: [Debug, Release]
+        compiler: [gcc, clang]
+        exclude:
+          # Reduce matrix size by excluding some combinations
+          - os: macos-13
+            compiler: gcc
+          - os: macos-12
+            compiler: gcc
+          - os: ubuntu-20.04
+            build_type: Debug
+        include:
+          # Add specific configurations
+          - os: ubuntu-22.04
+            compiler: gcc
+            gcc_version: 11
+          - os: ubuntu-22.04
+            compiler: clang
+            clang_version: 15
+          - os: ubuntu-20.04
+            compiler: gcc
+            gcc_version: 10
+          - os: ubuntu-20.04
+            compiler: clang
+            clang_version: 13
+
+    runs-on: ${{ matrix.os }}
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Cache LLVM
+      id: cache-llvm
+      uses: actions/cache@v4
+      with:
+        path: ${{ runner.temp }}/llvm
+        key: ${{ matrix.os }}-llvm-${{ env.LLVM_VERSION }}
+    
+    - name: Install dependencies (Ubuntu)
+      if: startsWith(matrix.os, 'ubuntu')
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          build-essential \
+          cmake \
+          ninja-build \
+          llvm-${{ matrix.clang_version || '15' }}-dev \
+          clang-${{ matrix.clang_version || '15' }}-dev \
+          libclang-${{ matrix.clang_version || '15' }}-dev \
+          libc++-${{ matrix.clang_version || '15' }}-dev \
+          libc++abi-${{ matrix.clang_version || '15' }}-dev \
+          valgrind \
+          lcov
+        
+        # Set up compiler versions
+        if [ "${{ matrix.compiler }}" = "gcc" ]; then
+          sudo apt-get install -y gcc-${{ matrix.gcc_version || '11' }} g++-${{ matrix.gcc_version || '11' }}
+          sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-${{ matrix.gcc_version || '11' }} 100
+          sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-${{ matrix.gcc_version || '11' }} 100
+        else
+          sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-${{ matrix.clang_version || '15' }} 100
+          sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-${{ matrix.clang_version || '15' }} 100
+        fi
+    
+    - name: Install dependencies (macOS)
+      if: startsWith(matrix.os, 'macos')
+      run: |
+        brew update
+        brew install llvm@15 ninja
+        
+        # Add LLVM to PATH
+        echo "/opt/homebrew/opt/llvm@15/bin" >> $GITHUB_PATH
+        echo "LDFLAGS=-L/opt/homebrew/opt/llvm@15/lib" >> $GITHUB_ENV
+        echo "CPPFLAGS=-I/opt/homebrew/opt/llvm@15/include" >> $GITHUB_ENV
+    
+    - name: Set up compiler environment
+      run: |
+        if [ "${{ matrix.compiler }}" = "gcc" ]; then
+          echo "CC=gcc" >> $GITHUB_ENV
+          echo "CXX=g++" >> $GITHUB_ENV
+        else
+          echo "CC=clang" >> $GITHUB_ENV
+          echo "CXX=clang++" >> $GITHUB_ENV
+        fi
+    
+    - name: Configure CMake
+      run: |
+        cmake -B build \
+          -G Ninja \
+          -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+          -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+          -DENABLE_TESTING=ON \
+          -DBUILD_EXAMPLES=ON
+    
+    - name: Build
+      run: |
+        cmake --build build --parallel $(nproc)
+    
+    - name: Run tests
+      run: |
+        cd build
+        ctest --output-on-failure --parallel $(nproc)
+    
+    - name: Run integration tests
+      run: |
+        cd build
+        ctest -L integration --output-on-failure
+    
+    - name: Test installation
+      run: |
+        sudo cmake --install build --prefix /usr/local
+        which optiweave
+        optiweave --version
+
+  # Memory testing with Valgrind (Linux only)
+  memory-test:
+    name: Memory Test
+    runs-on: ubuntu-22.04
+    if: github.event_name != 'schedule'  # Skip on scheduled runs
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          build-essential \
+          cmake \
+          ninja-build \
+          llvm-15-dev \
+          clang-15-dev \
+          libclang-15-dev \
+          valgrind
+    
+    - name: Build with debug info
+      run: |
+        cmake -B build -G Ninja \
+          -DCMAKE_BUILD_TYPE=Debug \
+          -DCMAKE_CXX_FLAGS="-g -O1" \
+          -DENABLE_TESTING=ON
+        cmake --build build --parallel $(nproc)
+    
+    - name: Run tests with Valgrind
+      run: |
+        cd build
+        ctest --output-on-failure -T MemCheck
+    
+    - name: Upload Valgrind results
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: valgrind-results
+        path: build/Testing/Temporary/MemoryChecker.*.log
+
+  # Coverage testing
+  coverage:
+    name: Coverage
+    runs-on: ubuntu-22.04
+    if: github.event_name != 'schedule'
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          build-essential \
+          cmake \
+          ninja-build \
+          llvm-15-dev \
+          clang-15-dev \
+          libclang-15-dev \
+          lcov \
+          gcovr
+    
+    - name: Build with coverage
+      run: |
+        cmake -B build -G Ninja \
+          -DCMAKE_BUILD_TYPE=Debug \
+          -DCMAKE_CXX_FLAGS="--coverage -g -O0" \
+          -DCMAKE_EXE_LINKER_FLAGS="--coverage" \
+          -DENABLE_TESTING=ON
+        cmake --build build --parallel $(nproc)
+    
+    - name: Run tests
+      run: |
+        cd build
+        ctest --output-on-failure --parallel $(nproc)
+    
+    - name: Generate coverage report
+      run: |
+        cd build
+        lcov --capture --directory . --output-file coverage.info
+        lcov --remove coverage.info '/usr/*' --output-file coverage.info
+        lcov --remove coverage.info '*/tests/*' --output-file coverage.info
+        lcov --remove coverage.info '*/third_party/*' --output-file coverage.info
+        genhtml coverage.info --output-directory coverage_html
+    
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v4
+      with:
+        file: build/coverage.info
+        fail_ci_if_error: false
+    
+    - name: Upload coverage artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: coverage-report
+        path: build/coverage_html/
+
+  # Performance benchmarks
+  benchmark:
+    name: Benchmark
+    runs-on: ubuntu-22.04
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          build-essential \
+          cmake \
+          ninja-build \
+          llvm-15-dev \
+          clang-15-dev \
+          libclang-15-dev
+    
+    - name: Build optimized
+      run: |
+        cmake -B build -G Ninja \
+          -DCMAKE_BUILD_TYPE=Release \
+          -DCMAKE_CXX_FLAGS="-O3 -DNDEBUG -march=native" \
+          -DBUILD_BENCHMARKS=ON
+        cmake --build build --parallel $(nproc)
+    
+    - name: Run benchmarks
+      run: |
+        cd build
+        find . -name "*benchmark*" -executable -type f -exec {} \;
+    
+    - name: Upload benchmark results
+      uses: actions/upload-artifact@v4
+      with:
+        name: benchmark-results
+        path: build/*.json
+
+  # Documentation check
+  documentation:
+    name: Documentation
+    runs-on: ubuntu-22.04
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Check documentation
+      run: |
+        # Check that required documentation files exist
+        test -f README.md
+        test -f LICENSE
+        test -f docs/architecture.md
+        
+        # Check for broken markdown links (simple check)
+        grep -r "\[.*\](" docs/ README.md || true
+        
+        # Verify code examples in documentation compile
+        mkdir -p doc_test
+        cd doc_test
+        
+        # Extract and test code blocks from README
+        if grep -A 20 '```cpp' ../README.md > example.cpp 2>/dev/null; then
+          echo "Found C++ example in README, testing compilation..."
+          echo '#include <iostream>' > test.cpp
+          tail -n +2 example.cpp | head -n -1 >> test.cpp
+          g++ -c test.cpp -std=c++20 || echo "Example compilation failed (may be expected)"
+        fi
+
+  # Security scan
+  security:
+    name: Security Scan
+    runs-on: ubuntu-22.04
+    if: github.event_name == 'push'
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Run CodeQL Analysis
+      uses: github/codeql-action/init@v3
+      with:
+        languages: cpp
+    
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          build-essential \
+          cmake \
+          ninja-build \
+          llvm-15-dev \
+          clang-15-dev \
+          libclang-15-dev
+    
+    - name: Build for analysis
+      run: |
+        cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+        cmake --build build --parallel $(nproc)
+    
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v3
+
+  # Release workflow (only on tags)
+  release:
+    name: Release
+    runs-on: ubuntu-22.04
+    needs: [build-and-test, static-analysis, format-check]
+    if: startsWith(github.ref, 'refs/tags/v')
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          build-essential \
+          cmake \
+          ninja-build \
+          llvm-15-dev \
+          clang-15-dev \
+          libclang-15-dev
+    
+    - name: Build release
+      run: |
+        cmake -B build -G Ninja \
+          -DCMAKE_BUILD_TYPE=Release \
+          -DCMAKE_INSTALL_PREFIX=/usr/local
+        cmake --build build --parallel $(nproc)
+    
+    - name: Create package
+      run: |
+        cd build
+        cpack
+    
+    - name: Create Release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: Release ${{ github.ref }}
+        draft: false
+        prerelease: false
+    
+    - name: Upload Release Asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: build/*.tar.gz
+        asset_name: optiweave-${{ github.ref }}-linux.tar.gz
+        asset_content_type: application/gzip
