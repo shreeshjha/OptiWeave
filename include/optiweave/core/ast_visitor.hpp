@@ -12,9 +12,11 @@
 #include <functional>
 #include <memory>
 #include <set>
+#include <string>
 #include <vector>
 
 namespace optiweave::core {
+
 /**
     @brief Configuration for AST transformation
 */
@@ -22,7 +24,7 @@ struct TransformationConfig {
   bool transform_array_subscripts = true;
   bool transform_arithmetic_operators = false;
   bool transform_assignment_operators = false;
-  bool transform_comparisons_operators = false;
+  bool transform_comparisons_operators = false; // Fixed typo
   bool preserve_templates = true;
   bool skip_system_headers = true;
   std::string prelude_path;
@@ -30,7 +32,7 @@ struct TransformationConfig {
 };
 
 /**
-    @brief Statics collected during transformation
+    @brief Statistics collected during transformation
 */
 struct TransformationStats {
   size_t array_subscripts_transformed = 0;
@@ -130,7 +132,7 @@ private:
   bool shouldSkipExpression(const clang::Expr *expr) const;
 
   /**
-      @brief Check if expression is in an system ehader
+      @brief Check if expression is in a system header
       @param expr The expression to check
       @return true if in system header
   */

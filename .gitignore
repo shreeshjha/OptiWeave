@@ -1,0 +1,265 @@
+# OptiWeave .gitignore
+
+# Build directories
+build/
+build-*/
+_build/
+cmake-build-*/
+
+# CMake files
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+CTestTestfile.cmake
+install_manifest.txt
+compile_commands.json
+
+# Generated files
+*.generated.*
+*.tmp
+*.temp
+
+# Object files
+*.o
+*.obj
+*.lo
+*.slo
+*.ko
+
+# Libraries
+*.a
+*.la
+*.lib
+*.so
+*.so.*
+*.dylib
+*.dll
+
+# Executables
+*.exe
+*.out
+*.app
+optiweave
+optiweave.exe
+
+# Debug files
+*.dSYM/
+*.su
+*.idb
+*.pdb
+
+# Coverage files
+*.gcov
+*.gcda
+*.gcno
+*.lcov
+coverage/
+*.coverage
+htmlcov/
+
+# Profiling files
+*.prof
+gmon.out
+callgrind.out.*
+*.perf
+
+# Valgrind files
+*.valgrind
+vgcore.*
+massif.out.*
+
+# Static analysis
+*.sarif
+*.plist
+scan-build-*/
+
+# Backup files
+*.bak
+*.backup
+*.orig
+*.rej
+*~
+#*#
+.#*
+
+# Temporary files
+.tmp/
+tmp/
+temp/
+*.tmp.*
+
+# Editor files
+.vscode/
+.vs/
+*.swp
+*.swo
+*~
+.*.swp
+.*.swo
+
+# IDE files
+.idea/
+*.iml
+*.ipr
+*.iws
+.clangd/
+.ccls-cache/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# Package files
+*.tar.gz
+*.tar.bz2
+*.tar.xz
+*.zip
+*.7z
+*.rar
+
+# Documentation generated files
+docs/build/
+docs/_build/
+doc/html/
+doc/latex/
+*.pdf
+*.ps
+*.eps
+
+# Test results
+test-results/
+test_detail.xml
+test-reports/
+junit.xml
+*.testresults
+
+# Benchmark results
+benchmark_results/
+*.benchmark
+*.json
+
+# Log files
+*.log
+logs/
+
+# Python files (if any)
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+.env
+
+# Node.js files (if any)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Rust files (if any)
+target/
+Cargo.lock
+
+# Go files (if any)
+vendor/
+
+# Installation directories
+install/
+prefix/
+
+# Package build directories
+debian/
+rpm/
+pkg/
+
+# CTest files
+Testing/
+DartConfiguration.tcl
+
+# Doxygen
+html/
+latex/
+man/
+
+# Clang static analyzer
+analyze/
+
+# Sanitizer logs
+*sanitizer*
+*.asan
+*.tsan
+*.msan
+
+# Custom build artifacts
+artifacts/
+dist/
+releases/
+
+# Third-party downloads
+third_party/downloads/
+external/downloads/
+
+# Local configuration files
+.env.local
+.env.*.local
+local.properties
+config.local.*
+
+# User-specific files
+.user
+*.user
+*.userosscache
+*.sln.docstates
+
+# Windows specific
+*.msi
+*.msm
+*.wixobj
+*.wixpdb
+
+# macOS specific
+.AppleDouble
+.LSOverride
+Icon
+._*
+
+# Linux specific
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# Temporary patch files
+*.patch
+*.diff
+
+# Core dumps
+core
+core.*
+vgcore.*
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Certificates and keys
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+
+# Custom OptiWeave files
+prelude_temp_*
+*.optiweave.backup
+transformation_cache/
