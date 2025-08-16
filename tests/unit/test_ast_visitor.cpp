@@ -222,4 +222,6 @@ TEST_F(MinimalASTTest, EmptyCode) {
 
 TEST_F(MinimalASTTest, InvalidCode) {
   std::string code = "invalid c++ code {{{";
-  // Should still return true for non-empty code in our
+  // Should still return true for non-empty code in our implementation
+  EXPECT_TRUE(testVisitorWithCode(code));
+}

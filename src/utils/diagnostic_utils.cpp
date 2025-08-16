@@ -1,4 +1,4 @@
-#include "../../include/optiweave/utils/diagnostic_utils.hpp"
+#include <optiweave/utils/diagnostic_utils.hpp>
 #include <clang/Basic/SourceManager.h>
 #include <llvm/Support/raw_ostream.h>
 

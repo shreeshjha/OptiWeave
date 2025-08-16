@@ -3,7 +3,7 @@
 # OptiWeave Build Script
 # Usage: ./scripts/build.sh [options]
 
-set -e  # Exit on any error
+set -e    # Exit on any error
 
 #### Configuration defaults
 BUILD_TYPE="${BUILD_TYPE:-Release}"
@@ -14,15 +14,12 @@ ENABLE_TESTS="${ENABLE_TESTS:-OFF}"
 ENABLE_EXAMPLES="${ENABLE_EXAMPLES:-ON}"
 ENABLE_DOCS="${ENABLE_DOCS:-OFF}"
 
-LLVM_MIN_VERSION="13"
-LLVM_MAX_VERSION="17"
-
 #### Colorized logging
 RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; BLUE='\033[0;34m'; NC='\033[0m'
 log_info()    { echo -e "${BLUE}[INFO]${NC}    $1"; }
 log_success() { echo -e "${GREEN}[SUCCESS]${NC} $1"; }
 log_warning() { echo -e "${YELLOW}[WARNING]${NC} $1"; }
-log_error()   { echo -e "${RED}[ERROR]${NC}   $1"; }
+log_error()   { echo -e "${RED}[ERROR]${NC}    $1"; }
 
 #### Help text
 show_help() {
@@ -32,25 +29,25 @@ OptiWeave Build Script
 Usage: $0 [OPTIONS]
 
 OPTIONS:
-  -h, --help           Show this help
-  -c, --clean          Clean build directory first
-  -t, --build-type T   Build type (Debug, Release, RelWithDebInfo, MinSizeRel)
-  -j, --jobs N         Parallel jobs
-  -p, --prefix PATH    Install prefix
-  --tests              Enable building tests (disabled by default)
-  --no-examples        Disable building examples
-  --docs               Enable building documentation
-  --install            Install after building
-  --package            Generate distribution package
+  -h, --help            Show this help
+  -c, --clean           Clean build directory first
+  -t, --build-type T    Build type (Debug, Release, RelWithDebInfo, MinSizeRel)
+  -j, --jobs N          Parallel jobs
+  -p, --prefix PATH     Install prefix
+  --tests               Enable building tests (disabled by default)
+  --no-examples         Disable building examples
+  --docs              Enable building documentation
+  --install             Install after building
+  --package             Generate distribution package
 
 ENV VARS:
   BUILD_TYPE, BUILD_DIR, INSTALL_PREFIX, PARALLEL_JOBS, ENABLE_TESTS,
-  ENABLE_EXAMPLES, ENABLE_DOCS, CC, CXX, LLVM_DIR
+  ENABLE_EXAMPLES, ENABLE_DOCS, CC, CXX, LLVM_DIR (for non-macOS/specific LLVM installs)
 
 Requirements:
-  - LLVM ${LLVM_MIN_VERSION}.x – ${LLVM_MAX_VERSION}.x
+  - LLVM 13.x – 17.x (or compatible Apple Clang)
   - CMake ≥ 3.20
-  - A C++20‐capable compiler
+  - A C++20-capable compiler
 EOF
 }
 
@@ -61,17 +58,17 @@ CREATE_PACKAGE=false
 
 while [[ $# -gt 0 ]]; do
   case $1 in
-    -h|--help)      show_help; exit 0;;
-    -c|--clean)     CLEAN_BUILD=true; shift;;
+    -h|--help)       show_help; exit 0;;
+    -c|--clean)      CLEAN_BUILD=true; shift;;
     -t|--build-type) BUILD_TYPE="$2"; shift 2;;
-    -j|--jobs)      PARALLEL_JOBS="$2"; shift 2;;
-    -p|--prefix)    INSTALL_PREFIX="$2"; shift 2;;
-    --tests)        ENABLE_TESTS="ON"; shift;;
-    --no-examples)  ENABLE_EXAMPLES="OFF"; shift;;
-    --docs)         ENABLE_DOCS="ON"; shift;;
-    --install)      INSTALL_AFTER_BUILD=true; shift;;
-    --package)      CREATE_PACKAGE=true; shift;;
-    *)              log_error "Unknown option: $1"; show_help; exit 1;;
+    -j|--jobs)       PARALLEL_JOBS="$2"; shift 2;;
+    -p|--prefix)     INSTALL_PREFIX="$2"; shift 2;;
+    --tests)         ENABLE_TESTS="ON"; shift;;
+    --no-examples)   ENABLE_EXAMPLES="OFF"; shift;;
+    --docs)          ENABLE_DOCS="ON"; shift;;
+    --install)       INSTALL_AFTER_BUILD=true; shift;;
+    --package)       CREATE_PACKAGE=true; shift;;
+    *)               log_error "Unknown option: $1"; show_help; exit 1;;
   esac
 done
 
@@ -85,14 +82,14 @@ esac
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &>/dev/null && pwd )"
 PROJECT_ROOT="$( dirname "$SCRIPT_DIR" )"
 
-log_info "Project root:     $PROJECT_ROOT"
-log_info "Build type:       $BUILD_TYPE"
-log_info "Build directory:  $BUILD_DIR"
-log_info "Install prefix:   $INSTALL_PREFIX"
-log_info "Parallel jobs:    $PARALLEL_JOBS"
-log_info "Build tests:      $ENABLE_TESTS"
-log_info "Build examples:   $ENABLE_EXAMPLES"
-log_info "Build docs:       $ENABLE_DOCS"
+log_info "Project root:      $PROJECT_ROOT"
+log_info "Build type:        $BUILD_TYPE"
+log_info "Build directory:   $BUILD_DIR"
+log_info "Install prefix:    $INSTALL_PREFIX"
+log_info "Parallel jobs:     $PARALLEL_JOBS"
+log_info "Build tests:       $ENABLE_TESTS"
+log_info "Build examples:    $ENABLE_EXAMPLES"
+log_info "Build docs:        $ENABLE_DOCS"
 
 cd "$PROJECT_ROOT"
 
@@ -109,54 +106,23 @@ else
     log_error "Neither make nor ninja found"; exit 1;
 fi
 
-#### Select compiler
+#### Select compiler - Prioritize Apple Clang, then Homebrew, then generic.
 if [[ -z "$CXX" ]]; then
-  if command -v clang++ &>/dev/null; then
-    export CXX=clang++; export CC=clang; log_info "Using Clang"
+  if [[ "$(uname)" == "Darwin" ]]; then
+    export CXX="/usr/bin/clang++"
+    export CC="/usr/bin/clang"
+    log_info "Using Apple Clang from /usr/bin"
+    # We will pass LLVM_DIR to CMake directly for Homebrew LLVM
+  elif command -v clang++ &>/dev/null; then
+    export CXX=clang++; export CC=clang; log_info "Using generic Clang from PATH"
   elif command -v g++ &>/dev/null; then
-    export CXX=g++;    export CC=gcc;   log_info "Using GCC"
+    export CXX=g++;    export CC=gcc;    log_info "Using GCC from PATH"
   else
     log_error "No C++ compiler found"; exit 1;
   fi
 else
-  log_info "Using compiler:   $CXX"
+  log_info "Using explicitly set compiler: $CXX"
 fi
-
-#### Check LLVM version
-check_llvm_version() {
-    if [[ -n "$LLVM_DIR" ]]; then
-        log_info "Using LLVM_DIR: $LLVM_DIR"
-        return 0
-    fi
-
-    if command -v llvm-config &>/dev/null; then
-        LV=$(llvm-config --version | cut -d. -f1)
-        FULL=$(llvm-config --version)
-        
-        if (( LV < LLVM_MIN_VERSION )); then
-            log_error "LLVM $FULL is too old (need ${LLVM_MIN_VERSION}.x - ${LLVM_MAX_VERSION}.x)"
-            log_info "Install instructions:"
-            log_info "  macOS: brew install llvm@${LLVM_MIN_VERSION}"
-            log_info "  Ubuntu: sudo apt install llvm-${LLVM_MIN_VERSION}-dev clang-${LLVM_MIN_VERSION}-dev"
-            exit 1
-        elif (( LV > LLVM_MAX_VERSION )); then
-            log_error "LLVM $FULL is too new (need ${LLVM_MIN_VERSION}.x - ${LLVM_MAX_VERSION}.x)"
-            log_info "Install compatible version:"
-            log_info "  macOS: brew install llvm@${LLVM_MAX_VERSION}"
-            log_info "  Ubuntu: sudo apt install llvm-${LLVM_MAX_VERSION}-dev clang-${LLVM_MAX_VERSION}-dev"
-            exit 1
-        fi
-        
-        log_success "Found LLVM $FULL"
-    else
-        log_error "llvm-config not found. Please install LLVM ${LLVM_MIN_VERSION}.x - ${LLVM_MAX_VERSION}.x"
-        log_info "  macOS: brew install llvm@${LLVM_MIN_VERSION}"
-        log_info "  Ubuntu: sudo apt install llvm-${LLVM_MIN_VERSION}-dev clang-${LLVM_MIN_VERSION}-dev"
-        exit 1
-    fi
-}
-
-check_llvm_version
 
 #### Clean?
 if $CLEAN_BUILD; then
@@ -176,21 +142,35 @@ CMAKE_ARGS=(
   -DCMAKE_INSTALL_PREFIX="$INSTALL_PREFIX"
   -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
   -DBUILD_TESTING="$ENABLE_TESTS"
-  -DENABLE_TESTING="$ENABLE_TESTS"
   -DBUILD_EXAMPLES="$ENABLE_EXAMPLES"
   -DBUILD_DOCUMENTATION="$ENABLE_DOCS"
+  -DCMAKE_C_COMPILER="$CC"
+  -DCMAKE_CXX_COMPILER="$CXX"
 )
 
-# Add LLVM_DIR if set
-[[ -n "$LLVM_DIR"  ]] && CMAKE_ARGS+=( -DLLVM_DIR="$LLVM_DIR" )
-[[ -n "$Clang_DIR" ]] && CMAKE_ARGS+=( -DClang_DIR="$Clang_DIR" )
+# IMPORTANT: Set LLVM_DIR to the Homebrew LLVM installation's cmake directory
+# Assuming llvm@17 is installed at /opt/homebrew/opt/llvm@17
+# You might need to adjust this path if your Homebrew prefix is different or you installed a different llvm version.
+LLVM_HOMEBREW_PATH="/opt/homebrew/opt/llvm@17" # <--- VERIFY THIS PATH
+if [[ -d "${LLVM_HOMEBREW_PATH}/lib/cmake/llvm" ]]; then
+    CMAKE_ARGS+=( -DLLVM_DIR="${LLVM_HOMEBREW_PATH}/lib/cmake/llvm" )
+    log_info "Setting LLVM_DIR for CMake to: ${LLVM_HOMEBREW_PATH}/lib/cmake/llvm"
+else
+    log_warning "Homebrew LLVM cmake directory not found at ${LLVM_HOMEBREW_PATH}/lib/cmake/llvm. CMake may struggle to find LLVM."
+fi
+# Also hint Clang_DIR if necessary, though LLVM_DIR usually covers it.
+if [[ -d "${LLVM_HOMEBREW_PATH}/lib/cmake/clang" ]]; then
+    CMAKE_ARGS+=( -DClang_DIR="${LLVM_HOMEBREW_PATH}/lib/cmake/clang" )
+    log_info "Setting Clang_DIR for CMake to: ${LLVM_HOMEBREW_PATH}/lib/cmake/clang"
+fi
 
 # Run CMake
 if cmake "${CMAKE_ARGS[@]}" "$PROJECT_ROOT"; then
     log_success "Configured successfully"
 else
     log_error "CMake configuration failed"
-    log_info "Check that you have compatible LLVM/Clang versions installed"
+    log_info "Check that you have a C++20 compatible compiler and (for Linux) an LLVM development package installed."
+    log_info "On macOS, ensure Xcode Command Line Tools are installed: xcode-select --install"
     exit 1
 fi
 

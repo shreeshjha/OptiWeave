@@ -1,4 +1,4 @@
-#include "../../include/optiweave/analysis/template_analyzer.hpp"
+#include <optiweave/analysis/template_analyzer.hpp>
 #include <clang/AST/RecursiveASTVisitor.h>
 #include <llvm/Support/raw_ostream.h>
 

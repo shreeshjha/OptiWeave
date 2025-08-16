@@ -1,4 +1,4 @@
-#include "../../include/optiweave/matchers/operator_matchers.hpp"
+#include <optiweave/matchers/operator_matchers.hpp>
 #include <clang/ASTMatchers/ASTMatchers.h>
 
 using namespace clang::ast_matchers;

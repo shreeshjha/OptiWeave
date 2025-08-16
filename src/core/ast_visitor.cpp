@@ -52,6 +52,47 @@ const char *getBinaryOperatorSpelling(clang::BinaryOperatorKind op) {
   }
 }
 
+const char *getBinaryOperatorTemplateName(clang::BinaryOperatorKind op) {
+  switch (op) {
+  case clang::BO_Add:
+    return "add";
+  case clang::BO_Sub:
+    return "sub";
+  case clang::BO_Mul:
+    return "mul";
+  case clang::BO_Div:
+    return "div";
+  case clang::BO_Rem:
+    return "rem";
+  case clang::BO_Assign:
+    return "assign";
+  case clang::BO_AddAssign:
+    return "add_assign";
+  case clang::BO_SubAssign:
+    return "sub_assign";
+  case clang::BO_MulAssign:
+    return "mul_assign";
+  case clang::BO_DivAssign:
+    return "div_assign";
+  case clang::BO_RemAssign:
+    return "rem_assign";
+  case clang::BO_EQ:
+    return "eq";
+  case clang::BO_NE:
+    return "ne";
+  case clang::BO_LT:
+    return "lt";
+  case clang::BO_GT:
+    return "gt";
+  case clang::BO_LE:
+    return "le";
+  case clang::BO_GE:
+    return "ge";
+  default:
+    return "unknown";
+  }
+}
+
 // Helper functions to check operator types - fixed for LLVM 17
 bool isArithmeticOp(clang::BinaryOperatorKind op) {
     return op == clang::BO_Add || op == clang::BO_Sub || 
@@ -286,14 +327,14 @@ std::string ModernASTVisitor::generateArraySubscriptInstrumentation(
 
   if (isTemplateDependentType(lhs_type)) {
     // Template-dependent case - use runtime type detection
-    oss << "__maybe_primop_subscript<"
+    oss << "optiweave::__maybe_primop_subscript<"
         << "decltype(" << lhs_text.str() << "), "
-        << "!__has_subscript_overload<decltype(" << lhs_text.str() << ")>::value"
+        << "!optiweave::has_subscript_overload<decltype(" << lhs_text.str() << ")>::value"
         << ">()(" << lhs_text.str() << ", " << rhs_text.str() << ")";
   } else {
     // Non-template case - use compile-time type
     std::string type_str = lhs_type.getAsString(context_.getPrintingPolicy());
-    oss << "__primop_subscript<" << type_str << ">()"
+    oss << "optiweave::__primop_subscript<" << type_str << ">()"
         << "(" << lhs_text.str() << ", " << rhs_text.str() << ")";
   }
 
@@ -306,12 +347,12 @@ std::string ModernASTVisitor::generateBinaryOperatorInstrumentation(
     llvm::StringRef rhs_text) const {
 
   std::ostringstream oss;
-  const char *op_name = getBinaryOperatorSpelling(op);
+  const char *op_template_name = getBinaryOperatorTemplateName(op);
 
   if (isTemplateDependentType(lhs_type) ||
       isTemplateDependentType(rhs_type)) {
     // Template-dependent case
-    oss << "__maybe_primop_" << op_name << "<"
+    oss << "optiweave::__maybe_primop_" << op_template_name << "<"
         << "decltype(" << lhs_text.str() << "), "
         << "decltype(" << rhs_text.str() << ")"
         << ">()(" << lhs_text.str() << ", " << rhs_text.str() << ")";
@@ -321,7 +362,7 @@ std::string ModernASTVisitor::generateBinaryOperatorInstrumentation(
         lhs_type.getAsString(context_.getPrintingPolicy());
     std::string rhs_type_str =
         rhs_type.getAsString(context_.getPrintingPolicy());
-    oss << "__primop_" << op_name << "<" << lhs_type_str << ", "
+    oss << "optiweave::__primop_" << op_template_name << "<" << lhs_type_str << ", "
         << rhs_type_str << ">()"
         << "(" << lhs_text.str() << ", " << rhs_text.str() << ")";
   }
@@ -356,12 +397,24 @@ std::string ModernASTVisitor::getSourceText(clang::SourceRange range) const {
 TransformationConsumer::TransformationConsumer(
     clang::Rewriter &rewriter, clang::ASTContext &context,
     const TransformationConfig &config)
-    : context_(context) {
+    : rewriter_(rewriter), context_(context), config_(config) {
   visitor_ = std::make_unique<ModernASTVisitor>(rewriter, context, config);
 }
 
 void TransformationConsumer::HandleTranslationUnit(clang::ASTContext &
                                                    context) {
+  // INJECT PRELUDE HEADER BEFORE AST TRAVERSAL
+  auto &source_manager = context.getSourceManager();
+  auto main_file_id = source_manager.getMainFileID();
+  auto start_loc = source_manager.getLocForStartOfFile(main_file_id);
+  
+  // Only inject if not already present
+  auto buffer = source_manager.getBufferData(main_file_id);
+  if (buffer.find("#include") == llvm::StringRef::npos || 
+      buffer.find("optiweave/prelude.hpp") == llvm::StringRef::npos) {
+    rewriter_.InsertText(start_loc, "#include <optiweave/prelude.hpp>\n", true);
+  }
+  
   // Set traversal scope to the entire translation unit
   context.setTraversalScope({context.getTranslationUnitDecl()});
 

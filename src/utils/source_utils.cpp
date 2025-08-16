@@ -1,4 +1,4 @@
-#include "../../include/optiweave/utils/source_utils.hpp"
+#include <optiweave/utils/source_utils.hpp>
 #include <clang/Lex/Lexer.h>
 #include <clang/Basic/SourceManager.h>
 #include <llvm/Support/raw_ostream.h>

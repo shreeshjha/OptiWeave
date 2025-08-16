@@ -1,4 +1,4 @@
-#include "../../include/optiweave/matchers/type_matchers.hpp"
+#include <optiweave/matchers/type_matchers.hpp>
 #include <clang/ASTMatchers/ASTMatchers.h>
 #include <clang/AST/ASTContext.h>
 

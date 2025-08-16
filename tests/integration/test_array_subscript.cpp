@@ -16,31 +16,7 @@ using namespace clang;
 using namespace clang::tooling;
 
 class ArraySubscriptTransformationTest : public ::testing::Test {
-protected:
-  void SetUp() override {
-    // Common setup for tests
-  }
-
-  void TearDown() override {
-    // Cleanup
-  }
-
-  /**
-   * @brief Helper to run transformation on source code
-   */
-  bool transformSource(const std::string &source_code,
-                              const TransformationConfig &config = {}) {
-    // Create a unique filename for this test
-    std::string filename =
-        "/tmp/test_" + std::to_string(++test_counter_) + ".cpp";
-
-    // Run transformation
-    auto result = runToolOnCode(std::make_unique<TransformationAction>(config),
-                                source_code, filename);
-
-    return result;
-  }
-
+public:
   /**
    * @brief Custom frontend action for testing
    */
@@ -66,11 +42,8 @@ protected:
         transformed_code_ = std::string(buffer->begin(), buffer->end());
       } else {
         // No changes were made, return original
-        auto file_entry = source_manager.getFileEntryForID(main_file_id);
-        if (file_entry) {
-          auto buffer = source_manager.getBufferData(main_file_id);
-          transformed_code_ = buffer->getBufferData().str();
-        }
+        auto original_buffer = source_manager.getBufferData(main_file_id);
+        transformed_code_ = original_buffer.str();
       }
     }
 
@@ -87,8 +60,40 @@ protected:
     std::string transformed_code_;
   };
 
+protected:
+  void SetUp() override {
+    // Common setup for tests
+  }
+
+  void TearDown() override {
+    // Cleanup
+  }
+
+  /**
+   * @brief Helper to run transformation on source code
+   */
+  std::string transformSource(const std::string &source_code,
+                              const TransformationConfig &config = {}) {
+    // Create a unique filename for this test
+    std::string filename =
+        "/tmp/test_" + std::to_string(++test_counter_) + ".cpp";
+
+    // Create the action and remember it before moving
+    auto action = std::make_unique<TransformationAction>(config);
+    last_action_ = action.get(); // Store raw pointer for later access
+    
+    auto result = runToolOnCode(std::move(action), source_code, filename);
+    
+    if (result && last_action_) {
+      return last_action_->getTransformedCode();
+    } else {
+      return source_code; // Return original if transformation failed
+    }
+  }
+
 private:
   static int test_counter_;
+  TransformationAction* last_action_ = nullptr;
 };
 
 int ArraySubscriptTransformationTest::test_counter_ = 0;
@@ -104,7 +109,7 @@ int main() {
   TransformationConfig config;
   config.transform_array_subscripts = true;
 
-  bool result = transformSource(source, config);
+  std::string result = transformSource(source, config);
 
   // Check that the array access was transformed
   EXPECT_TRUE(result.find("__primop_subscript") != std::string::npos);
@@ -122,7 +127,7 @@ int main() {
   TransformationConfig config;
   config.transform_array_subscripts = true;
 
-  bool result = transformSource(source, config);
+  std::string result = transformSource(source, config);
 
   // Check transformation
   EXPECT_TRUE(result.find("__primop_subscript") != std::string::npos);
@@ -140,7 +145,7 @@ int main() {
   TransformationConfig config;
   config.transform_array_subscripts = true;
 
-  bool result = transformSource(source, config);
+  std::string result = transformSource(source, config);
 
   // Should transform both subscript operations
   size_t primop_count = 0;
@@ -169,7 +174,7 @@ int main() {
   TransformationConfig config;
   config.transform_array_subscripts = true;
 
-  bool result = transformSource(source, config);
+  std::string result = transformSource(source, config);
 
   // Template-dependent array access should use maybe_primop
   EXPECT_TRUE(result.find("__maybe_primop_subscript") != std::string::npos);
@@ -193,7 +198,7 @@ int main() {
   TransformationConfig config;
   config.transform_array_subscripts = true;
 
-  bool result = transformSource(source, config);
+  std::string result = transformSource(source, config);
 
   // Should NOT transform overloaded operator calls (they're already
   // instrumented) This should remain as arr[10] or be handled differently The
@@ -212,7 +217,7 @@ int main() {
   TransformationConfig config;
   config.transform_array_subscripts = true;
 
-  bool result = transformSource(source, config);
+  std::string result = transformSource(source, config);
 
   // Both array accesses should be transformed
   size_t primop_count = 0;
@@ -236,7 +241,7 @@ int main() {
   TransformationConfig config;
   config.transform_array_subscripts = false; // Disabled
 
-  bool result = transformSource(source, config);
+  std::string result = transformSource(source, config);
 
   // Should not be transformed
   EXPECT_TRUE(result.find("__primop_subscript") == std::string::npos);
@@ -257,7 +262,7 @@ int main() {
   config.transform_array_subscripts = true;
   config.skip_system_headers = true;
 
-  bool result = transformSource(source, config);
+  std::string result = transformSource(source, config);
 
   // Should transform local array access but not std::vector
   EXPECT_TRUE(result.find("__primop_subscript") != std::string::npos);
@@ -276,7 +281,7 @@ int main() {
   TransformationConfig config;
   config.transform_array_subscripts = true;
 
-  bool result = transformSource(source, config);
+  std::string result = transformSource(source, config);
 
   // Should only transform the second array access
   size_t primop_count = 0;
@@ -301,7 +306,7 @@ int main() {
   TransformationConfig config;
   config.transform_array_subscripts = true;
 
-  bool result = transformSource(source, config);
+  std::string result = transformSource(source, config);
 
   // Should only transform the second array access
   size_t primop_count = 0;
@@ -331,7 +336,7 @@ int main() {
   TransformationConfig config;
   config.transform_array_subscripts = true;
 
-  bool result = transformSource(source, config);
+  std::string result = transformSource(source, config);
 
   // Should transform the array access in the loop
   EXPECT_TRUE(result.find("__primop_subscript") != std::string::npos);
@@ -350,7 +355,7 @@ int main() {
   TransformationConfig config;
   config.transform_array_subscripts = true;
 
-  bool result = transformSource(source, config);
+  std::string result = transformSource(source, config);
 
   // Should preserve the complex index expression
   EXPECT_TRUE(result.find("__primop_subscript") != std::string::npos);
@@ -369,7 +374,7 @@ int main() {
   TransformationConfig config;
   config.transform_array_subscripts = true;
 
-  bool result = transformSource(source, config);
+  std::string result = transformSource(source, config);
 
   // Should transform arr[1] but not affect the dereference
   EXPECT_TRUE(result.find("__primop_subscript") != std::string::npos);
@@ -391,7 +396,7 @@ int main() {
   TransformationConfig config;
   config.transform_array_subscripts = true;
 
-  bool result = transformSource(source, config);
+  std::string result = transformSource(source, config);
 
   // Should transform getArray()[3]
   EXPECT_TRUE(result.find("__primop_subscript") != std::string::npos);
@@ -411,7 +416,7 @@ int main() {
   TransformationConfig config;
   config.transform_array_subscripts = true;
 
-  bool result = transformSource(source, config);
+  std::string result = transformSource(source, config);
 
   // Macro expansion should be handled correctly
   // The exact behavior depends on whether we see the expanded or unexpanded
@@ -431,7 +436,7 @@ int main() {
   TransformationConfig config;
   config.transform_array_subscripts = true;
 
-  bool result = transformSource(source, config);
+  std::string result = transformSource(source, config);
 
   // Should transform even invalid accesses
   EXPECT_TRUE(result.find("__primop_subscript") != std::string::npos);
@@ -449,7 +454,7 @@ int main() {
   TransformationConfig config;
   config.transform_array_subscripts = true;
 
-  bool result = transformSource(source, config);
+  std::string result = transformSource(source, config);
 
   // Should transform even dangerous accesses
   EXPECT_TRUE(result.find("__primop_subscript") != std::string::npos);
@@ -471,7 +476,7 @@ int main() {
   TransformationConfig config;
   config.transform_array_subscripts = true;
 
-  bool result = transformSource(source, config);
+  std::string result = transformSource(source, config);
 
   // All three array accesses should be transformed
   size_t primop_count = 0;
@@ -495,7 +500,7 @@ int main() {
   TransformationConfig config;
   config.transform_array_subscripts = true;
 
-  bool result = transformSource(source, config);
+  std::string result = transformSource(source, config);
 
   // Should handle const arrays correctly
   EXPECT_TRUE(result.find("__primop_subscript") != std::string::npos);
@@ -513,7 +518,7 @@ int main() {
   TransformationConfig config;
   config.transform_array_subscripts = true;
 
-  bool result = transformSource(source, config);
+  std::string result = transformSource(source, config);
 
   // Should handle volatile arrays correctly
   EXPECT_TRUE(result.find("__primop_subscript") != std::string::npos);
@@ -535,7 +540,7 @@ int main() {
   TransformationConfig config;
   config.transform_array_subscripts = true;
 
-  bool result = transformSource(source, config);
+  std::string result = transformSource(source, config);
 
   // Should transform array access inside lambda
   EXPECT_TRUE(result.find("__primop_subscript") != std::string::npos);
@@ -558,7 +563,7 @@ int main() {
   // We need to access the transformation action to get statistics
   // This would require modifying the transformSource helper
   // For now, just verify the transformation occurred
-  bool result = transformSource(source, config);
+  std::string result = transformSource(source, config);
 
   size_t primop_count = 0;
   size_t pos = 0;

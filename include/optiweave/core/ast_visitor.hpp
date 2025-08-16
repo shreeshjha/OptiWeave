@@ -227,8 +227,10 @@ public:
   const TransformationStats &getStats() const;
 
 private:
+  clang::Rewriter &rewriter_;
   std::unique_ptr<ModernASTVisitor> visitor_;
   clang::ASTContext &context_;
+  TransformationConfig config_;
 };
 
 } // namespace optiweave::core

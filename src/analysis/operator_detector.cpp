@@ -1,4 +1,4 @@
-#include "../../include/optiweave/analysis/operator_detector.hpp"
+#include <optiweave/analysis/operator_detector.hpp>
 #include <clang/AST/RecursiveASTVisitor.h>
 #include <clang/Basic/SourceManager.h>
 #include <llvm/Support/raw_ostream.h>
