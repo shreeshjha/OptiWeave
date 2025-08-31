@@ -376,14 +376,22 @@ bool ModernASTVisitor::isTemplateDependentType(clang::QualType type) const {
 }
 
 std::string ModernASTVisitor::getSourceText(clang::SourceRange range) const {
+  // Prefer the current rewritten text (captures inner transformations),
+  // then fall back to original source via Lexer if unavailable.
+  // Note: Rewriter::getRewrittenText returns the edited text for the range
+  // if any rewrites have been applied, otherwise the original text.
+  std::string rewritten = rewriter_.getRewrittenText(range);
+  if (!rewritten.empty()) {
+    return rewritten;
+  }
+
   auto &source_manager = context_.getSourceManager();
   auto &lang_opts = context_.getLangOpts();
 
-  // Use Clang's Lexer to get the exact source text
   auto char_range = clang::CharSourceRange::getTokenRange(range);
   bool invalid = false;
-  auto text = clang::Lexer::getSourceText(char_range, source_manager,
-                                          lang_opts, &invalid);
+  auto text =
+      clang::Lexer::getSourceText(char_range, source_manager, lang_opts, &invalid);
 
   if (invalid) {
     llvm::errs() << "Warning: Could not get source text for range\n";
