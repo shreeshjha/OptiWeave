@@ -27,6 +27,7 @@ function(add_optiweave_test test_name)
     target_link_libraries(${test_name} 
         PRIVATE 
         optiweave_core
+        optiweave_runtime
         GTest::gtest_main
     )
     target_include_directories(${test_name} PRIVATE
@@ -50,6 +51,7 @@ set(UNIT_TESTS
     unit/test_rewriter.cpp
     unit/test_operator_detection.cpp
     unit/test_template_handling.cpp
+    unit/test_prelude_templates.cpp
 )
 
 set(INTEGRATION_TESTS

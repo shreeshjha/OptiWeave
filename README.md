@@ -28,18 +28,60 @@
 
 ## 🚀 Quick Start
 
-**Transform and run in 30 seconds:**
+### Building OptiWeave
 
 ```bash
-# 1. Create a test file
-echo 'int main() { int arr[10]; return arr[5]; }' > test.cpp
+# Clone the repository
+git clone https://github.com/yourusername/optiweave.git
+cd optiweave
 
-# 2. Transform and compile automatically
-./build/optiweave test.cpp --compile -o instrumented
+# Build everything (tool + runtime library)
+mkdir build && cd build
+cmake .. -DCMAKE_BUILD_TYPE=Release
+make -j$(nproc)
+cd ..
+```
 
-# 3. Run with automatic instrumentation
-./instrumented
-# Output: [2025-01-15 12:34:56.789] OptiWeave: pointer_subscript at 0x7fff[5]
+### Running on Examples
+
+**Option 1: Transform and Compile in One Step**
+```bash
+# Run on the provided example
+./build/optiweave examples/basic_transformation/example.cpp --compile -o example
+
+# Execute the instrumented program
+./example
+```
+
+**Option 2: Step-by-Step Workflow**
+```bash
+# Step 1: Transform the code
+./build/optiweave examples/basic_transformation/example.cpp --
+
+# Step 2: Compile manually
+clang++ -std=c++20 -I./templates -L./build -loptiweave_runtime \
+    examples/basic_transformation/example.cpp -o example
+
+# Step 3: Run it
+./example
+```
+
+**Option 3: Try Your Own Code**
+```bash
+# Create a simple test file
+echo '#include <iostream>
+int main() {
+    int arr[10];
+    arr[5] = 42;
+    std::cout << arr[5] << std::endl;
+    return 0;
+}' > test.cpp
+
+# Transform and compile
+./build/optiweave test.cpp --compile -o test
+
+# Run it
+./test
 ```
 
 **That's it!** OptiWeave handles transformation, header injection, library linking, and compilation automatically.

@@ -25,6 +25,9 @@ struct TransformationConfig {
   bool transform_arithmetic_operators = false;
   bool transform_assignment_operators = false;
   bool transform_comparisons_operators = false; // Fixed typo
+  // Generate wrappers that ensure single-evaluation of operands
+  // and preserve value categories (via lambda + auto&& temporaries)
+  bool evaluation_safe_wrappers = true;
   bool preserve_templates = true;
   bool skip_system_headers = true;
   std::string prelude_path;

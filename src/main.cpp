@@ -82,6 +82,11 @@ static cl::opt<bool> GenerateCompileCommands(
     cl::desc("Generate compile_commands.json for proper header resolution"),
     cl::init(false), cl::cat(OptiWeaveCategory));
 
+static cl::opt<bool> EvaluationSafe(
+    "evaluation-safe",
+    cl::desc("Use wrappers to ensure single-evaluation of operands (default: ON)"),
+    cl::init(true), cl::cat(OptiWeaveCategory));
+
 namespace optiweave {
 
 /**
@@ -605,6 +610,7 @@ int main(int argc, const char **argv) {
   config.transform_arithmetic_operators = TransformArithmetic;
   config.transform_assignment_operators = TransformAssignment;
   config.transform_comparisons_operators = TransformComparison;
+  config.evaluation_safe_wrappers = EvaluationSafe;
   config.skip_system_headers = SkipSystemHeaders;
   config.prelude_path = prelude_path;
 
@@ -658,6 +664,28 @@ int main(int argc, const char **argv) {
 
   // Add C++20 standard if not specified
   Tool.appendArgumentsAdjuster(getInsertArgumentAdjuster("-std=c++20", clang::tooling::ArgumentInsertPosition::BEGIN));
+
+  // Add Clang resource directory for compiler intrinsics (stdarg.h, etc.)
+  std::string resource_dir;
+  FILE* clang_resource_cmd = popen("clang++ -print-resource-dir 2>/dev/null", "r");
+  if (clang_resource_cmd) {
+    char path_buffer[512];
+    if (fgets(path_buffer, sizeof(path_buffer), clang_resource_cmd)) {
+      resource_dir = std::string(path_buffer);
+      if (!resource_dir.empty() && resource_dir.back() == '\n') {
+        resource_dir.pop_back();
+      }
+    }
+    pclose(clang_resource_cmd);
+  }
+
+  if (!resource_dir.empty() && llvm::sys::fs::exists(resource_dir)) {
+    std::string resource_arg = "-resource-dir=" + resource_dir;
+    Tool.appendArgumentsAdjuster(getInsertArgumentAdjuster(resource_arg.c_str(), clang::tooling::ArgumentInsertPosition::BEGIN));
+    if (Verbose) {
+      llvm::errs() << "Using Clang resource directory: " << resource_dir << "\n";
+    }
+  }
 
   // Create factory and run tool
   optiweave::OptiWeaveFrontendActionFactory factory(config);

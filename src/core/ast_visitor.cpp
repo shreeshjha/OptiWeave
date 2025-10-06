@@ -202,6 +202,21 @@ bool ModernASTVisitor::shouldSkipExpression(const clang::Expr *expr) const {
     return true;
   }
 
+  // Skip if in OptiWeave prelude/templates (to avoid transforming our own instrumentation code)
+  auto &source_manager = context_.getSourceManager();
+  auto location = expr->getBeginLoc();
+  if (location.isValid()) {
+    auto file_entry = source_manager.getFileEntryForID(source_manager.getFileID(location));
+    if (file_entry) {
+      llvm::StringRef filename = file_entry->getName();
+      // Skip if the file is in templates/ directory or is named prelude.hpp
+      if (filename.contains("/templates/") || filename.endswith("prelude.hpp") ||
+          filename.endswith("optiweave/prelude.hpp") || filename.contains("/optiweave/")) {
+        return true;
+      }
+    }
+  }
+
   // Check for problematic contexts (sizeof, alignof, etc.)
   auto parents = context_.getParents(*expr);
   for (const auto &parent_node : parents) {
@@ -323,22 +338,51 @@ std::string ModernASTVisitor::generateArraySubscriptInstrumentation(
     clang::QualType lhs_type, llvm::StringRef lhs_text,
     llvm::StringRef rhs_text) const {
 
-  std::ostringstream oss;
+  // Compact helper when evaluation-safe wrappers are enabled
+  if (config_.evaluation_safe_wrappers) {
+    std::ostringstream helper;
+    helper << "optiweave::ow_subscript(" << lhs_text.str() << ", "
+           << rhs_text.str() << ")";
+    return helper.str();
+  }
+
+  std::ostringstream call;
 
   if (isTemplateDependentType(lhs_type)) {
-    // Template-dependent case - use runtime type detection
-    oss << "optiweave::__maybe_primop_subscript<"
-        << "decltype(" << lhs_text.str() << "), "
-        << "!optiweave::has_subscript_overload<decltype(" << lhs_text.str() << ")>::value"
-        << ">()(" << lhs_text.str() << ", " << rhs_text.str() << ")";
+    // Template-dependent case
+    call << "optiweave::__maybe_primop_subscript<"
+         << "decltype(__ow_lhs), "
+         << "!optiweave::has_subscript_overload<decltype(__ow_lhs)>::value"
+         << ">()(__ow_lhs, __ow_rhs)";
   } else {
     // Non-template case - use compile-time type
     std::string type_str = lhs_type.getAsString(context_.getPrintingPolicy());
-    oss << "optiweave::__primop_subscript<" << type_str << ">()"
-        << "(" << lhs_text.str() << ", " << rhs_text.str() << ")";
+    call << "optiweave::__primop_subscript<" << type_str << ">()"
+         << "(__ow_lhs, __ow_rhs)";
   }
 
-  return oss.str();
+  if (config_.evaluation_safe_wrappers) {
+    std::ostringstream wrapped;
+    wrapped << "([&]() -> decltype(auto) { "
+            << "auto&& __ow_lhs = (" << lhs_text.str() << "); "
+            << "auto&& __ow_rhs = (" << rhs_text.str() << "); "
+            << "return " << call.str() << "; })()";
+    return wrapped.str();
+  }
+
+  // Fallback: direct call without wrappers
+  std::ostringstream direct;
+  if (isTemplateDependentType(lhs_type)) {
+    direct << "optiweave::__maybe_primop_subscript<"
+           << "decltype(" << lhs_text.str() << "), "
+           << "!optiweave::has_subscript_overload<decltype(" << lhs_text.str() << ")>::value"
+           << ">()(" << lhs_text.str() << ", " << rhs_text.str() << ")";
+  } else {
+    std::string type_str = lhs_type.getAsString(context_.getPrintingPolicy());
+    direct << "optiweave::__primop_subscript<" << type_str << ">()"
+           << "(" << lhs_text.str() << ", " << rhs_text.str() << ")";
+  }
+  return direct.str();
 }
 
 std::string ModernASTVisitor::generateBinaryOperatorInstrumentation(
@@ -346,28 +390,142 @@ std::string ModernASTVisitor::generateBinaryOperatorInstrumentation(
     clang::QualType rhs_type, llvm::StringRef lhs_text,
     llvm::StringRef rhs_text) const {
 
-  std::ostringstream oss;
-  const char *op_template_name = getBinaryOperatorTemplateName(op);
-
-  if (isTemplateDependentType(lhs_type) ||
-      isTemplateDependentType(rhs_type)) {
-    // Template-dependent case
-    oss << "optiweave::__maybe_primop_" << op_template_name << "<"
-        << "decltype(" << lhs_text.str() << "), "
-        << "decltype(" << rhs_text.str() << ")"
-        << ">()(" << lhs_text.str() << ", " << rhs_text.str() << ")";
-  } else {
-    // Non-template case
-    std::string lhs_type_str =
-        lhs_type.getAsString(context_.getPrintingPolicy());
-    std::string rhs_type_str =
-        rhs_type.getAsString(context_.getPrintingPolicy());
-    oss << "optiweave::__primop_" << op_template_name << "<" << lhs_type_str << ", "
-        << rhs_type_str << ">()"
-        << "(" << lhs_text.str() << ", " << rhs_text.str() << ")";
+  // Compact helpers for arithmetic operators when evaluation-safe wrappers are enabled
+  if (config_.evaluation_safe_wrappers && isArithmeticOp(op)) {
+    const char *fname = nullptr;
+    switch (op) {
+    case clang::BO_Add:
+      fname = "ow_add";
+      break;
+    case clang::BO_Sub:
+      fname = "ow_sub";
+      break;
+    case clang::BO_Mul:
+      fname = "ow_mul";
+      break;
+    case clang::BO_Div:
+      fname = "ow_div";
+      break;
+    case clang::BO_Rem:
+      fname = "ow_rem";
+      break;
+    default:
+      break;
+    }
+    if (fname) {
+      std::ostringstream helper;
+      helper << "optiweave::" << fname << "(" << lhs_text.str() << ", "
+             << rhs_text.str() << ")";
+      return helper.str();
+    }
   }
 
-  return oss.str();
+  // Compact helpers for assignment operators
+  if (config_.evaluation_safe_wrappers && config_.transform_assignment_operators &&
+      isAssignmentOp(op)) {
+    const char *fname = nullptr;
+    switch (op) {
+    case clang::BO_Assign:
+      fname = "ow_assign";
+      break;
+    case clang::BO_AddAssign:
+      fname = "ow_add_assign";
+      break;
+    case clang::BO_SubAssign:
+      fname = "ow_sub_assign";
+      break;
+    case clang::BO_MulAssign:
+      fname = "ow_mul_assign";
+      break;
+    case clang::BO_DivAssign:
+      fname = "ow_div_assign";
+      break;
+    case clang::BO_RemAssign:
+      fname = "ow_rem_assign";
+      break;
+    default:
+      break;
+    }
+    if (fname) {
+      std::ostringstream helper;
+      helper << "optiweave::" << fname << "(" << lhs_text.str() << ", "
+             << rhs_text.str() << ")";
+      return helper.str();
+    }
+  }
+
+  // Compact helpers for comparison operators
+  if (config_.evaluation_safe_wrappers && config_.transform_comparisons_operators &&
+      isComparisonOp(op)) {
+    const char *fname = nullptr;
+    switch (op) {
+    case clang::BO_EQ:
+      fname = "ow_eq";
+      break;
+    case clang::BO_NE:
+      fname = "ow_ne";
+      break;
+    case clang::BO_LT:
+      fname = "ow_lt";
+      break;
+    case clang::BO_GT:
+      fname = "ow_gt";
+      break;
+    case clang::BO_LE:
+      fname = "ow_le";
+      break;
+    case clang::BO_GE:
+      fname = "ow_ge";
+      break;
+    default:
+      break;
+    }
+    if (fname) {
+      std::ostringstream helper;
+      helper << "optiweave::" << fname << "(" << lhs_text.str() << ", "
+             << rhs_text.str() << ")";
+      return helper.str();
+    }
+  }
+
+  std::ostringstream call;
+  const char *op_template_name = getBinaryOperatorTemplateName(op);
+
+  if (isTemplateDependentType(lhs_type) || isTemplateDependentType(rhs_type)) {
+    // Template-dependent case
+    call << "optiweave::__maybe_primop_" << op_template_name << "<"
+         << "decltype(__ow_lhs), decltype(__ow_rhs)>()(__ow_lhs, __ow_rhs)";
+  } else {
+    // Non-template case
+    std::string lhs_type_str = lhs_type.getAsString(context_.getPrintingPolicy());
+    std::string rhs_type_str = rhs_type.getAsString(context_.getPrintingPolicy());
+    call << "optiweave::__primop_" << op_template_name << "<" << lhs_type_str
+         << ", " << rhs_type_str << ">()(__ow_lhs, __ow_rhs)";
+  }
+
+  if (config_.evaluation_safe_wrappers) {
+    std::ostringstream wrapped;
+    wrapped << "([&]() -> decltype(auto) { "
+            << "auto&& __ow_lhs = (" << lhs_text.str() << "); "
+            << "auto&& __ow_rhs = (" << rhs_text.str() << "); "
+            << "return " << call.str() << "; })()";
+    return wrapped.str();
+  }
+
+  // Fallback: direct call without wrappers
+  std::ostringstream direct;
+  if (isTemplateDependentType(lhs_type) || isTemplateDependentType(rhs_type)) {
+    direct << "optiweave::__maybe_primop_" << op_template_name << "<"
+           << "decltype(" << lhs_text.str() << "), decltype(" << rhs_text.str()
+           << ")>()(" << lhs_text.str() << ", " << rhs_text.str() << ")";
+  } else {
+    std::string lhs_type_str = lhs_type.getAsString(context_.getPrintingPolicy());
+    std::string rhs_type_str = rhs_type.getAsString(context_.getPrintingPolicy());
+    direct << "optiweave::__primop_" << op_template_name << "<" << lhs_type_str
+           << ", " << rhs_type_str << ">()(" << lhs_text.str() << ", "
+           << rhs_text.str() << ")";
+  }
+  return direct.str();
 }
 
 bool ModernASTVisitor::isTemplateDependentType(clang::QualType type) const {

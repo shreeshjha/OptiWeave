@@ -1,3 +1,4 @@
+#include <optiweave/prelude.hpp>
 #include <array>
 #include <iostream>
 #include <vector>
@@ -7,9 +8,9 @@ int basic_array_example() {
   int arr[10] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
 
   // These will be transformed to __primop_subscript calls
-  int first = arr[0];
-  int middle = arr[5];
-  int last = arr[9];
+  int first = optiweave::ow_subscript(arr, 0);
+  int middle = optiweave::ow_subscript(arr, 5);
+  int last = optiweave::ow_subscript(arr, 9);
 
   return first + middle + last;
 }
@@ -20,7 +21,7 @@ int pointer_example() {
   int *ptr = data;
 
   // This will also be transformed
-  return ptr[2];
+  return optiweave::ow_subscript(ptr, 2);
 }
 
 // Multi-dimensional array example
@@ -28,7 +29,7 @@ int multidimensional_example() {
   int matrix[3][4] = {{1, 2, 3, 4}, {5, 6, 7, 8}, {9, 10, 11, 12}};
 
   // Both subscript operations will be transformed
-  return matrix[1][2];
+  return optiweave::ow_subscript(optiweave::ow_subscript(matrix, 1), 2);
 }
 
 // Dynamic array example
@@ -43,7 +44,7 @@ int dynamic_array_example() {
 // Template function example
 template <typename T> T template_array_access(T *arr, int index) {
   // This will use __maybe_primop_subscript for template-dependent types
-  return arr[index];
+  return optiweave::ow_subscript(arr, index);
 }
 
 // Class with overloaded operator[]
@@ -54,17 +55,17 @@ private:
 public:
   MyArray() {
     for (int i = 0; i < 10; ++i) {
-      data[i] = i * i;
+      optiweave::ow_subscript(data, i) = i * i;
     }
   }
 
   int &operator[](int index) {
     // Built-in array access inside class
-    return data[index]; // This will be transformed
+    return optiweave::ow_subscript(data, index); // This will be transformed
   }
 
   const int &operator[](int index) const {
-    return data[index]; // This will also be transformed
+    return optiweave::ow_subscript(data, index); // This will also be transformed
   }
 };
 
@@ -83,25 +84,25 @@ int nested_access_example() {
   int data2[] = {4, 5, 6};
   int data3[] = {7, 8, 9};
 
-  ptrs[0] = data1;
-  ptrs[1] = data2;
-  ptrs[2] = data3;
+  optiweave::ow_subscript(ptrs, 0) = data1;
+  optiweave::ow_subscript(ptrs, 1) = data2;
+  optiweave::ow_subscript(ptrs, 2) = data3;
 
   // Multiple levels of array access
-  return ptrs[1][2]; // Both will be transformed
+  return optiweave::ow_subscript(optiweave::ow_subscript(ptrs, 1), 2); // Both will be transformed
 }
 
 // Complex expression as index
 int complex_index_example() {
   int arr[20];
   for (int i = 0; i < 20; ++i) {
-    arr[i] = i;
+    optiweave::ow_subscript(arr, i) = i;
   }
 
   int x = 3, y = 4;
 
   // Complex index expression will be preserved
-  return arr[x * y + 2];
+  return optiweave::ow_subscript(arr, x * y + 2);
 }
 
 // Array access in different contexts
@@ -109,13 +110,13 @@ int context_examples() {
   int arr[10] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
 
   // Normal access - will be transformed
-  int normal = arr[3];
+  int normal = optiweave::ow_subscript(arr, 3);
 
   // Address-of context - should NOT be transformed
   int *ptr = &arr[5];
 
   // In sizeof context - should NOT be transformed
-  size_t element_size = sizeof(arr[0]);
+  size_t element_size = sizeof(optiweave::ow_subscript(arr, 0));
 
   return normal + *ptr + static_cast<int>(element_size);
 }
