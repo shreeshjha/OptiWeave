@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OptiWeave Dashboard - Performance Analysis & Optimization</title>
+
+    <!-- D3.js for visualizations -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+        /* Custom styles */
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .glass {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .metric-card {
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .flame-bar {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .flame-bar:hover {
+            filter: brightness(1.1);
+            transform: scaleX(1.01);
+        }
+
+        .suggestion-card {
+            transition: all 0.2s;
+            border-left: 4px solid transparent;
+        }
+
+        .suggestion-card:hover {
+            border-left-color: #667eea;
+            transform: translateX(4px);
+        }
+
+        .tab-button {
+            transition: all 0.2s;
+        }
+
+        .tab-button.active {
+            background: #667eea;
+            color: white;
+        }
+
+        /* Code syntax highlighting */
+        .code-block {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            font-family: 'Fira Code', 'Consolas', monospace;
+            border-radius: 8px;
+            padding: 1rem;
+            overflow-x: auto;
+        }
+
+        .keyword { color: #569cd6; }
+        .function { color: #dcdcaa; }
+        .comment { color: #6a9955; }
+        .string { color: #ce9178; }
+        .number { color: #b5cea8; }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <!-- Main Container -->
+    <div class="max-w-7xl mx-auto">
+
+        <!-- Header -->
+        <div class="glass rounded-2xl p-6 mb-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-4xl font-bold text-gray-800 mb-2">
+                        ⚡ OptiWeave Dashboard
+                    </h1>
+                    <p class="text-gray-600">
+                        Performance Analysis & Optimization Intelligence
+                    </p>
+                </div>
+                <div class="flex gap-3">
+                    <button class="px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-800 transition">
+                        📊 Export Report
+                    </button>
+                    <button class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                        🔄 Reload Data
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Metrics Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <!-- Total Operations -->
+            <div class="glass rounded-xl p-6 metric-card">
+                <div class="text-sm text-gray-600 mb-1">Total Operations</div>
+                <div class="text-3xl font-bold text-gray-800">15.2M</div>
+                <div class="text-xs text-green-600 mt-2">↑ 8.2M ops/sec</div>
+            </div>
+
+            <!-- Runtime -->
+            <div class="glass rounded-xl p-6 metric-card">
+                <div class="text-sm text-gray-600 mb-1">Total Runtime</div>
+                <div class="text-3xl font-bold text-gray-800">2.34s</div>
+                <div class="text-xs text-blue-600 mt-2">⏱️ 5.2% overhead</div>
+            </div>
+
+            <!-- Optimizations Found -->
+            <div class="glass rounded-xl p-6 metric-card">
+                <div class="text-sm text-gray-600 mb-1">Issues Found</div>
+                <div class="text-3xl font-bold text-orange-600">12</div>
+                <div class="text-xs text-orange-600 mt-2">🔥 3 high impact</div>
+            </div>
+
+            <!-- Potential Speedup -->
+            <div class="glass rounded-xl p-6 metric-card">
+                <div class="text-sm text-gray-600 mb-1">Potential Speedup</div>
+                <div class="text-3xl font-bold text-purple-600">20-150x</div>
+                <div class="text-xs text-purple-600 mt-2">✨ Combined estimate</div>
+            </div>
+        </div>
+
+        <!-- Main Content Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+
+            <!-- Left Column - Hotspots (2 cols) -->
+            <div class="lg:col-span-2 glass rounded-xl p-6">
+                <h2 class="text-2xl font-bold text-gray-800 mb-4">
+                    🔥 Performance Hotspots
+                </h2>
+                <div id="hotspots-chart"></div>
+            </div>
+
+            <!-- Right Column - Operation Breakdown -->
+            <div class="glass rounded-xl p-6">
+                <h2 class="text-2xl font-bold text-gray-800 mb-4">
+                    📊 Operations
+                </h2>
+                <div id="operations-pie"></div>
+            </div>
+
+        </div>
+
+        <!-- Optimization Suggestions -->
+        <div class="glass rounded-xl p-6 mb-6">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">
+                💡 Optimization Suggestions (12 opportunities)
+            </h2>
+
+            <!-- Filters -->
+            <div class="flex gap-2 mb-4">
+                <button class="tab-button active px-4 py-2 rounded-lg text-sm font-medium">
+                    All (12)
+                </button>
+                <button class="tab-button px-4 py-2 rounded-lg text-sm font-medium bg-gray-100">
+                    High Impact (3)
+                </button>
+                <button class="tab-button px-4 py-2 rounded-lg text-sm font-medium bg-gray-100">
+                    Medium Impact (7)
+                </button>
+                <button class="tab-button px-4 py-2 rounded-lg text-sm font-medium bg-gray-100">
+                    Low Impact (2)
+                </button>
+            </div>
+
+            <div id="suggestions-list" class="space-y-3"></div>
+        </div>
+
+        <!-- Timeline View -->
+        <div class="glass rounded-xl p-6 mb-6">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">
+                ⏱️ Execution Timeline
+            </h2>
+            <div id="timeline-chart" class="h-48"></div>
+        </div>
+
+        <!-- Footer -->
+        <div class="text-center text-white text-sm opacity-75">
+            OptiWeave v1.0 - Made with ❤️ by the OptiWeave Team
+        </div>
+
+    </div>
+
+    <script>
+        // ============================================================================
+        // Mock Data
+        // ============================================================================
+
+        const mockData = {
+            metrics: {
+                totalOps: 15234567,
+                runtime: 2.345,
+                opsPerSec: 8234567,
+                overhead: 5.2,
+                suggestionsCount: 12,
+                speedupMin: 20,
+                speedupMax: 150
+            },
+
+            hotspots: [
+                { name: "matrix_multiply", file: "matrix.cpp:45", time: 845, percent: 36.0, ops: 5234567 },
+                { name: "data_transform", file: "process.cpp:78", time: 532, percent: 22.7, ops: 2345678 },
+                { name: "compute_sum", file: "utils.cpp:23", time: 295, percent: 12.6, ops: 3456789 },
+                { name: "apply_filter", file: "filter.cpp:89", time: 209, percent: 8.9, ops: 1234567 },
+                { name: "process_batch", file: "batch.cpp:156", time: 186, percent: 7.9, ops: 987654 },
+                { name: "validate_data", file: "validate.cpp:34", time: 156, percent: 6.7, ops: 765432 },
+                { name: "transform_input", file: "input.cpp:67", time: 123, percent: 5.2, ops: 654321 }
+            ],
+
+            operations: [
+                { type: "Array Access", count: 5234567, percent: 34.3, color: "#3b82f6" },
+                { type: "Multiplication", count: 3456789, percent: 22.7, color: "#8b5cf6" },
+                { type: "Addition", count: 4123456, percent: 27.1, color: "#10b981" },
+                { type: "Division", count: 234567, percent: 1.5, color: "#ef4444" },
+                { type: "Comparison", count: 1234567, percent: 8.1, color: "#f59e0b" },
+                { type: "Assignment", count: 950621, percent: 6.2, color: "#ec4899" }
+            ],
+
+            suggestions: [
+                {
+                    severity: "high",
+                    title: "Naive Matrix Multiplication - Use BLAS",
+                    location: "matrix.cpp:45 (matrix_multiply)",
+                    speedup: "20-50x",
+                    timePercent: 36.0,
+                    description: "O(n³) nested loops with poor cache locality",
+                    currentCode: `for (int i = 0; i < n; i++) {
+    for (int j = 0; j < n; j++) {
+        for (int k = 0; k < n; k++) {
+            C[i][j] += A[i][k] * B[k][j];
+        }
+    }
+}`,
+                    optimizedCode: `#include <cblas.h>
+cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
+            n, n, n, 1.0, A, n, B, n, 0.0, C, n);`
+                },
+                {
+                    severity: "medium",
+                    title: "Division in Hot Loop",
+                    location: "process.cpp:78 (data_transform)",
+                    speedup: "3-8x",
+                    timePercent: 22.7,
+                    description: "Loop contains division by constant value",
+                    currentCode: `for (int i = 0; i < n; i++) {
+    result[i] = data[i] / constant;
+}`,
+                    optimizedCode: `double inv_constant = 1.0 / constant;
+for (int i = 0; i < n; i++) {
+    result[i] = data[i] * inv_constant;
+}`
+                },
+                {
+                    severity: "medium",
+                    title: "SIMD Vectorization Opportunity",
+                    location: "utils.cpp:23 (compute_sum)",
+                    speedup: "2-4x",
+                    timePercent: 12.6,
+                    description: "Loop is vectorizable but not using SIMD",
+                    currentCode: `for (int i = 0; i < n; i++) {
+    sum += array[i];
+}`,
+                    optimizedCode: `#pragma omp simd reduction(+:sum)
+for (int i = 0; i < n; i++) {
+    sum += array[i];
+}`
+                }
+            ]
+        };
+
+        // ============================================================================
+        // Hotspots Visualization
+        // ============================================================================
+
+        function renderHotspots() {
+            const container = d3.select("#hotspots-chart");
+            const maxTime = d3.max(mockData.hotspots, d => d.time);
+
+            const bars = container.selectAll(".hotspot-bar")
+                .data(mockData.hotspots)
+                .enter()
+                .append("div")
+                .attr("class", "mb-3");
+
+            bars.append("div")
+                .attr("class", "flex justify-between text-sm mb-1")
+                .html(d => `
+                    <span class="font-medium text-gray-700">${d.name}</span>
+                    <span class="text-gray-600">${d.time}ms (${d.percent}%)</span>
+                `);
+
+            bars.append("div")
+                .attr("class", "text-xs text-gray-500 mb-2")
+                .text(d => `${d.file} • ${d.ops.toLocaleString()} operations`);
+
+            bars.append("div")
+                .attr("class", "h-8 bg-gray-200 rounded-lg overflow-hidden")
+                .append("div")
+                .attr("class", "flame-bar h-full flex items-center px-3 text-white text-sm font-medium")
+                .style("width", d => `${(d.time / maxTime) * 100}%`)
+                .style("background", (d, i) => {
+                    const colors = ['#ef4444', '#f97316', '#f59e0b', '#eab308', '#84cc16', '#22c55e', '#10b981'];
+                    return colors[i % colors.length];
+                })
+                .text(d => `${d.percent}%`);
+        }
+
+        // ============================================================================
+        // Operations Pie Chart
+        // ============================================================================
+
+        function renderOperationsPie() {
+            const width = 300;
+            const height = 300;
+            const radius = Math.min(width, height) / 2;
+
+            const svg = d3.select("#operations-pie")
+                .append("svg")
+                .attr("width", width)
+                .attr("height", height)
+                .append("g")
+                .attr("transform", `translate(${width / 2}, ${height / 2})`);
+
+            const pie = d3.pie()
+                .value(d => d.count)
+                .sort(null);
+
+            const arc = d3.arc()
+                .innerRadius(radius * 0.5)
+                .outerRadius(radius * 0.8);
+
+            const arcs = svg.selectAll("arc")
+                .data(pie(mockData.operations))
+                .enter()
+                .append("g");
+
+            arcs.append("path")
+                .attr("d", arc)
+                .attr("fill", d => d.data.color)
+                .attr("stroke", "white")
+                .attr("stroke-width", 2)
+                .style("opacity", 0.9)
+                .on("mouseover", function() {
+                    d3.select(this).style("opacity", 1);
+                })
+                .on("mouseout", function() {
+                    d3.select(this).style("opacity", 0.9);
+                });
+
+            // Legend
+            const legend = d3.select("#operations-pie")
+                .append("div")
+                .attr("class", "mt-4 space-y-2");
+
+            mockData.operations.forEach(op => {
+                legend.append("div")
+                    .attr("class", "flex items-center justify-between text-sm")
+                    .html(`
+                        <div class="flex items-center gap-2">
+                            <div class="w-3 h-3 rounded" style="background: ${op.color}"></div>
+                            <span class="text-gray-700">${op.type}</span>
+                        </div>
+                        <span class="text-gray-600 font-medium">${op.percent}%</span>
+                    `);
+            });
+        }
+
+        // ============================================================================
+        // Optimization Suggestions
+        // ============================================================================
+
+        function renderSuggestions() {
+            const container = d3.select("#suggestions-list");
+
+            mockData.suggestions.forEach((suggestion, index) => {
+                const card = container.append("div")
+                    .attr("class", "suggestion-card bg-white rounded-lg p-5 cursor-pointer");
+
+                const severityColors = {
+                    high: { bg: "bg-red-100", text: "text-red-700", border: "border-red-200" },
+                    medium: { bg: "bg-orange-100", text: "text-orange-700", border: "border-orange-200" },
+                    low: { bg: "bg-blue-100", text: "text-blue-700", border: "border-blue-200" }
+                };
+
+                const colors = severityColors[suggestion.severity];
+
+                card.html(`
+                    <div class="flex items-start justify-between mb-3">
+                        <div class="flex-1">
+                            <div class="flex items-center gap-3 mb-2">
+                                <span class="px-3 py-1 ${colors.bg} ${colors.text} text-xs font-bold rounded-full uppercase">
+                                    ${suggestion.severity} Impact
+                                </span>
+                                <span class="text-sm font-bold text-purple-600">${suggestion.speedup} speedup</span>
+                            </div>
+                            <h3 class="text-lg font-bold text-gray-800 mb-1">${suggestion.title}</h3>
+                            <p class="text-sm text-gray-600">${suggestion.location}</p>
+                        </div>
+                        <button class="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition"
+                                onclick="showSuggestionDetail(${index})">
+                            View Details
+                        </button>
+                    </div>
+                    <div class="text-sm text-gray-700">
+                        ${suggestion.description} • ${suggestion.timePercent}% of total execution time
+                    </div>
+                `);
+            });
+        }
+
+        function showSuggestionDetail(index) {
+            const suggestion = mockData.suggestions[index];
+            alert(`Suggestion Details:\n\n${suggestion.title}\n\nCurrent Code:\n${suggestion.currentCode}\n\nOptimized Code:\n${suggestion.optimizedCode}`);
+            // In a real implementation, this would open a modal with syntax highlighting
+        }
+
+        // ============================================================================
+        // Timeline Chart
+        // ============================================================================
+
+        function renderTimeline() {
+            const container = d3.select("#timeline-chart");
+            const width = container.node().getBoundingClientRect().width;
+            const height = 192;
+
+            const svg = container.append("svg")
+                .attr("width", width)
+                .attr("height", height);
+
+            // Simple timeline visualization (placeholder for now)
+            const timeBlocks = [
+                { start: 0, duration: 845, label: "matrix_multiply", color: "#ef4444" },
+                { start: 845, duration: 532, label: "data_transform", color: "#f97316" },
+                { start: 1377, duration: 295, label: "compute_sum", color: "#f59e0b" },
+                { start: 1672, duration: 209, label: "apply_filter", color: "#eab308" },
+                { start: 1881, duration: 464, label: "other", color: "#94a3b8" }
+            ];
+
+            const xScale = d3.scaleLinear()
+                .domain([0, 2345])
+                .range([0, width]);
+
+            svg.selectAll("rect")
+                .data(timeBlocks)
+                .enter()
+                .append("rect")
+                .attr("x", d => xScale(d.start))
+                .attr("y", 40)
+                .attr("width", d => xScale(d.duration))
+                .attr("height", 80)
+                .attr("fill", d => d.color)
+                .attr("rx", 4)
+                .style("opacity", 0.8);
+
+            svg.selectAll("text")
+                .data(timeBlocks)
+                .enter()
+                .append("text")
+                .attr("x", d => xScale(d.start) + xScale(d.duration) / 2)
+                .attr("y", 80)
+                .attr("text-anchor", "middle")
+                .attr("fill", "white")
+                .attr("font-size", "12px")
+                .attr("font-weight", "bold")
+                .text(d => d.duration > 100 ? d.label : "");
+        }
+
+        // ============================================================================
+        // Initialize Dashboard
+        // ============================================================================
+
+        document.addEventListener("DOMContentLoaded", function() {
+            renderHotspots();
+            renderOperationsPie();
+            renderSuggestions();
+            renderTimeline();
+
+            console.log("OptiWeave Dashboard initialized with mock data");
+        });
+
+        // Tab button interactivity
+        document.querySelectorAll('.tab-button').forEach(button => {
+            button.addEventListener('click', function() {
+                document.querySelectorAll('.tab-button').forEach(b => {
+                    b.classList.remove('active');
+                    b.classList.add('bg-gray-100');
+                });
+                this.classList.add('active');
+                this.classList.remove('bg-gray-100');
+            });
+        });
+    </script>
+
+</body>
+</html>

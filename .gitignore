@@ -263,3 +263,20 @@ vgcore.*
 prelude_temp_*
 *.optiweave.backup
 transformation_cache/
+
+# Documentation files (keep only README.md in root, CHANGELOG.md, CONTRIBUTING.md, and LICENSE)
+*.md
+!README.md
+!CHANGELOG.md
+!CONTRIBUTING.md
+!LICENSE.md
+
+# Keep markdown files in specific directories
+!docs/*.md
+!examples/*.md
+!web/*.md
+
+# OptiWeave runtime artifacts
+.optiweave_loop_info.bin
+*.optiweave_*
+*_optiweave.*

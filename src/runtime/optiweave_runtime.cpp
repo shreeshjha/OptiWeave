@@ -5,6 +5,22 @@
 #include <chrono>
 #include <iomanip>
 
+#ifdef OPTIWEAVE_ENABLE_STATS
+#include <optiweave/runtime/statistics.hpp>
+#endif
+
+#ifdef OPTIWEAVE_ENABLE_TIMING
+#include <optiweave/runtime/timing.hpp>
+#endif
+
+#ifdef OPTIWEAVE_ENABLE_HOTSPOTS
+#include <optiweave/runtime/hotspot_tracker.hpp>
+#endif
+
+#ifdef OPTIWEAVE_ENABLE_SUGGESTIONS
+#include <optiweave/runtime/optimization_suggestions.hpp>
+#endif
+
 // Define the global configuration instance
 namespace optiweave {
     InstrumentationConfig g_config;
@@ -117,9 +133,9 @@ void __optiweave_log_operation(const char *operation, const char *lhs_type,
 // Additional utility functions for runtime configuration
 void __optiweave_init() {
     // Initialize with default configuration
-    optiweave::g_config.log_array_accesses = true;
+    optiweave::g_config.log_array_accesses = false;
     optiweave::g_config.log_arithmetic_ops = false;
-    optiweave::g_config.log_to_stderr = true;
+    optiweave::g_config.log_to_stderr = false;
     optiweave::g_config.log_to_file = false;
     optiweave::g_config.log_file_path = "optiweave.log";
     optiweave::g_config.include_timestamps = true;
@@ -166,6 +182,22 @@ class RuntimeInitializer {
 public:
     RuntimeInitializer() {
         __optiweave_init();
+
+#ifdef OPTIWEAVE_ENABLE_STATS
+        statistics::initialize();
+#endif
+
+#ifdef OPTIWEAVE_ENABLE_TIMING
+        timing::initialize();
+#endif
+
+#ifdef OPTIWEAVE_ENABLE_HOTSPOTS
+        hotspots::initialize();
+#endif
+
+#ifdef OPTIWEAVE_ENABLE_SUGGESTIONS
+        optimization::initialize();
+#endif
     }
 };
 

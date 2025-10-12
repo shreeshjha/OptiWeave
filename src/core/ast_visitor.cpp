@@ -1,4 +1,5 @@
 #include "../../include/optiweave/core/ast_visitor.hpp"
+#include "../../include/optiweave/runtime/loop_info_serializer.hpp"
 #include <clang/AST/ParentMapContext.h>
 #include <clang/Basic/SourceManager.h>
 #include <clang/Lex/Lexer.h>
@@ -245,6 +246,12 @@ bool ModernASTVisitor::isInSystemHeader(const clang::Expr *expr) const {
   return source_manager.isInSystemHeader(location);
 }
 
+bool ModernASTVisitor::isInSystemHeader(const clang::Stmt *stmt) const {
+  auto &source_manager = context_.getSourceManager();
+  auto location = stmt->getBeginLoc();
+  return source_manager.isInSystemHeader(location);
+}
+
 bool ModernASTVisitor::isAlreadyProcessed(const clang::Expr *expr) {
   auto &source_manager = context_.getSourceManager();
   auto begin_offset = source_manager.getFileOffset(expr->getBeginLoc());
@@ -278,9 +285,9 @@ bool ModernASTVisitor::transformArraySubscript(clang::ArraySubscriptExpr *
       return false;
     }
 
-    // Generate instrumentation
+    // Generate instrumentation (pass expr for source location)
     std::string instrumentation = generateArraySubscriptInstrumentation(
-        lhs->getType(), lhs_text, rhs_text);
+        expr, lhs->getType(), lhs_text, rhs_text);
 
     // Apply transformation
     auto source_range = expr->getSourceRange();
@@ -334,15 +341,45 @@ bool ModernASTVisitor::transformBinaryOperator(clang::BinaryOperator *expr) {
   }
 }
 
+std::string ModernASTVisitor::getSourceLocationLiterals(clang::SourceLocation loc) const {
+  auto &source_manager = context_.getSourceManager();
+
+  // Get the presumed location (handles #line directives)
+  auto presumed_loc = source_manager.getPresumedLoc(loc);
+  if (!presumed_loc.isValid()) {
+    return "\"<unknown>\", 0, \"<unknown>\"";
+  }
+
+  // Extract file, line, and function name
+  std::string filename = presumed_loc.getFilename();
+  unsigned line = presumed_loc.getLine();
+
+  // Escape backslashes and quotes in filename for C++ string literal
+  std::string escaped_filename;
+  for (char c : filename) {
+    if (c == '\\' || c == '"') {
+      escaped_filename += '\\';
+    }
+    escaped_filename += c;
+  }
+
+  std::ostringstream oss;
+  oss << "\"" << escaped_filename << "\", " << line << ", __FUNCTION__";
+  return oss.str();
+}
+
 std::string ModernASTVisitor::generateArraySubscriptInstrumentation(
-    clang::QualType lhs_type, llvm::StringRef lhs_text,
-    llvm::StringRef rhs_text) const {
+    const clang::ArraySubscriptExpr *expr, clang::QualType lhs_type,
+    llvm::StringRef lhs_text, llvm::StringRef rhs_text) const {
 
   // Compact helper when evaluation-safe wrappers are enabled
+  // Instead of using the ow_subscript macro (which captures wrong location),
+  // we directly call __ow_subscript_impl with source location literals
   if (config_.evaluation_safe_wrappers) {
     std::ostringstream helper;
-    helper << "optiweave::ow_subscript(" << lhs_text.str() << ", "
-           << rhs_text.str() << ")";
+    helper << "optiweave::__ow_subscript_impl("
+           << lhs_text.str() << ", " << rhs_text.str() << ", "
+           << getSourceLocationLiterals(expr->getExprLoc()) << ")";
     return helper.str();
   }
 
@@ -567,25 +604,147 @@ TransformationConsumer::TransformationConsumer(
   visitor_ = std::make_unique<ModernASTVisitor>(rewriter, context, config);
 }
 
+// ============================================================================
+// Loop Analysis Methods
+// ============================================================================
+
+bool ModernASTVisitor::VisitForStmt(clang::ForStmt *stmt) {
+  if (isInSystemHeader(stmt)) return true;
+
+  current_loop_nesting_++;
+  analyzeLoop(stmt->getBody(), stmt->getBeginLoc());
+  current_loop_nesting_--;
+
+  return true;
+}
+
+bool ModernASTVisitor::VisitWhileStmt(clang::WhileStmt *stmt) {
+  if (isInSystemHeader(stmt)) return true;
+
+  current_loop_nesting_++;
+  analyzeLoop(stmt->getBody(), stmt->getBeginLoc());
+  current_loop_nesting_--;
+
+  return true;
+}
+
+bool ModernASTVisitor::VisitDoStmt(clang::DoStmt *stmt) {
+  if (isInSystemHeader(stmt)) return true;
+
+  current_loop_nesting_++;
+  analyzeLoop(stmt->getBody(), stmt->getBeginLoc());
+  current_loop_nesting_--;
+
+  return true;
+}
+
+void ModernASTVisitor::analyzeLoop(clang::Stmt *loop_body, clang::SourceLocation loc) {
+  if (!loop_body) return;
+
+  optiweave::analysis::LoopInfo info;
+
+  // Get source location
+  auto &sm = context_.getSourceManager();
+  auto presumed = sm.getPresumedLoc(loc);
+  if (presumed.isValid()) {
+    info.location.file = presumed.getFilename();
+    info.location.line = presumed.getLine();
+    info.location.function = "<unknown>";  // Would need more complex analysis
+  }
+
+  // Get line range of loop body
+  if (loop_body) {
+    auto body_start = sm.getPresumedLoc(loop_body->getBeginLoc());
+    auto body_end = sm.getPresumedLoc(loop_body->getEndLoc());
+    if (body_start.isValid() && body_end.isValid()) {
+      info.line_start = body_start.getLine();
+      info.line_end = body_end.getLine();
+    }
+  }
+
+  info.nesting_level = current_loop_nesting_;
+  info.has_divisions = containsDivisions(loop_body);
+  info.has_strided_access = containsStridedAccess(loop_body);
+
+  // Basic heuristics for vectorization
+  info.is_vectorizable = true;  // Assume vectorizable unless proven otherwise
+  // Would need more sophisticated dependency analysis
+
+  loop_info_.push_back(info);
+}
+
+bool ModernASTVisitor::containsDivisions(clang::Stmt *stmt) const {
+  if (!stmt) return false;
+
+  // Check if this statement is a division
+  if (auto *binop = llvm::dyn_cast<clang::BinaryOperator>(stmt)) {
+    if (binop->getOpcode() == clang::BO_Div ||
+        binop->getOpcode() == clang::BO_DivAssign) {
+      return true;
+    }
+  }
+
+  // Recursively check children
+  for (auto *child : stmt->children()) {
+    if (containsDivisions(child)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+bool ModernASTVisitor::containsStridedAccess(clang::Stmt *stmt) const {
+  if (!stmt) return false;
+
+  // Simple heuristic: look for array subscripts with non-trivial index expressions
+  if (auto *subscript = llvm::dyn_cast<clang::ArraySubscriptExpr>(stmt)) {
+    // If index is not a simple variable, it might be strided
+    auto *idx = subscript->getIdx();
+    if (!llvm::isa<clang::DeclRefExpr>(idx)) {
+      return true;  // Conservative: non-simple index might be strided
+    }
+  }
+
+  // Recursively check children
+  for (auto *child : stmt->children()) {
+    if (containsStridedAccess(child)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 void TransformationConsumer::HandleTranslationUnit(clang::ASTContext &
                                                    context) {
   // INJECT PRELUDE HEADER BEFORE AST TRAVERSAL
   auto &source_manager = context.getSourceManager();
   auto main_file_id = source_manager.getMainFileID();
   auto start_loc = source_manager.getLocForStartOfFile(main_file_id);
-  
+
   // Only inject if not already present
   auto buffer = source_manager.getBufferData(main_file_id);
-  if (buffer.find("#include") == llvm::StringRef::npos || 
+  if (buffer.find("#include") == llvm::StringRef::npos ||
       buffer.find("optiweave/prelude.hpp") == llvm::StringRef::npos) {
     rewriter_.InsertText(start_loc, "#include <optiweave/prelude.hpp>\n", true);
   }
-  
+
   // Set traversal scope to the entire translation unit
   context.setTraversalScope({context.getTranslationUnitDecl()});
 
   // Traverse the AST
   visitor_->TraverseDecl(context.getTranslationUnitDecl());
+
+  // Serialize loop information for runtime analysis
+  const auto& loop_info = visitor_->getLoopInfo();
+  if (!loop_info.empty()) {
+    std::string loop_info_file = optiweave::serialization::get_loop_info_path();
+    if (optiweave::serialization::serialize_loop_info(loop_info, loop_info_file)) {
+      llvm::errs() << "Loop information serialized: " << loop_info.size()
+                   << " loops -> " << loop_info_file << "\n";
+    }
+  }
 
   // Print statistics
   llvm::errs() << "=== Transformation Complete ===\n";

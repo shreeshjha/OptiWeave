@@ -1,5 +1,6 @@
 #include <optiweave/core/ast_visitor.hpp>
 #include <optiweave/core/rewriter.hpp>
+#include <optiweave/analysis/complexity_analyzer.hpp>
 
 #include <clang/Frontend/CompilerInstance.h>
 #include <clang/Frontend/FrontendActions.h>
@@ -12,6 +13,7 @@
 #include <llvm/Support/Path.h>
 
 #include <iostream>
+#include <fstream>
 #include <memory>
 #include <string>
 #include <vector>
@@ -86,6 +88,80 @@ static cl::opt<bool> EvaluationSafe(
     "evaluation-safe",
     cl::desc("Use wrappers to ensure single-evaluation of operands (default: ON)"),
     cl::init(true), cl::cat(OptiWeaveCategory));
+
+// Statistics options
+static cl::opt<bool> EnableStats(
+    "enable-stats",
+    cl::desc("Enable operation statistics collection at runtime"),
+    cl::init(false), cl::cat(OptiWeaveCategory));
+
+static cl::opt<std::string> StatsCSV(
+    "export-stats-csv",
+    cl::desc("Export statistics to CSV file"),
+    cl::value_desc("filename"), cl::cat(OptiWeaveCategory));
+
+static cl::opt<std::string> StatsJSON(
+    "export-stats-json",
+    cl::desc("Export statistics to JSON file"),
+    cl::value_desc("filename"), cl::cat(OptiWeaveCategory));
+
+// Timing options
+static cl::opt<bool> EnableTiming(
+    "enable-timing",
+    cl::desc("Enable high-resolution timing of operations at runtime"),
+    cl::init(false), cl::cat(OptiWeaveCategory));
+
+static cl::opt<bool> EnableProfile(
+    "enable-profile",
+    cl::desc("Enable full profiling with percentiles and histograms"),
+    cl::init(false), cl::cat(OptiWeaveCategory));
+
+static cl::opt<std::string> TimingCSV(
+    "export-timing-csv",
+    cl::desc("Export timing data to CSV file"),
+    cl::value_desc("filename"), cl::cat(OptiWeaveCategory));
+
+static cl::opt<std::string> TimingJSON(
+    "export-timing-json",
+    cl::desc("Export timing data to JSON file"),
+    cl::value_desc("filename"), cl::cat(OptiWeaveCategory));
+
+// Hotspot options
+static cl::opt<bool> EnableHotspots(
+    "hotspots",
+    cl::desc("Enable hotspot detection and source location tracking"),
+    cl::init(false), cl::cat(OptiWeaveCategory));
+
+static cl::opt<unsigned> HotspotsTopN(
+    "top",
+    cl::desc("Show top N hotspots (default: 10)"),
+    cl::init(10), cl::value_desc("N"), cl::cat(OptiWeaveCategory));
+
+static cl::opt<std::string> HotspotsCSV(
+    "export-hotspots-csv",
+    cl::desc("Export hotspot data to CSV file"),
+    cl::value_desc("filename"), cl::cat(OptiWeaveCategory));
+
+static cl::opt<std::string> HotspotsJSON(
+    "export-hotspots-json",
+    cl::desc("Export hotspot data to JSON file"),
+    cl::value_desc("filename"), cl::cat(OptiWeaveCategory));
+
+// Complexity analysis options
+static cl::opt<bool> AnalyzeComplexity(
+    "analyze-complexity",
+    cl::desc("Perform static complexity analysis (cyclomatic, cognitive, maintainability)"),
+    cl::init(false), cl::cat(OptiWeaveCategory));
+
+static cl::opt<std::string> ComplexityFormat(
+    "complexity-format",
+    cl::desc("Output format for complexity analysis (terminal, json, markdown, dot)"),
+    cl::value_desc("format"), cl::init("terminal"), cl::cat(OptiWeaveCategory));
+
+static cl::opt<std::string> ComplexityOutput(
+    "complexity-output",
+    cl::desc("Output file for complexity analysis"),
+    cl::value_desc("filename"), cl::cat(OptiWeaveCategory));
 
 namespace optiweave {
 
@@ -468,7 +544,7 @@ bool compileTransformedFiles(const std::vector<std::string> &source_paths) {
   SmallString<128> runtime_lib_path;
   runtime_lib_path = lib_dir;
   llvm::sys::path::append(runtime_lib_path, "liboptiweave_runtime.a");
-  
+
   if (llvm::sys::fs::exists(runtime_lib_path)) {
     compile_cmd.push_back("-L" + lib_dir.str().str());
     compile_cmd.push_back("-loptiweave_runtime");
@@ -480,7 +556,48 @@ bool compileTransformedFiles(const std::vector<std::string> &source_paths) {
     llvm::errs() << "Please rebuild OptiWeave with: ./scripts/build.sh\n";
     return false;
   }
-  
+
+  // Add statistics compilation flags if enabled
+  if (EnableStats || !StatsCSV.empty() || !StatsJSON.empty()) {
+    compile_cmd.push_back("-DOPTIWEAVE_ENABLE_STATS");
+    if (Verbose) {
+      llvm::errs() << "Enabling statistics collection\n";
+    }
+  }
+
+  // Add timing compilation flags if enabled
+  if (EnableTiming || EnableProfile || !TimingCSV.empty() || !TimingJSON.empty()) {
+    compile_cmd.push_back("-DOPTIWEAVE_ENABLE_TIMING");
+    if (Verbose) {
+      llvm::errs() << "Enabling timing/profiling\n";
+    }
+  }
+
+  // Add hotspot compilation flags if enabled
+  if (EnableHotspots || !HotspotsCSV.empty() || !HotspotsJSON.empty()) {
+    compile_cmd.push_back("-DOPTIWEAVE_ENABLE_HOTSPOTS");
+    // Hotspots require timing for duration measurement
+    compile_cmd.push_back("-DOPTIWEAVE_ENABLE_TIMING");
+    if (Verbose) {
+      llvm::errs() << "Enabling hotspot detection\n";
+    }
+  }
+
+  // Add runtime include path for statistics header
+  SmallString<128> runtime_include_dir;
+  if (auto exe = llvm::sys::fs::getMainExecutable(nullptr, nullptr); !exe.empty()) {
+    runtime_include_dir = exe;
+    llvm::sys::path::remove_filename(runtime_include_dir);
+    llvm::sys::path::append(runtime_include_dir, "..", "include");
+
+    if (llvm::sys::fs::exists(runtime_include_dir)) {
+      compile_cmd.push_back("-I" + runtime_include_dir.str().str());
+      if (Verbose) {
+        llvm::errs() << "Using runtime includes: " << runtime_include_dir << "\n";
+      }
+    }
+  }
+
   // Add source files
   for (const auto &source : source_paths) {
     if (OutputDir.empty()) {
@@ -604,6 +721,21 @@ int main(int argc, const char **argv) {
   // Setup prelude
   std::string prelude_path = optiweave::setupPrelude();
 
+  // Set loop info file path for optimization suggestions
+  // When compiling with -o, place loop info next to the executable
+  if (CompileAfterTransform && !OutputExecutable.empty()) {
+    llvm::SmallString<256> loop_info_path(OutputExecutable);
+    llvm::sys::path::remove_filename(loop_info_path);
+    if (loop_info_path.empty()) {
+      loop_info_path = ".";
+    }
+    llvm::sys::path::append(loop_info_path, ".optiweave_loop_info.bin");
+    setenv("OPTIWEAVE_LOOP_INFO_FILE", loop_info_path.c_str(), 1);
+    if (Verbose) {
+      llvm::errs() << "Loop info will be saved to: " << loop_info_path << "\n";
+    }
+  }
+
   // Configure transformation
   optiweave::core::TransformationConfig config;
   config.transform_array_subscripts = TransformArraySubscripts;
@@ -702,7 +834,88 @@ int main(int argc, const char **argv) {
       llvm::errs() << "Parse errors encountered (code: " << result << "), but transformation may have succeeded\n";
     }
   }
-  
+
+  // Perform complexity analysis if requested
+  if (AnalyzeComplexity) {
+    if (Verbose) {
+      llvm::errs() << "Performing complexity analysis...\n";
+    }
+
+    // Create a new tool for complexity analysis
+    ClangTool ComplexityTool(OptionsParser.getCompilations(),
+                             OptionsParser.getSourcePathList());
+
+    // Add templates directory to include path (same as transformation tool)
+    if (llvm::sys::fs::exists(templates_dir)) {
+      std::string include_arg = "-I" + templates_dir.str().str();
+      ComplexityTool.appendArgumentsAdjuster(getInsertArgumentAdjuster(include_arg.c_str(), clang::tooling::ArgumentInsertPosition::BEGIN));
+      if (Verbose) {
+        llvm::errs() << "Added include path for complexity analysis: " << templates_dir << "\n";
+      }
+    }
+
+    // Add C++20 standard
+    ComplexityTool.appendArgumentsAdjuster(getInsertArgumentAdjuster("-std=c++20", clang::tooling::ArgumentInsertPosition::BEGIN));
+
+    // Add Clang resource directory for compiler intrinsics (same as transformation tool)
+    if (!resource_dir.empty() && llvm::sys::fs::exists(resource_dir)) {
+      std::string resource_arg = "-resource-dir=" + resource_dir;
+      ComplexityTool.appendArgumentsAdjuster(getInsertArgumentAdjuster(resource_arg.c_str(), clang::tooling::ArgumentInsertPosition::BEGIN));
+      if (Verbose) {
+        llvm::errs() << "Using Clang resource directory for complexity analysis: " << resource_dir << "\n";
+      }
+    }
+
+    // Run complexity analysis
+    optiweave::ComplexityAnalysisActionFactory complexity_factory;
+
+    int analysis_result = ComplexityTool.run(&complexity_factory);
+
+    if (Verbose) {
+      llvm::errs() << "Complexity analysis return code: " << analysis_result << "\n";
+    }
+
+    if (analysis_result == 0) {
+      const auto& result = complexity_factory.getResult();
+
+      if (Verbose) {
+        llvm::errs() << "Functions analyzed: " << result.functions.size() << "\n";
+        llvm::errs() << "Exporting in format: " << ComplexityFormat << "\n";
+      }
+
+      // Export results based on format
+      std::string output;
+      if (ComplexityFormat == "json") {
+        output = optiweave::analysis::export_utils::export_json(result);
+      } else if (ComplexityFormat == "markdown") {
+        output = optiweave::analysis::export_utils::export_markdown(result);
+      } else if (ComplexityFormat == "dot") {
+        output = optiweave::analysis::export_utils::export_call_graph_dot(result);
+      } else {
+        // Default: terminal
+        output = optiweave::analysis::export_utils::export_terminal(result);
+      }
+
+      // Write to file or stdout
+      if (!ComplexityOutput.empty()) {
+        std::ofstream out(ComplexityOutput);
+        if (out.is_open()) {
+          out << output;
+          out.close();
+          llvm::errs() << "Complexity analysis exported to: " << ComplexityOutput << "\n";
+        } else {
+          llvm::errs() << "Error: Could not write to " << ComplexityOutput << "\n";
+          llvm::errs() << output;  // Print to stderr as fallback
+        }
+      } else {
+        // Print to stderr
+        llvm::errs() << output;
+      }
+    } else {
+      llvm::errs() << "Warning: Complexity analysis encountered errors\n";
+    }
+  }
+
   // Always attempt compilation if requested (transformation often succeeds despite parse warnings)
   if (CompileAfterTransform) {
     if (Verbose) {

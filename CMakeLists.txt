@@ -52,9 +52,13 @@ add_definitions(${LLVM_DEFINITIONS})
 set(OPTIWEAVE_CORE_SOURCES
     src/analysis/operator_detector.cpp
     src/analysis/template_analyzer.cpp
+    src/analysis/pattern_detector.cpp
+    src/analysis/complexity_analyzer.cpp
+    src/analysis/complexity_export.cpp
     src/core/ast_visitor.cpp
     src/core/rewriter.cpp
     src/core/transformer.cpp
+    src/runtime/loop_info_serializer.cpp
     src/Matchers/operator_matchers.cpp
     src/Matchers/type_matchers.cpp
     src/utils/diagnostic_utils.cpp
@@ -93,11 +97,27 @@ target_link_libraries(optiweave_core
 # --------------------------------------------------------------------------
 # Build the runtime library
 # --------------------------------------------------------------------------
-add_library(optiweave_runtime STATIC src/runtime/optiweave_runtime.cpp)
+add_library(optiweave_runtime STATIC
+    src/runtime/optiweave_runtime.cpp
+    src/runtime/statistics.cpp
+    src/runtime/timing.cpp
+    src/runtime/hotspot_tracker.cpp
+    src/runtime/optimization_suggestions.cpp
+    src/runtime/loop_info_serializer.cpp
+    src/runtime/json_exporter.cpp
+    src/analysis/pattern_detector.cpp
+)
 target_include_directories(optiweave_runtime PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/templates>
     $<INSTALL_INTERFACE:include>
+)
+# Always compile runtime with statistics, timing, hotspot, and suggestions support (users can enable/disable at runtime via env vars)
+target_compile_definitions(optiweave_runtime PRIVATE
+    OPTIWEAVE_ENABLE_STATS
+    OPTIWEAVE_ENABLE_TIMING
+    OPTIWEAVE_ENABLE_HOTSPOTS
+    OPTIWEAVE_ENABLE_SUGGESTIONS
 )
 
 # --------------------------------------------------------------------------

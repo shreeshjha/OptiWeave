@@ -9,6 +9,18 @@
 #include <string>
 #include <type_traits>
 
+#ifdef OPTIWEAVE_ENABLE_STATS
+#include <optiweave/runtime/statistics.hpp>
+#endif
+
+#ifdef OPTIWEAVE_ENABLE_TIMING
+#include <optiweave/runtime/timing.hpp>
+#endif
+
+#ifdef OPTIWEAVE_ENABLE_HOTSPOTS
+#include <optiweave/runtime/hotspot_tracker.hpp>
+#endif
+
 // Forward declarations for instrumentation functions
 extern "C" {
 void __optiweave_log_access(const char *operation, const void *ptr,
@@ -24,9 +36,9 @@ namespace optiweave {
  * @brief Configuration for runtime instrumentation
  */
 struct InstrumentationConfig {
-  bool log_array_accesses = true;
+  bool log_array_accesses = false;
   bool log_arithmetic_ops = false;
-  bool log_to_stderr = true;
+  bool log_to_stderr = false;
   bool log_to_file = false;
   std::string log_file_path = "optiweave.log";
   bool include_timestamps = true;
@@ -105,11 +117,7 @@ struct __primop_subscript<Element[Size]> {
   using size_type = std::size_t;
 
   constexpr element_type &operator()(Element (&arr)[Size],
-                                     size_type index) const {
-    if (g_config.log_array_accesses) {
-      __optiweave_log_access("array_subscript", arr, index, __FILE__, __LINE__);
-    }
-
+                                      size_type index) const {
 // Bounds checking in debug mode
 #ifdef OPTIWEAVE_DEBUG
     if (index >= Size) {
@@ -131,11 +139,6 @@ template <typename Element> struct __primop_subscript<Element *> {
   using size_type = std::size_t;
 
   constexpr element_type &operator()(Element *ptr, size_type index) const {
-    if (g_config.log_array_accesses) {
-      __optiweave_log_access("pointer_subscript", ptr, index, __FILE__,
-                             __LINE__);
-    }
-
 #ifdef OPTIWEAVE_DEBUG
     if (ptr == nullptr) {
       std::cerr << "OptiWeave: Null pointer dereference at " << __FILE__ << ":"
@@ -179,8 +182,18 @@ struct __maybe_primop_subscript<Subscripted, false>
  * @brief Arithmetic operation instrumentation templates
  */
 template <typename LHS, typename RHS> struct __primop_add {
-  constexpr auto operator()(const LHS &lhs, const RHS &rhs) const
+#ifndef OPTIWEAVE_ENABLE_TIMING
+  constexpr
+#endif
+  auto operator()(const LHS &lhs, const RHS &rhs) const
       -> decltype(lhs + rhs) {
+#ifdef OPTIWEAVE_ENABLE_TIMING
+    timing::ScopedOperationTimer timer(timing::g_timing_stats.addition);
+#endif
+
+#ifdef OPTIWEAVE_ENABLE_STATS
+    statistics::increment_addition();
+#endif
 
     if (g_config.log_arithmetic_ops) {
       __optiweave_log_operation("add", typeid(LHS).name(), typeid(RHS).name(),
@@ -194,6 +207,9 @@ template <typename LHS, typename RHS> struct __primop_add {
 template <typename LHS, typename RHS> struct __primop_sub {
   constexpr auto operator()(const LHS &lhs, const RHS &rhs) const
       -> decltype(lhs - rhs) {
+#ifdef OPTIWEAVE_ENABLE_STATS
+    statistics::increment_subtraction();
+#endif
 
     if (g_config.log_arithmetic_ops) {
       __optiweave_log_operation("sub", typeid(LHS).name(), typeid(RHS).name(),
@@ -205,8 +221,18 @@ template <typename LHS, typename RHS> struct __primop_sub {
 };
 
 template <typename LHS, typename RHS> struct __primop_mul {
-  constexpr auto operator()(const LHS &lhs, const RHS &rhs) const
+#ifndef OPTIWEAVE_ENABLE_TIMING
+  constexpr
+#endif
+  auto operator()(const LHS &lhs, const RHS &rhs) const
       -> decltype(lhs * rhs) {
+#ifdef OPTIWEAVE_ENABLE_TIMING
+    timing::ScopedOperationTimer timer(timing::g_timing_stats.multiplication);
+#endif
+
+#ifdef OPTIWEAVE_ENABLE_STATS
+    statistics::increment_multiplication();
+#endif
 
     if (g_config.log_arithmetic_ops) {
       __optiweave_log_operation("mul", typeid(LHS).name(), typeid(RHS).name(),
@@ -218,8 +244,18 @@ template <typename LHS, typename RHS> struct __primop_mul {
 };
 
 template <typename LHS, typename RHS> struct __primop_div {
-  constexpr auto operator()(const LHS &lhs, const RHS &rhs) const
+#ifndef OPTIWEAVE_ENABLE_TIMING
+  constexpr
+#endif
+  auto operator()(const LHS &lhs, const RHS &rhs) const
       -> decltype(lhs / rhs) {
+#ifdef OPTIWEAVE_ENABLE_TIMING
+    timing::ScopedOperationTimer timer(timing::g_timing_stats.division);
+#endif
+
+#ifdef OPTIWEAVE_ENABLE_STATS
+    statistics::increment_division();
+#endif
 
     if (g_config.log_arithmetic_ops) {
       __optiweave_log_operation("div", typeid(LHS).name(), typeid(RHS).name(),
@@ -286,6 +322,81 @@ public:
   }
 };
 
+/**
+ * @brief Compact helper wrapper functions for evaluation-safe transformations
+ */
+
+// Array subscript helper - internal version that accepts source location
+template <typename Array, typename Index>
+inline decltype(auto) __ow_subscript_impl(Array&& arr, Index&& idx, const char* file, int line, const char* func) {
+  using DecayedArray = std::decay_t<Array>;
+
+#if defined(OPTIWEAVE_ENABLE_HOTSPOTS) || defined(OPTIWEAVE_ENABLE_TIMING)
+  timing::OperationTimer hotspot_timer;
+#endif
+
+#ifdef OPTIWEAVE_ENABLE_STATS
+  statistics::increment_array_subscript();
+#endif
+
+  if (g_config.log_array_accesses) {
+    __optiweave_log_access("array_subscript", &arr, static_cast<size_t>(idx), file, line);
+  }
+
+  auto& result = __primop_subscript<DecayedArray>()(std::forward<Array>(arr), std::forward<Index>(idx));
+
+#if defined(OPTIWEAVE_ENABLE_HOTSPOTS) || defined(OPTIWEAVE_ENABLE_TIMING)
+  uint64_t duration_ns = hotspot_timer.elapsed_ns();
+#ifdef OPTIWEAVE_ENABLE_TIMING
+  timing::g_timing_stats.array_subscript.record(duration_ns);
+#endif
+#ifdef OPTIWEAVE_ENABLE_HOTSPOTS
+  hotspots::g_hotspot_tracker.record_operation(
+      "array_subscript",
+      hotspots::SourceLocation(file, line, func),
+      duration_ns);
+#endif
+#endif
+
+  return result;
+}
+
+} // namespace optiweave
+
+// Macro version that captures source location at call site - MUST be outside namespace
+#define ow_subscript(arr, idx) \
+  optiweave::__ow_subscript_impl((arr), (idx), __FILE__, __LINE__, __FUNCTION__)
+
+namespace optiweave {
+
+// Function version for backward compatibility (captures template location)
+template <typename Array, typename Index>
+inline decltype(auto) ow_subscript_func(Array&& arr, Index&& idx) {
+  using DecayedArray = std::decay_t<Array>;
+  return __primop_subscript<DecayedArray>()(std::forward<Array>(arr), std::forward<Index>(idx));
+}
+
+// Arithmetic operation helpers
+template <typename LHS, typename RHS>
+inline auto ow_add(LHS&& lhs, RHS&& rhs) -> decltype(auto) {
+  return __primop_add<std::decay_t<LHS>, std::decay_t<RHS>>()(std::forward<LHS>(lhs), std::forward<RHS>(rhs));
+}
+
+template <typename LHS, typename RHS>
+inline auto ow_sub(LHS&& lhs, RHS&& rhs) -> decltype(auto) {
+  return __primop_sub<std::decay_t<LHS>, std::decay_t<RHS>>()(std::forward<LHS>(lhs), std::forward<RHS>(rhs));
+}
+
+template <typename LHS, typename RHS>
+inline auto ow_mul(LHS&& lhs, RHS&& rhs) -> decltype(auto) {
+  return __primop_mul<std::decay_t<LHS>, std::decay_t<RHS>>()(std::forward<LHS>(lhs), std::forward<RHS>(rhs));
+}
+
+template <typename LHS, typename RHS>
+inline auto ow_div(LHS&& lhs, RHS&& rhs) -> decltype(auto) {
+  return __primop_div<std::decay_t<LHS>, std::decay_t<RHS>>()(std::forward<LHS>(lhs), std::forward<RHS>(rhs));
+}
+
 } // namespace optiweave
 
 /**
@@ -300,6 +411,14 @@ public:
       __optiweave_log_access("manual", ptr, index, __FILE__, __LINE__);        \
     }                                                                          \
   } while (0)
+
+#ifdef OPTIWEAVE_ENABLE_HOTSPOTS
+// Print hotspot report manually (call before main() returns)
+#define OPTIWEAVE_PRINT_HOTSPOTS(n) \
+  optiweave::hotspots::print_report(n)
+#else
+#define OPTIWEAVE_PRINT_HOTSPOTS(n) ((void)0)
+#endif
 
 // Alias the old names for backward compatibility
 #define __has_subscript_overload optiweave::has_subscript_overload

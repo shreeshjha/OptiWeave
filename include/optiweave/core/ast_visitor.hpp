@@ -14,6 +14,7 @@
 #include <set>
 #include <string>
 #include <vector>
+#include <optiweave/analysis/pattern_detector.hpp>
 
 namespace optiweave::core {
 
@@ -105,6 +106,27 @@ public:
   bool VisitCXXOperatorCallExpr(clang::CXXOperatorCallExpr *expr);
 
   /**
+      @brief Visit for loops
+      @param stmt The for statement
+      @return true to continue traversal
+  */
+  bool VisitForStmt(clang::ForStmt *stmt);
+
+  /**
+      @brief Visit while loops
+      @param stmt The while statement
+      @return true to continue traversal
+  */
+  bool VisitWhileStmt(clang::WhileStmt *stmt);
+
+  /**
+      @brief Visit do-while loops
+      @param stmt The do-while statement
+      @return true to continue traversal
+  */
+  bool VisitDoStmt(clang::DoStmt *stmt);
+
+  /**
       @brief Get transformation Statistics
       @return const reference to stats
   */
@@ -117,6 +139,12 @@ public:
 
   void resetStats() { stats_.reset(); }
 
+  /**
+      @brief Get collected loop information
+      @return const reference to loop info vector
+  */
+  const std::vector<optiweave::analysis::LoopInfo>& getLoopInfo() const { return loop_info_; }
+
 private:
   clang::Rewriter &rewriter_;
   clang::ASTContext &context_;
@@ -125,6 +153,11 @@ private:
 
   // Track processed source ranges to avoid double-processing
   std::set<std::pair<unsigned, unsigned>> processed_ranges_;
+
+  // Loop analysis data
+  std::vector<optiweave::analysis::LoopInfo> loop_info_;
+  int current_loop_nesting_ = 0;
+  optiweave::analysis::LoopInfo* current_loop_ = nullptr;
 
   /**
       @brief Check if we should skip this expression based on context
@@ -141,6 +174,14 @@ private:
   */
 
   bool isInSystemHeader(const clang::Expr *expr) const;
+
+  /**
+      @brief Check if statement is in a system header
+      @param stmt The statement to check
+      @return true if in system header
+  */
+
+  bool isInSystemHeader(const clang::Stmt *stmt) const;
 
   /**
       @brief Check if expression is already processed
@@ -175,15 +216,24 @@ private:
 
   /**
       @brief Generate instrumentation code for array subscript
+      @param expr The array subscript expression (for source location)
       @param lhs_type The type of the left-hand side
       @param lhs_text The text of the left-hand side
       @param rhs_text The text of the right-hand side
       @return Generated instrumentation code
   */
   std::string
-  generateArraySubscriptInstrumentation(clang::QualType lhs_type,
+  generateArraySubscriptInstrumentation(const clang::ArraySubscriptExpr *expr,
+                                        clang::QualType lhs_type,
                                         llvm::StringRef lhs_text,
                                         llvm::StringRef rhs_text) const;
+
+  /**
+      @brief Get source location as string literals for instrumentation
+      @param loc The source location
+      @return String containing "file", line, __FUNCTION__
+  */
+  std::string getSourceLocationLiterals(clang::SourceLocation loc) const;
 
   /**
       @brief Generate instrumentation code for binary operator
@@ -199,6 +249,26 @@ private:
       clang::BinaryOperatorKind op, clang::QualType lhs_type,
       clang::QualType rhs_type, llvm::StringRef lhs_text,
       llvm::StringRef rhs_text) const;
+
+  /**
+      @brief Analyze loop for patterns
+      @param loop The loop statement
+  */
+  void analyzeLoop(clang::Stmt *loop_body, clang::SourceLocation loc);
+
+  /**
+      @brief Check if statement contains divisions
+      @param stmt The statement to check
+      @return true if divisions found
+  */
+  bool containsDivisions(clang::Stmt *stmt) const;
+
+  /**
+      @brief Check if statement contains strided access
+      @param stmt The statement to check
+      @return true if strided access found
+  */
+  bool containsStridedAccess(clang::Stmt *stmt) const;
 
   /**
     @brief Check if type is template-dependent
