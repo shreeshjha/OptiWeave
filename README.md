@@ -245,17 +245,29 @@ Most analysis features support `--*-format` (text/json) and `--*-output` (filena
 
 ## Performance
 
-OptiWeave has minimal runtime overhead:
+OptiWeave is a **profiling and debugging tool** - overhead is expected and acceptable for development use.
 
-| Feature | Overhead | Use Case |
-|---------|----------|----------|
-| Statistics | -2.8% (faster!) | Production profiling |
-| Timing | ~2% | Performance analysis |
-| Full Profiling | ~5% | Deep investigation |
-| Hotspots | ~3% | Finding bottlenecks |
-| Cache Profiling | ~3-5% | Memory optimization |
+### Runtime Overhead (measured on M1 Mac, -O3)
 
-The negative overhead for statistics-only mode is due to compiler optimizations on the transformed code.
+| Workload Type | Baseline | With Instrumentation | Overhead |
+|---------------|----------|---------------------|----------|
+| Array-heavy (10M ops) | 1.05 ms | 68 ms | +6,400% |
+| Arithmetic-heavy | 0.005 ms | 0.006 ms | +22% |
+| Mixed operations | 0.26 ms | 12 ms | +4,500% |
+
+**Why the overhead is acceptable:**
+
+- **This is a profiling tool** - you use it to find bottlenecks, not in production
+- **Tracks every operation** - provides complete visibility into your code
+- **Static analysis is free** - overflow/FP/memory detection has zero runtime cost
+- **Arithmetic ops have low overhead** - only ~22% when not instrumenting array access
+- **Use sampling for large workloads** - profile 1% of operations for 99% less overhead
+
+**Typical workflow:**
+1. Run with instrumentation to find hotspots (high overhead, but that's fine)
+2. Identify bottlenecks from profiling data
+3. Optimize those specific areas
+4. Compile without instrumentation for production (zero overhead)
 
 ## Build System Integration
 
