@@ -21,6 +21,10 @@
 #include <optiweave/runtime/optimization_suggestions.hpp>
 #endif
 
+#ifdef OPTIWEAVE_ENABLE_CACHE_PROFILE
+#include <optiweave/runtime/cache_profiler.hpp>
+#endif
+
 // Define the global configuration instance
 namespace optiweave {
     InstrumentationConfig g_config;
@@ -197,6 +201,47 @@ public:
 
 #ifdef OPTIWEAVE_ENABLE_SUGGESTIONS
         optimization::initialize();
+#endif
+
+#ifdef OPTIWEAVE_ENABLE_CACHE_PROFILE
+        // Initialize cache profiling
+        const char* env_cache = std::getenv("OPTIWEAVE_CACHE_PROFILE");
+        const char* env_cache_csv = std::getenv("OPTIWEAVE_CACHE_CSV");
+        const char* env_cache_json = std::getenv("OPTIWEAVE_CACHE_JSON");
+
+        if (env_cache && std::string(env_cache) == "1") {
+            auto& cache_profiler = runtime::get_cache_profiler();
+            if (cache_profiler.initialize()) {
+                cache_profiler.start_monitoring();
+
+                // Register cleanup handler
+                std::atexit([]() {
+                    auto& profiler = runtime::get_cache_profiler();
+                    profiler.stop_monitoring();
+
+                    // Print report
+                    profiler.print_report(20);
+
+                    // Export to CSV if requested
+                    const char* csv_path = std::getenv("OPTIWEAVE_CACHE_CSV");
+                    if (csv_path) {
+                        profiler.export_csv(csv_path);
+                        std::cout << "\nCache profiling CSV saved to: " << csv_path << "\n";
+                    }
+
+                    // Export to JSON if requested
+                    const char* json_path = std::getenv("OPTIWEAVE_CACHE_JSON");
+                    if (json_path) {
+                        profiler.export_json(json_path);
+                        std::cout << "Cache profiling JSON saved to: " << json_path << "\n";
+                    }
+                });
+            } else {
+                std::cerr << "Warning: Cache profiling requested but not available on this system.\n";
+                std::cerr << "  Requires Linux with perf_event support.\n";
+                std::cerr << "  Check /proc/sys/kernel/perf_event_paranoid (should be <= 1)\n";
+            }
+        }
 #endif
     }
 };

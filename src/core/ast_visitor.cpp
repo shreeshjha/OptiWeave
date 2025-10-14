@@ -602,6 +602,11 @@ TransformationConsumer::TransformationConsumer(
     const TransformationConfig &config)
     : rewriter_(rewriter), context_(context), config_(config) {
   visitor_ = std::make_unique<ModernASTVisitor>(rewriter, context, config);
+
+  // Create dependency graph if enabled
+  if (config_.enable_dependency_graph) {
+    dependency_graph_ = std::make_unique<optiweave::analysis::DependencyGraph>();
+  }
 }
 
 // ============================================================================
@@ -753,6 +758,303 @@ void TransformationConsumer::HandleTranslationUnit(clang::ASTContext &
 
 const TransformationStats &TransformationConsumer::getStats() const {
   return visitor_->getStats();
+}
+
+optiweave::analysis::CallGraphBuilder* TransformationConsumer::getCallGraphBuilder() {
+  if (!visitor_) {
+    return nullptr;
+  }
+  return &visitor_->getCallGraphBuilder();
+}
+
+optiweave::analysis::DependencyGraph* TransformationConsumer::getDependencyGraph() {
+  return dependency_graph_.get();
+}
+
+// ============================================================================
+// Dependency Graph Tracking (Preprocessor Callbacks)
+// ============================================================================
+
+void DependencyTrackerPPCallbacks::InclusionDirective(
+    clang::SourceLocation hash_loc,
+    const clang::Token& include_tok,
+    llvm::StringRef file_name,
+    bool is_angled,
+    clang::CharSourceRange filename_range,
+    clang::OptionalFileEntryRef file,
+    llvm::StringRef search_path,
+    llvm::StringRef relative_path,
+    const clang::Module* imported,
+    clang::SrcMgr::CharacteristicKind file_type) {
+
+  if (!dep_graph_) {
+    return;
+  }
+
+  // Get the file that contains the #include directive
+  auto presumed_loc = source_manager_.getPresumedLoc(hash_loc);
+  if (!presumed_loc.isValid()) {
+    return;
+  }
+
+  std::string from_file = presumed_loc.getFilename();
+
+  // Get the included file path
+  std::string to_file;
+  if (file) {
+    to_file = file->getName().str();
+  } else {
+    // File not found, use the filename from the directive
+    to_file = file_name.str();
+  }
+
+  // Determine if it's a system header
+  bool is_system_header = (file_type == clang::SrcMgr::C_System ||
+                           file_type == clang::SrcMgr::C_ExternCSystem);
+
+  // Add the file and the include relationship
+  dep_graph_->add_file(from_file, false);  // Source file is not a system header
+  dep_graph_->add_file(to_file, is_system_header);
+  dep_graph_->add_include(from_file, to_file);
+}
+
+// ============================================================================
+// Call Graph Generation Methods
+// ============================================================================
+
+bool ModernASTVisitor::VisitFunctionDecl(clang::FunctionDecl *decl) {
+  if (!config_.enable_call_graph) {
+    return true;
+  }
+
+  // Only process function definitions (not just declarations)
+  if (!decl->hasBody()) {
+    return true;
+  }
+
+  // Skip if in system header
+  auto &sm = context_.getSourceManager();
+  if (config_.skip_system_headers && sm.isInSystemHeader(decl->getLocation())) {
+    return true;
+  }
+
+  // Get function name
+  std::string function_name = decl->getQualifiedNameAsString();
+
+  // Get source location
+  auto loc = decl->getLocation();
+  auto presumed = sm.getPresumedLoc(loc);
+
+  std::string file = "<unknown>";
+  int line = 0;
+  if (presumed.isValid()) {
+    file = presumed.getFilename();
+    line = presumed.getLine();
+  }
+
+  // Check if it's a template or virtual function
+  bool is_template = decl->getTemplatedKind() != clang::FunctionDecl::TK_NonTemplate;
+  bool is_virtual = false;
+  if (auto *method = llvm::dyn_cast<clang::CXXMethodDecl>(decl)) {
+    is_virtual = method->isVirtual();
+  }
+
+  // Enter function context
+  call_graph_builder_.enter_function(function_name, file, line, is_template, is_virtual);
+  current_function_name_ = function_name;
+
+  return true;
+}
+
+bool ModernASTVisitor::VisitCallExpr(clang::CallExpr *expr) {
+  if (!config_.enable_call_graph) {
+    return true;
+  }
+
+  // Skip if we're not in a function
+  if (current_function_name_.empty()) {
+    return true;
+  }
+
+  // Skip if in system header
+  if (isInSystemHeader(expr)) {
+    return true;
+  }
+
+  // Get the callee
+  const clang::FunctionDecl *callee = expr->getDirectCallee();
+  if (!callee) {
+    return true;  // Can't determine callee (e.g., function pointer)
+  }
+
+  // Get callee name
+  std::string callee_name = callee->getQualifiedNameAsString();
+
+  // Record the call
+  call_graph_builder_.record_call(callee_name);
+
+  return true;
+}
+
+// ============================================================================
+// Data Flow Analysis Methods
+// ============================================================================
+
+bool ModernASTVisitor::VisitVarDecl(clang::VarDecl *decl) {
+  if (!config_.enable_data_flow_analysis) {
+    return true;
+  }
+
+  // Skip if in system header
+  auto &sm = context_.getSourceManager();
+  if (config_.skip_system_headers && sm.isInSystemHeader(decl->getLocation())) {
+    return true;
+  }
+
+  // Add variable to data flow analysis
+  data_flow_analysis_.add_variable(decl, current_function_name_);
+
+  return true;
+}
+
+bool ModernASTVisitor::VisitDeclRefExpr(clang::DeclRefExpr *expr) {
+  if (!config_.enable_data_flow_analysis) {
+    return true;
+  }
+
+  // Skip if in system header
+  if (isInSystemHeader(expr)) {
+    return true;
+  }
+
+  // Check if this is a variable reference
+  const clang::ValueDecl* decl = expr->getDecl();
+  if (!decl || !clang::isa<clang::VarDecl>(decl)) {
+    return true;
+  }
+
+  // Determine if this is a read or write
+  // We need to check the parent context to see if this is an lvalue used for assignment
+  bool is_write = false;
+  auto parents = context_.getParents(*expr);
+
+  for (const auto &parent_node : parents) {
+    // Check if parent is a binary operator with assignment
+    if (const auto *binop = parent_node.get<clang::BinaryOperator>()) {
+      // If this expr is the LHS of an assignment, it's a write
+      if (binop->isAssignmentOp() && binop->getLHS() == expr) {
+        is_write = true;
+        // Also record the definition
+        data_flow_analysis_.record_variable_definition(expr, current_function_name_);
+        break;
+      }
+    }
+    // Check if parent is a unary operator (++, --, &, etc.)
+    if (const auto *unaryop = parent_node.get<clang::UnaryOperator>()) {
+      // ++, --, or & (address-of) can be considered writes/uses
+      if (unaryop->isIncrementDecrementOp()) {
+        is_write = true;
+        data_flow_analysis_.record_variable_definition(expr, current_function_name_);
+      }
+      // Address-of is a read (we're reading the address)
+      // So we don't break here, let it be recorded as a use below
+    }
+  }
+
+  // Record the use
+  bool is_read = !is_write; // If not a write, it's a read
+  data_flow_analysis_.record_variable_use(expr, current_function_name_, is_read);
+
+  return true;
+}
+
+optiweave::analysis::DataFlowAnalysis* TransformationConsumer::getDataFlowAnalysis() {
+  if (!visitor_) {
+    return nullptr;
+  }
+  return &visitor_->getDataFlowAnalysis();
+}
+
+// ============================================================================
+// Memory Profiling Methods
+// ============================================================================
+
+bool ModernASTVisitor::VisitCXXNewExpr(clang::CXXNewExpr *expr) {
+  if (!config_.enable_memory_profiling) {
+    return true;
+  }
+
+  // Skip if in system header
+  if (isInSystemHeader(expr)) {
+    return true;
+  }
+
+  // Create allocation site
+  optiweave::analysis::AllocationSite site;
+
+  // Get source location
+  auto &sm = context_.getSourceManager();
+  auto loc = expr->getBeginLoc();
+  auto presumed = sm.getPresumedLoc(loc);
+
+  if (presumed.isValid()) {
+    site.file = presumed.getFilename();
+    site.line = presumed.getLine();
+  }
+
+  site.function = current_function_name_;
+  site.is_array = expr->isArray();
+  site.allocation_type = site.is_array ? "new[]" : "new";
+
+  // Get allocated type
+  if (expr->getAllocatedType().getTypePtrOrNull()) {
+    site.element_type = expr->getAllocatedType().getAsString();
+  }
+
+  // Add to memory profiler
+  memory_profiler_.add_allocation(site);
+
+  return true;
+}
+
+bool ModernASTVisitor::VisitCXXDeleteExpr(clang::CXXDeleteExpr *expr) {
+  if (!config_.enable_memory_profiling) {
+    return true;
+  }
+
+  // Skip if in system header
+  if (isInSystemHeader(expr)) {
+    return true;
+  }
+
+  // Create deallocation site
+  optiweave::analysis::DeallocationSite site;
+
+  // Get source location
+  auto &sm = context_.getSourceManager();
+  auto loc = expr->getBeginLoc();
+  auto presumed = sm.getPresumedLoc(loc);
+
+  if (presumed.isValid()) {
+    site.file = presumed.getFilename();
+    site.line = presumed.getLine();
+  }
+
+  site.function = current_function_name_;
+  site.is_array = expr->isArrayForm();
+  site.deallocation_type = site.is_array ? "delete[]" : "delete";
+
+  // Add to memory profiler
+  memory_profiler_.add_deallocation(site);
+
+  return true;
+}
+
+optiweave::analysis::MemoryProfiler* TransformationConsumer::getMemoryProfiler() {
+  if (!visitor_) {
+    return nullptr;
+  }
+  return &visitor_->getMemoryProfiler();
 }
 
 } // namespace optiweave::core

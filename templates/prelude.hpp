@@ -21,6 +21,10 @@
 #include <optiweave/runtime/hotspot_tracker.hpp>
 #endif
 
+#ifdef OPTIWEAVE_ENABLE_CACHE_PROFILE
+#include <optiweave/runtime/cache_profiler.hpp>
+#endif
+
 // Forward declarations for instrumentation functions
 extern "C" {
 void __optiweave_log_access(const char *operation, const void *ptr,
@@ -356,6 +360,10 @@ inline decltype(auto) __ow_subscript_impl(Array&& arr, Index&& idx, const char* 
       hotspots::SourceLocation(file, line, func),
       duration_ns);
 #endif
+#endif
+
+#ifdef OPTIWEAVE_ENABLE_CACHE_PROFILE
+  runtime::get_cache_profiler().record_cache_stats(file, line, func);
 #endif
 
   return result;

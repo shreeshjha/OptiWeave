@@ -55,6 +55,12 @@ set(OPTIWEAVE_CORE_SOURCES
     src/analysis/pattern_detector.cpp
     src/analysis/complexity_analyzer.cpp
     src/analysis/complexity_export.cpp
+    src/analysis/call_graph.cpp
+    src/analysis/dependency_graph.cpp
+    src/analysis/data_flow_analysis.cpp
+    src/analysis/memory_profiler.cpp
+    src/analysis/overflow_detector.cpp
+    src/analysis/fp_precision_detector.cpp
     src/core/ast_visitor.cpp
     src/core/rewriter.cpp
     src/core/transformer.cpp
@@ -105,6 +111,7 @@ add_library(optiweave_runtime STATIC
     src/runtime/optimization_suggestions.cpp
     src/runtime/loop_info_serializer.cpp
     src/runtime/json_exporter.cpp
+    src/runtime/cache_profiler.cpp
     src/analysis/pattern_detector.cpp
 )
 target_include_directories(optiweave_runtime PUBLIC
@@ -112,12 +119,13 @@ target_include_directories(optiweave_runtime PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/templates>
     $<INSTALL_INTERFACE:include>
 )
-# Always compile runtime with statistics, timing, hotspot, and suggestions support (users can enable/disable at runtime via env vars)
+# Always compile runtime with statistics, timing, hotspot, suggestions, and cache profiling support (users can enable/disable at runtime via env vars)
 target_compile_definitions(optiweave_runtime PRIVATE
     OPTIWEAVE_ENABLE_STATS
     OPTIWEAVE_ENABLE_TIMING
     OPTIWEAVE_ENABLE_HOTSPOTS
     OPTIWEAVE_ENABLE_SUGGESTIONS
+    OPTIWEAVE_ENABLE_CACHE_PROFILE
 )
 
 # --------------------------------------------------------------------------

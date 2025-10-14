@@ -1,9 +1,16 @@
 #include <optiweave/core/ast_visitor.hpp>
 #include <optiweave/core/rewriter.hpp>
 #include <optiweave/analysis/complexity_analyzer.hpp>
+#include <optiweave/analysis/call_graph.hpp>
+#include <optiweave/analysis/dependency_graph.hpp>
+#include <optiweave/analysis/data_flow_analysis.hpp>
+#include <optiweave/analysis/memory_profiler.hpp>
+#include <optiweave/analysis/overflow_detector.hpp>
+#include <optiweave/analysis/fp_precision_detector.hpp>
 
 #include <clang/Frontend/CompilerInstance.h>
 #include <clang/Frontend/FrontendActions.h>
+#include <clang/Frontend/TextDiagnosticPrinter.h>
 #include <clang/Tooling/ArgumentsAdjusters.h>
 #include <clang/Basic/Version.h>
 #include <clang/Tooling/CommonOptionsParser.h>
@@ -163,6 +170,123 @@ static cl::opt<std::string> ComplexityOutput(
     cl::desc("Output file for complexity analysis"),
     cl::value_desc("filename"), cl::cat(OptiWeaveCategory));
 
+// Call graph options
+static cl::opt<bool> EnableCallGraph(
+    "call-graph",
+    cl::desc("Generate call graph showing function dependencies"),
+    cl::init(false), cl::cat(OptiWeaveCategory));
+
+static cl::opt<std::string> CallGraphOutput(
+    "call-graph-output",
+    cl::desc("Output file for call graph (default: callgraph.dot)"),
+    cl::value_desc("filename"), cl::init("callgraph.dot"), cl::cat(OptiWeaveCategory));
+
+static cl::opt<std::string> CallGraphFormat(
+    "call-graph-format",
+    cl::desc("Call graph format: dot, json, html (default: dot)"),
+    cl::value_desc("format"), cl::init("dot"), cl::cat(OptiWeaveCategory));
+
+// Dependency graph options
+static cl::opt<bool> EnableDependencyGraph(
+    "dependency-graph",
+    cl::desc("Generate dependency graph showing file inclusion relationships"),
+    cl::init(false), cl::cat(OptiWeaveCategory));
+
+static cl::opt<std::string> DependencyGraphOutput(
+    "dependency-graph-output",
+    cl::desc("Output file for dependency graph (default: dependencies.dot)"),
+    cl::value_desc("filename"), cl::init("dependencies.dot"), cl::cat(OptiWeaveCategory));
+
+static cl::opt<std::string> DependencyGraphFormat(
+    "dependency-graph-format",
+    cl::desc("Dependency graph format: dot, json (default: dot)"),
+    cl::value_desc("format"), cl::init("dot"), cl::cat(OptiWeaveCategory));
+
+static cl::opt<bool> IncludeSystemHeaders(
+    "include-system-headers",
+    cl::desc("Include system headers in dependency graph (default: false)"),
+    cl::init(false), cl::cat(OptiWeaveCategory));
+
+// Data flow analysis options
+static cl::opt<bool> EnableDataFlowAnalysis(
+    "data-flow-analysis",
+    cl::desc("Perform data flow analysis (detect unused variables, uninitialized usage, dead code)"),
+    cl::init(false), cl::cat(OptiWeaveCategory));
+
+static cl::opt<std::string> DataFlowOutput(
+    "data-flow-output",
+    cl::desc("Output file for data flow analysis (default: dataflow.txt)"),
+    cl::value_desc("filename"), cl::init("dataflow.txt"), cl::cat(OptiWeaveCategory));
+
+static cl::opt<std::string> DataFlowFormat(
+    "data-flow-format",
+    cl::desc("Data flow analysis format: text, json (default: text)"),
+    cl::value_desc("format"), cl::init("text"), cl::cat(OptiWeaveCategory));
+
+// Memory profiling options
+static cl::opt<bool> EnableMemoryProfiling(
+    "memory-profile",
+    cl::desc("Perform memory profiling (track allocations, deallocations, detect leaks)"),
+    cl::init(false), cl::cat(OptiWeaveCategory));
+
+static cl::opt<std::string> MemoryProfileOutput(
+    "memory-profile-output",
+    cl::desc("Output file for memory profiling (default: memory.txt)"),
+    cl::value_desc("filename"), cl::init("memory.txt"), cl::cat(OptiWeaveCategory));
+
+static cl::opt<std::string> MemoryProfileFormat(
+    "memory-profile-format",
+    cl::desc("Memory profiling format: text, json (default: text)"),
+    cl::value_desc("format"), cl::init("text"), cl::cat(OptiWeaveCategory));
+
+// Cache profiling options
+static cl::opt<bool> EnableCacheProfiling(
+    "cache-profile",
+    cl::desc("Enable hardware cache profiling (L1/L2/L3 misses, requires Linux)"),
+    cl::init(false), cl::cat(OptiWeaveCategory));
+
+static cl::opt<std::string> CacheProfileCSV(
+    "export-cache-csv",
+    cl::desc("Export cache profiling data to CSV file"),
+    cl::value_desc("filename"), cl::cat(OptiWeaveCategory));
+
+static cl::opt<std::string> CacheProfileJSON(
+    "export-cache-json",
+    cl::desc("Export cache profiling data to JSON file"),
+    cl::value_desc("filename"), cl::cat(OptiWeaveCategory));
+
+// Integer overflow detection options
+static cl::opt<bool> EnableOverflowDetection(
+    "detect-overflow",
+    cl::desc("Detect potential integer overflow issues"),
+    cl::init(false), cl::cat(OptiWeaveCategory));
+
+static cl::opt<std::string> OverflowOutput(
+    "overflow-output",
+    cl::desc("Output file for overflow detection (default: overflow.txt)"),
+    cl::value_desc("filename"), cl::init("overflow.txt"), cl::cat(OptiWeaveCategory));
+
+static cl::opt<std::string> OverflowFormat(
+    "overflow-format",
+    cl::desc("Overflow detection format: text, json (default: text)"),
+    cl::value_desc("format"), cl::init("text"), cl::cat(OptiWeaveCategory));
+
+// Floating-point precision warning options
+static cl::opt<bool> EnableFPPrecisionWarnings(
+    "fp-precision-warnings",
+    cl::desc("Detect potential floating-point precision issues"),
+    cl::init(false), cl::cat(OptiWeaveCategory));
+
+static cl::opt<std::string> FPPrecisionOutput(
+    "fp-precision-output",
+    cl::desc("Output file for FP precision warnings (default: fp_precision.txt)"),
+    cl::value_desc("filename"), cl::init("fp_precision.txt"), cl::cat(OptiWeaveCategory));
+
+static cl::opt<std::string> FPPrecisionFormat(
+    "fp-precision-format",
+    cl::desc("FP precision warning format: text, json (default: text)"),
+    cl::value_desc("format"), cl::init("text"), cl::cat(OptiWeaveCategory));
+
 namespace optiweave {
 
 /**
@@ -170,8 +294,15 @@ namespace optiweave {
  */
 class OptiWeaveFrontendAction : public ASTFrontendAction {
 public:
-  explicit OptiWeaveFrontendAction(const core::TransformationConfig &config)
-      : config_(config) {}
+  explicit OptiWeaveFrontendAction(const core::TransformationConfig &config,
+                                   analysis::CallGraph* shared_call_graph = nullptr,
+                                   analysis::DependencyGraph* shared_dependency_graph = nullptr,
+                                   analysis::DataFlowAnalysis* shared_data_flow = nullptr,
+                                   analysis::MemoryProfiler* shared_memory_profiler = nullptr)
+      : config_(config), shared_call_graph_(shared_call_graph),
+        shared_dependency_graph_(shared_dependency_graph),
+        shared_data_flow_(shared_data_flow),
+        shared_memory_profiler_(shared_memory_profiler), consumer_(nullptr) {}
 
   std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance &CI,
                                                  StringRef file) override {
@@ -182,12 +313,60 @@ public:
     // Initialize rewriter
     rewriter_.setSourceMgr(CI.getSourceManager(), CI.getLangOpts());
 
+    // Register preprocessor callback for dependency tracking if enabled
+    if (config_.enable_dependency_graph && shared_dependency_graph_) {
+      CI.getPreprocessor().addPPCallbacks(
+          std::make_unique<core::DependencyTrackerPPCallbacks>(
+              shared_dependency_graph_, CI.getSourceManager()));
+    }
+
     // Create consumer with configuration
-    return std::make_unique<core::TransformationConsumer>(
+    auto consumer = std::make_unique<core::TransformationConsumer>(
         rewriter_, CI.getASTContext(), config_);
+    consumer_ = consumer.get();
+    return consumer;
   }
 
   void EndSourceFileAction() override {
+    // If call graph tracking is enabled, merge this file's graph into shared graph
+    if (config_.enable_call_graph && consumer_ && shared_call_graph_) {
+      auto* builder = consumer_->getCallGraphBuilder();
+      if (builder) {
+        // Get the call graph from this translation unit
+        auto& local_graph = builder->get_graph();
+
+        // Merge into shared graph (copy all nodes and edges)
+        for (const auto& func_name : local_graph.get_all_functions()) {
+          const auto* node = local_graph.get_function(func_name);
+          if (node) {
+            shared_call_graph_->add_function(node->function_name, node->file,
+                                             node->line, node->is_template, node->is_virtual);
+            for (const auto& callee : node->callees) {
+              shared_call_graph_->add_call(func_name, callee);
+            }
+          }
+        }
+      }
+    }
+
+    // If data flow analysis is enabled, merge this file's analysis into shared analysis
+    if (config_.enable_data_flow_analysis && consumer_ && shared_data_flow_) {
+      auto* local_data_flow = consumer_->getDataFlowAnalysis();
+      if (local_data_flow) {
+        // Merge the local analysis into the shared analysis
+        shared_data_flow_->merge(*local_data_flow);
+      }
+    }
+
+    // If memory profiling is enabled, merge this file's analysis into shared profiler
+    if (config_.enable_memory_profiling && consumer_ && shared_memory_profiler_) {
+      auto* local_memory_profiler = consumer_->getMemoryProfiler();
+      if (local_memory_profiler) {
+        // Merge the local profiler into the shared profiler
+        shared_memory_profiler_->merge(*local_memory_profiler);
+      }
+    }
+
     auto &source_manager = rewriter_.getSourceMgr();
 
     if (DryRun) {
@@ -238,6 +417,11 @@ public:
 private:
   Rewriter rewriter_;
   core::TransformationConfig config_;
+  analysis::CallGraph* shared_call_graph_;
+  analysis::DependencyGraph* shared_dependency_graph_;
+  analysis::DataFlowAnalysis* shared_data_flow_;
+  analysis::MemoryProfiler* shared_memory_profiler_;
+  core::TransformationConsumer* consumer_;
 };
 
 /**
@@ -247,14 +431,23 @@ class OptiWeaveFrontendActionFactory : public FrontendActionFactory {
 public:
   explicit OptiWeaveFrontendActionFactory(
       const core::TransformationConfig &config)
-      : config_(config) {}
+      : config_(config), call_graph_(), dependency_graph_(), data_flow_analysis_(), memory_profiler_() {}
 
   std::unique_ptr<FrontendAction> create() override {
-    return std::make_unique<OptiWeaveFrontendAction>(config_);
+    return std::make_unique<OptiWeaveFrontendAction>(config_, &call_graph_, &dependency_graph_, &data_flow_analysis_, &memory_profiler_);
   }
+
+  analysis::CallGraph& getCallGraph() { return call_graph_; }
+  analysis::DependencyGraph& getDependencyGraph() { return dependency_graph_; }
+  analysis::DataFlowAnalysis& getDataFlowAnalysis() { return data_flow_analysis_; }
+  analysis::MemoryProfiler& getMemoryProfiler() { return memory_profiler_; }
 
 private:
   core::TransformationConfig config_;
+  analysis::CallGraph call_graph_;
+  analysis::DependencyGraph dependency_graph_;
+  analysis::DataFlowAnalysis data_flow_analysis_;
+  analysis::MemoryProfiler memory_profiler_;
 };
 
 /**
@@ -350,6 +543,44 @@ Usage Examples:
 
   # Transform entire project with compilation database
   optiweave --arithmetic-ops $(find src -name "*.cpp") --
+
+  # Generate call graph in DOT format (visualize with GraphViz)
+  optiweave source.cpp --call-graph --call-graph-output=callgraph.dot --
+  dot -Tpng callgraph.dot -o callgraph.png
+
+  # Generate call graph in JSON format
+  optiweave source.cpp --call-graph --call-graph-format=json --call-graph-output=callgraph.json --
+
+  # Generate interactive HTML call graph visualization
+  optiweave source.cpp --call-graph --call-graph-format=html --call-graph-output=callgraph.html --
+
+  # Generate dependency graph in DOT format (visualize with GraphViz)
+  optiweave source.cpp --dependency-graph --dependency-graph-output=dependencies.dot --
+  dot -Tpng dependencies.dot -o dependencies.png
+
+  # Generate dependency graph in JSON format
+  optiweave source.cpp --dependency-graph --dependency-graph-format=json --dependency-graph-output=dependencies.json --
+
+  # Include system headers in dependency graph
+  optiweave source.cpp --dependency-graph --include-system-headers --verbose --
+
+  # Combine transformation with call graph and complexity analysis
+  optiweave source.cpp --call-graph --analyze-complexity --verbose --
+
+  # Generate both call graph and dependency graph
+  optiweave source.cpp --call-graph --dependency-graph --verbose --
+
+  # Perform data flow analysis (detect unused variables, uninitialized usage)
+  optiweave source.cpp --data-flow-analysis --data-flow-output=dataflow.txt --
+
+  # Data flow analysis with JSON output
+  optiweave source.cpp --data-flow-analysis --data-flow-format=json --data-flow-output=dataflow.json --
+
+  # Perform memory profiling (track allocations, deallocations, detect leaks)
+  optiweave source.cpp --memory-profile --memory-profile-output=memory.txt --
+
+  # Memory profiling with JSON output
+  optiweave source.cpp --memory-profile --memory-profile-format=json --memory-profile-output=memory.json --
 
 For more information, see: https://github.com/optiweave/optiweave
 )";
@@ -583,6 +814,14 @@ bool compileTransformedFiles(const std::vector<std::string> &source_paths) {
     }
   }
 
+  // Add cache profiling compilation flags if enabled
+  if (EnableCacheProfiling || !CacheProfileCSV.empty() || !CacheProfileJSON.empty()) {
+    compile_cmd.push_back("-DOPTIWEAVE_ENABLE_CACHE_PROFILE");
+    if (Verbose) {
+      llvm::errs() << "Enabling cache profiling\n";
+    }
+  }
+
   // Add runtime include path for statistics header
   SmallString<128> runtime_include_dir;
   if (auto exe = llvm::sys::fs::getMainExecutable(nullptr, nullptr); !exe.empty()) {
@@ -744,6 +983,10 @@ int main(int argc, const char **argv) {
   config.transform_comparisons_operators = TransformComparison;
   config.evaluation_safe_wrappers = EvaluationSafe;
   config.skip_system_headers = SkipSystemHeaders;
+  config.enable_call_graph = EnableCallGraph;
+  config.enable_dependency_graph = EnableDependencyGraph;
+  config.enable_data_flow_analysis = EnableDataFlowAnalysis;
+  config.enable_memory_profiling = EnableMemoryProfiling;
   config.prelude_path = prelude_path;
 
   if (Verbose) {
@@ -916,12 +1159,554 @@ int main(int argc, const char **argv) {
     }
   }
 
+  // Export call graph if requested
+  if (EnableCallGraph) {
+    if (Verbose) {
+      llvm::errs() << "Exporting call graph...\n";
+    }
+
+    auto& call_graph = factory.getCallGraph();
+
+    // Export based on format
+    std::string format = CallGraphFormat;
+    std::string output_file = CallGraphOutput;
+
+    try {
+      if (format == "json") {
+        call_graph.export_json(output_file);
+      } else if (format == "html") {
+        call_graph.export_html(output_file);
+      } else {
+        // Default: DOT format
+        call_graph.export_dot(output_file, false);
+      }
+
+      llvm::errs() << "Call graph exported to: " << output_file << "\n";
+
+      if (Verbose) {
+        call_graph.print_statistics(llvm::outs());
+      }
+    } catch (const std::exception& e) {
+      llvm::errs() << "Error exporting call graph: " << e.what() << "\n";
+    }
+  }
+
+  // Export dependency graph if requested
+  if (EnableDependencyGraph) {
+    if (Verbose) {
+      llvm::errs() << "Exporting dependency graph...\n";
+    }
+
+    auto& dependency_graph = factory.getDependencyGraph();
+
+    // Calculate metrics before export
+    dependency_graph.calculate_include_depths();
+    dependency_graph.calculate_metrics();
+
+    // Export based on format
+    std::string format = DependencyGraphFormat;
+    std::string output_file = DependencyGraphOutput;
+    bool include_system = IncludeSystemHeaders;
+
+    try {
+      if (format == "json") {
+        dependency_graph.export_json(output_file, include_system);
+      } else {
+        // Default: DOT format
+        dependency_graph.export_dot(output_file, include_system);
+      }
+
+      llvm::errs() << "Dependency graph exported to: " << output_file << "\n";
+
+      if (Verbose) {
+        dependency_graph.print_statistics(llvm::outs(), include_system);
+      }
+    } catch (const std::exception& e) {
+      llvm::errs() << "Error exporting dependency graph: " << e.what() << "\n";
+    }
+  }
+
+  // Export data flow analysis if requested
+  if (EnableDataFlowAnalysis) {
+    if (Verbose) {
+      llvm::errs() << "Exporting data flow analysis...\n";
+    }
+
+    auto& data_flow = factory.getDataFlowAnalysis();
+
+    // Run detection algorithms on the merged data
+    data_flow.detect_uninitialized_variables();
+    data_flow.detect_unused_variables();
+    data_flow.detect_dead_code();
+    data_flow.generate_refactoring_opportunities();
+
+    // Export based on format
+    std::string format = DataFlowFormat;
+    std::string output_file = DataFlowOutput;
+
+    // We need a source manager for export - create a minimal one
+    llvm::IntrusiveRefCntPtr<clang::DiagnosticOptions> diag_opts = new clang::DiagnosticOptions();
+    clang::TextDiagnosticPrinter *diag_printer = new clang::TextDiagnosticPrinter(llvm::errs(), diag_opts.get());
+    llvm::IntrusiveRefCntPtr<clang::DiagnosticIDs> diag_id(new clang::DiagnosticIDs());
+    clang::DiagnosticsEngine diags(diag_id, diag_opts, diag_printer);
+
+    clang::FileSystemOptions file_system_opts;
+    clang::FileManager file_mgr(file_system_opts);
+    clang::SourceManager source_mgr(diags, file_mgr);
+
+    try {
+      if (format == "json") {
+        data_flow.export_json(output_file, source_mgr);
+      } else {
+        // Default: text format
+        data_flow.export_text(output_file, source_mgr);
+      }
+
+      llvm::errs() << "Data flow analysis exported to: " << output_file << "\n";
+
+      if (Verbose) {
+        data_flow.print_statistics(llvm::outs(), source_mgr);
+      }
+    } catch (const std::exception& e) {
+      llvm::errs() << "Error exporting data flow analysis: " << e.what() << "\n";
+    }
+  }
+
+  // Export memory profiling if requested
+  if (EnableMemoryProfiling) {
+    if (Verbose) {
+      llvm::errs() << "Exporting memory profiling...\n";
+    }
+
+    auto& memory_profiler = factory.getMemoryProfiler();
+
+    // Run analysis on the merged data
+    memory_profiler.analyze();
+
+    // Export based on format
+    std::string format = MemoryProfileFormat;
+    std::string output_file = MemoryProfileOutput;
+
+    try {
+      if (format == "json") {
+        memory_profiler.export_json(output_file);
+      } else {
+        // Default: text format
+        memory_profiler.export_text(output_file);
+      }
+
+      llvm::errs() << "Memory profiling exported to: " << output_file << "\n";
+
+      if (Verbose) {
+        memory_profiler.print_statistics(llvm::outs());
+      }
+    } catch (const std::exception& e) {
+      llvm::errs() << "Error exporting memory profiling: " << e.what() << "\n";
+    }
+  }
+
+  // Perform overflow detection if requested
+  if (EnableOverflowDetection) {
+    if (Verbose) {
+      llvm::errs() << "Performing integer overflow detection...\n";
+    }
+
+    // Create a new tool for overflow detection
+    ClangTool OverflowTool(OptionsParser.getCompilations(),
+                           OptionsParser.getSourcePathList());
+
+    // Add templates directory to include path (same as transformation tool)
+    if (llvm::sys::fs::exists(templates_dir)) {
+      std::string include_arg = "-I" + templates_dir.str().str();
+      OverflowTool.appendArgumentsAdjuster(getInsertArgumentAdjuster(include_arg.c_str(), clang::tooling::ArgumentInsertPosition::BEGIN));
+      if (Verbose) {
+        llvm::errs() << "Added include path for overflow detection: " << templates_dir << "\n";
+      }
+    }
+
+    // Add C++20 standard
+    OverflowTool.appendArgumentsAdjuster(getInsertArgumentAdjuster("-std=c++20", clang::tooling::ArgumentInsertPosition::BEGIN));
+
+    // Add Clang resource directory
+    if (!resource_dir.empty() && llvm::sys::fs::exists(resource_dir)) {
+      std::string resource_arg = "-resource-dir=" + resource_dir;
+      OverflowTool.appendArgumentsAdjuster(getInsertArgumentAdjuster(resource_arg.c_str(), clang::tooling::ArgumentInsertPosition::BEGIN));
+      if (Verbose) {
+        llvm::errs() << "Using Clang resource directory for overflow detection: " << resource_dir << "\n";
+      }
+    }
+
+    // Create frontend action that collects overflow issues
+    class OverflowDetectionAction : public clang::ASTFrontendAction {
+    public:
+      explicit OverflowDetectionAction(std::vector<optiweave::analysis::OverflowIssue>* shared_issues)
+        : shared_issues_(shared_issues) {}
+
+      std::unique_ptr<clang::ASTConsumer> CreateASTConsumer(
+          clang::CompilerInstance& CI, llvm::StringRef file) override {
+
+        class OverflowConsumer : public clang::ASTConsumer {
+        public:
+          OverflowConsumer(clang::ASTContext& context,
+                          std::vector<optiweave::analysis::OverflowIssue>* shared_issues)
+            : detector_(context), shared_issues_(shared_issues) {}
+
+          void HandleTranslationUnit(clang::ASTContext& context) override {
+            detector_.TraverseDecl(context.getTranslationUnitDecl());
+
+            // Merge issues into shared list
+            if (shared_issues_) {
+              const auto& issues = detector_.get_issues();
+              shared_issues_->insert(shared_issues_->end(), issues.begin(), issues.end());
+            }
+          }
+
+        private:
+          optiweave::analysis::OverflowDetector detector_;
+          std::vector<optiweave::analysis::OverflowIssue>* shared_issues_;
+        };
+
+        return std::make_unique<OverflowConsumer>(CI.getASTContext(), shared_issues_);
+      }
+
+    private:
+      std::vector<optiweave::analysis::OverflowIssue>* shared_issues_;
+    };
+
+    class OverflowDetectionFactory : public clang::tooling::FrontendActionFactory {
+    public:
+      OverflowDetectionFactory() {}
+
+      std::unique_ptr<clang::FrontendAction> create() override {
+        return std::make_unique<OverflowDetectionAction>(&shared_issues_);
+      }
+
+      const std::vector<optiweave::analysis::OverflowIssue>& getIssues() const {
+        return shared_issues_;
+      }
+
+    private:
+      std::vector<optiweave::analysis::OverflowIssue> shared_issues_;
+    };
+
+    OverflowDetectionFactory overflow_factory;
+    int overflow_result = OverflowTool.run(&overflow_factory);
+
+    if (Verbose) {
+      llvm::errs() << "Overflow detection return code: " << overflow_result << "\n";
+    }
+
+    const auto& issues = overflow_factory.getIssues();
+
+    if (Verbose) {
+      llvm::errs() << "Issues detected: " << issues.size() << "\n";
+    }
+
+    // Export results based on format
+    std::string format = OverflowFormat;
+    std::string output_file = OverflowOutput;
+
+    try {
+      if (format == "json") {
+        // Create a temporary detector just for export (we have the issues)
+        // We'll write JSON manually
+        std::error_code EC;
+        llvm::raw_fd_ostream out(output_file, EC);
+        if (EC) {
+          throw std::runtime_error("Could not open file for writing: " + output_file);
+        }
+
+        out << "{\n";
+        out << "  \"total_issues\": " << issues.size() << ",\n";
+        out << "  \"issues\": [\n";
+
+        for (size_t i = 0; i < issues.size(); ++i) {
+          const auto& issue = issues[i];
+          out << "    {\n";
+          out << "      \"type\": \"" << optiweave::analysis::overflow_type_to_string(issue.type) << "\",\n";
+          out << "      \"severity\": \"" << optiweave::analysis::severity_to_string(issue.severity) << "\",\n";
+          out << "      \"file\": \"" << issue.file << "\",\n";
+          out << "      \"line\": " << issue.line << ",\n";
+          out << "      \"column\": " << issue.column << ",\n";
+          out << "      \"function\": \"" << issue.function << "\",\n";
+          out << "      \"description\": \"" << issue.description << "\",\n";
+          out << "      \"suggestion\": \"" << issue.suggestion << "\"\n";
+          out << "    }";
+          if (i < issues.size() - 1) {
+            out << ",";
+          }
+          out << "\n";
+        }
+
+        out << "  ]\n";
+        out << "}\n";
+        out.flush();
+      } else {
+        // Text format
+        std::error_code EC;
+        llvm::raw_fd_ostream out(output_file, EC);
+        if (EC) {
+          throw std::runtime_error("Could not open file for writing: " + output_file);
+        }
+
+        out << "=== Integer Overflow Detection Report ===\n\n";
+        out << "Total issues found: " << issues.size() << "\n\n";
+
+        // Group by severity
+        size_t critical = 0, warning = 0, info = 0;
+        for (const auto& issue : issues) {
+          if (issue.severity == optiweave::analysis::OverflowSeverity::CRITICAL) critical++;
+          else if (issue.severity == optiweave::analysis::OverflowSeverity::WARNING) warning++;
+          else info++;
+        }
+
+        out << "Critical: " << critical << "\n";
+        out << "Warning: " << warning << "\n";
+        out << "Info: " << info << "\n\n";
+
+        // Print all issues
+        for (const auto& issue : issues) {
+          out << "[" << optiweave::analysis::severity_to_string(issue.severity) << "] ";
+          out << optiweave::analysis::overflow_type_to_string(issue.type) << "\n";
+          out << "  Location: " << issue.file << ":" << issue.line << ":" << issue.column;
+          if (!issue.function.empty()) {
+            out << " (in " << issue.function << ")";
+          }
+          out << "\n";
+          out << "  Description: " << issue.description << "\n";
+          if (!issue.suggestion.empty()) {
+            out << "  Suggestion: " << issue.suggestion << "\n";
+          }
+          out << "\n";
+        }
+
+        out.flush();
+      }
+
+      llvm::errs() << "Overflow detection exported to: " << output_file << "\n";
+
+      // Print summary to stdout
+      if (Verbose && issues.size() > 0) {
+        llvm::outs() << "\nOverflow Detection Summary:\n";
+        llvm::outs() << "  Total issues: " << issues.size() << "\n";
+
+        // Count by severity
+        size_t critical = 0, warning = 0, info = 0;
+        for (const auto& issue : issues) {
+          if (issue.severity == optiweave::analysis::OverflowSeverity::CRITICAL) critical++;
+          else if (issue.severity == optiweave::analysis::OverflowSeverity::WARNING) warning++;
+          else info++;
+        }
+
+        llvm::outs() << "  Critical: " << critical << "\n";
+        llvm::outs() << "  Warning: " << warning << "\n";
+        llvm::outs() << "  Info: " << info << "\n";
+      }
+    } catch (const std::exception& e) {
+      llvm::errs() << "Error exporting overflow detection: " << e.what() << "\n";
+    }
+  }
+
+  // Perform FP precision warnings if requested
+  if (EnableFPPrecisionWarnings) {
+    if (Verbose) {
+      llvm::errs() << "Performing floating-point precision analysis...\n";
+    }
+
+    // Create a new tool for FP precision detection
+    ClangTool FPPrecisionTool(OptionsParser.getCompilations(),
+                              OptionsParser.getSourcePathList());
+
+    // Add templates directory to include path
+    if (llvm::sys::fs::exists(templates_dir)) {
+      std::string include_arg = "-I" + templates_dir.str().str();
+      FPPrecisionTool.appendArgumentsAdjuster(getInsertArgumentAdjuster(include_arg.c_str(), clang::tooling::ArgumentInsertPosition::BEGIN));
+    }
+
+    // Add C++20 standard
+    FPPrecisionTool.appendArgumentsAdjuster(getInsertArgumentAdjuster("-std=c++20", clang::tooling::ArgumentInsertPosition::BEGIN));
+
+    // Add Clang resource directory
+    if (!resource_dir.empty() && llvm::sys::fs::exists(resource_dir)) {
+      std::string resource_arg = "-resource-dir=" + resource_dir;
+      FPPrecisionTool.appendArgumentsAdjuster(getInsertArgumentAdjuster(resource_arg.c_str(), clang::tooling::ArgumentInsertPosition::BEGIN));
+    }
+
+    // Create frontend action for FP precision detection
+    class FPPrecisionAction : public clang::ASTFrontendAction {
+    public:
+      explicit FPPrecisionAction(std::vector<optiweave::analysis::FPPrecisionIssue>* shared_issues)
+        : shared_issues_(shared_issues) {}
+
+      std::unique_ptr<clang::ASTConsumer> CreateASTConsumer(
+          clang::CompilerInstance& CI, llvm::StringRef file) override {
+
+        class FPPrecisionConsumer : public clang::ASTConsumer {
+        public:
+          FPPrecisionConsumer(clang::ASTContext& context,
+                             std::vector<optiweave::analysis::FPPrecisionIssue>* shared_issues)
+            : detector_(context), shared_issues_(shared_issues) {}
+
+          void HandleTranslationUnit(clang::ASTContext& context) override {
+            detector_.TraverseDecl(context.getTranslationUnitDecl());
+
+            if (shared_issues_) {
+              const auto& issues = detector_.get_issues();
+              shared_issues_->insert(shared_issues_->end(), issues.begin(), issues.end());
+            }
+          }
+
+        private:
+          optiweave::analysis::FPPrecisionDetector detector_;
+          std::vector<optiweave::analysis::FPPrecisionIssue>* shared_issues_;
+        };
+
+        return std::make_unique<FPPrecisionConsumer>(CI.getASTContext(), shared_issues_);
+      }
+
+    private:
+      std::vector<optiweave::analysis::FPPrecisionIssue>* shared_issues_;
+    };
+
+    class FPPrecisionFactory : public clang::tooling::FrontendActionFactory {
+    public:
+      std::unique_ptr<clang::FrontendAction> create() override {
+        return std::make_unique<FPPrecisionAction>(&shared_issues_);
+      }
+
+      const std::vector<optiweave::analysis::FPPrecisionIssue>& getIssues() const {
+        return shared_issues_;
+      }
+
+    private:
+      std::vector<optiweave::analysis::FPPrecisionIssue> shared_issues_;
+    };
+
+    FPPrecisionFactory fp_factory;
+    int fp_result = FPPrecisionTool.run(&fp_factory);
+
+    const auto& fp_issues = fp_factory.getIssues();
+
+    if (Verbose) {
+      llvm::errs() << "FP precision issues detected: " << fp_issues.size() << "\n";
+    }
+
+    // Export results
+    std::string format = FPPrecisionFormat;
+    std::string output_file = FPPrecisionOutput;
+
+    try {
+      if (format == "json") {
+        // Write JSON manually
+        std::error_code EC;
+        llvm::raw_fd_ostream out(output_file, EC);
+        if (EC) {
+          throw std::runtime_error("Could not open file for writing: " + output_file);
+        }
+
+        out << "{\n";
+        out << "  \"total_issues\": " << fp_issues.size() << ",\n";
+        out << "  \"issues\": [\n";
+
+        for (size_t i = 0; i < fp_issues.size(); ++i) {
+          const auto& issue = fp_issues[i];
+          out << "    {\n";
+          out << "      \"type\": \"fp_precision_issue\",\n";
+          out << "      \"severity\": \"" << (issue.severity == optiweave::analysis::FPPrecisionSeverity::CRITICAL ? "critical" :
+                                                issue.severity == optiweave::analysis::FPPrecisionSeverity::WARNING ? "warning" : "info") << "\",\n";
+          out << "      \"file\": \"" << issue.file << "\",\n";
+          out << "      \"line\": " << issue.line << ",\n";
+          out << "      \"column\": " << issue.column << ",\n";
+          out << "      \"function\": \"" << issue.function_name << "\",\n";
+          out << "      \"description\": \"" << issue.description << "\",\n";
+          out << "      \"suggestion\": \"" << issue.suggestion << "\"";
+          if (!issue.expression_text.empty()) {
+            out << ",\n      \"expression\": \"" << issue.expression_text << "\"";
+          }
+          out << "\n    }";
+          if (i < fp_issues.size() - 1) {
+            out << ",";
+          }
+          out << "\n";
+        }
+
+        out << "  ]\n";
+        out << "}\n";
+        out.flush();
+      } else {
+        // Write text format
+        std::error_code EC;
+        llvm::raw_fd_ostream out(output_file, EC);
+        if (EC) {
+          throw std::runtime_error("Could not open file for writing: " + output_file);
+        }
+
+        out << "=== Floating-Point Precision Warning Report ===\n\n";
+        out << "Total issues found: " << fp_issues.size() << "\n\n";
+
+        // Count by severity
+        size_t critical = 0, warning = 0, info = 0;
+        for (const auto& issue : fp_issues) {
+          if (issue.severity == optiweave::analysis::FPPrecisionSeverity::CRITICAL) critical++;
+          else if (issue.severity == optiweave::analysis::FPPrecisionSeverity::WARNING) warning++;
+          else info++;
+        }
+
+        out << "Critical: " << critical << "\n";
+        out << "Warning: " << warning << "\n";
+        out << "Info: " << info << "\n\n";
+
+        // Print all issues
+        for (const auto& issue : fp_issues) {
+          out << "[" << (issue.severity == optiweave::analysis::FPPrecisionSeverity::CRITICAL ? "critical" :
+                         issue.severity == optiweave::analysis::FPPrecisionSeverity::WARNING ? "warning" : "info") << "] ";
+          out << "FP precision issue\n";
+          out << "  Location: " << issue.file << ":" << issue.line << ":" << issue.column;
+          if (!issue.function_name.empty()) {
+            out << " (in " << issue.function_name << ")";
+          }
+          out << "\n";
+          out << "  Description: " << issue.description << "\n";
+          if (!issue.suggestion.empty()) {
+            out << "  Suggestion: " << issue.suggestion << "\n";
+          }
+          if (!issue.expression_text.empty()) {
+            out << "  Expression: " << issue.expression_text << "\n";
+          }
+          out << "\n";
+        }
+
+        out.flush();
+      }
+
+      llvm::errs() << "FP precision warnings exported to: " << output_file << "\n";
+
+      if (Verbose && fp_issues.size() > 0) {
+        llvm::outs() << "\nFP Precision Summary:\n";
+        llvm::outs() << "  Total issues: " << fp_issues.size() << "\n";
+
+        size_t critical = 0, warning = 0, info = 0;
+        for (const auto& issue : fp_issues) {
+          if (issue.severity == optiweave::analysis::FPPrecisionSeverity::CRITICAL) critical++;
+          else if (issue.severity == optiweave::analysis::FPPrecisionSeverity::WARNING) warning++;
+          else info++;
+        }
+
+        llvm::outs() << "  Critical: " << critical << "\n";
+        llvm::outs() << "  Warning: " << warning << "\n";
+        llvm::outs() << "  Info: " << info << "\n";
+      }
+    } catch (const std::exception& e) {
+      llvm::errs() << "Error exporting FP precision warnings: " << e.what() << "\n";
+    }
+  }
+
   // Always attempt compilation if requested (transformation often succeeds despite parse warnings)
   if (CompileAfterTransform) {
     if (Verbose) {
       llvm::errs() << "Starting compilation...\n";
     }
-    
+
     if (!optiweave::compileTransformedFiles(source_paths)) {
       llvm::errs() << "Compilation failed\n";
       return 1; // Compilation failed
