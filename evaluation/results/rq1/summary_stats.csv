@@ -1,0 +1,11 @@
+benchmark,baseline_median,optiweave_median,overhead_pct,baseline_stddev,optiweave_stddev,correctness
+gemm,0.34,0.35,2.00,0.01249,0.011,FAIL
+gemver,0.03,0.03,0,0,0,FAIL
+cholesky,15.405,FAILED,N/A,0.590204,N/A,COMPILATION_FAILED
+jacobi-2d,1,1.105,10.00,0.006,0.0631189,FAIL
+nussinov,2.31,2.82,22.00,0.0135647,0.021,FAIL
+2mm,3.32,3.285,-1.00,0.131488,0.0135647,FAIL
+correlation,2.1,2.1,0,0.006,0.006,FAIL
+heat-3d,1.52,1.53,0,0,0.0368239,FAIL
+atax,0.02,0.02,0,0,0,FAIL
+floyd-warshall,15.56,15.69,0,0.129248,0.0162788,FAIL
