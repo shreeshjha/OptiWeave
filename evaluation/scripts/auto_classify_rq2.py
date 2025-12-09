@@ -83,12 +83,7 @@ def auto_classify(results_dir):
         cpp_detected_funcs = parse_cppcheck_output(cpp_file)
         cpp_result = 'DETECTED' if test_function in cpp_detected_funcs else 'MISSED'
 
-        # Determine if it's a false positive
-        if expected == 'TRUE_NEGATIVE':
-            if ow_result == 'DETECTED':
-                ow_result = 'FALSE_POSITIVE'
-            if cpp_result == 'DETECTED':
-                cpp_result = 'FALSE_POSITIVE'
+        # Keep DETECTED/MISSED - metrics calculator will determine if it's FP/FN
 
         results.append({
             'test_file': test_file,

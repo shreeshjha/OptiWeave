@@ -387,7 +387,7 @@ public:
         FileID file_id = i->first;
         const RewriteBuffer &buffer = i->second;
 
-        auto file_entry = source_manager.getFileEntryForID(file_id);
+        auto file_entry = source_manager.getFileEntryRefForID(file_id);
         if (!file_entry)
           continue;
 
@@ -932,6 +932,16 @@ int main(int argc, const char **argv) {
 
   auto source_paths = OptionsParser.getSourcePathList();
 
+  // Detect if we're processing C or C++ files
+  bool is_c_file = false;
+  if (!source_paths.empty()) {
+    llvm::StringRef first_file(source_paths[0]);
+    is_c_file = first_file.ends_with(".c");
+    if (Verbose) {
+      llvm::errs() << "Detected file type: " << (is_c_file ? "C" : "C++") << "\n";
+    }
+  }
+
   // Generate compilation database if requested or if none exists and we need one
   bool should_generate_compile_commands = GenerateCompileCommands;
   
@@ -1037,8 +1047,9 @@ int main(int argc, const char **argv) {
     }
   }
 
-  // Add C++20 standard if not specified
-  Tool.appendArgumentsAdjuster(getInsertArgumentAdjuster("-std=c++20", clang::tooling::ArgumentInsertPosition::BEGIN));
+  // Add appropriate language standard if not specified
+  const char* lang_std = is_c_file ? "-std=c11" : "-std=c++20";
+  Tool.appendArgumentsAdjuster(getInsertArgumentAdjuster(lang_std, clang::tooling::ArgumentInsertPosition::BEGIN));
 
   // Add Clang resource directory for compiler intrinsics (stdarg.h, etc.)
   std::string resource_dir;
@@ -1098,7 +1109,7 @@ int main(int argc, const char **argv) {
     }
 
     // Add C++20 standard
-    ComplexityTool.appendArgumentsAdjuster(getInsertArgumentAdjuster("-std=c++20", clang::tooling::ArgumentInsertPosition::BEGIN));
+    ComplexityTool.appendArgumentsAdjuster(getInsertArgumentAdjuster(lang_std, clang::tooling::ArgumentInsertPosition::BEGIN));
 
     // Add Clang resource directory for compiler intrinsics (same as transformation tool)
     if (!resource_dir.empty() && llvm::sys::fs::exists(resource_dir)) {
@@ -1245,8 +1256,8 @@ int main(int argc, const char **argv) {
     std::string output_file = DataFlowOutput;
 
     // We need a source manager for export - create a minimal one
-    llvm::IntrusiveRefCntPtr<clang::DiagnosticOptions> diag_opts = new clang::DiagnosticOptions();
-    clang::TextDiagnosticPrinter *diag_printer = new clang::TextDiagnosticPrinter(llvm::errs(), diag_opts.get());
+    clang::DiagnosticOptions diag_opts;
+    clang::TextDiagnosticPrinter *diag_printer = new clang::TextDiagnosticPrinter(llvm::errs(), diag_opts);
     llvm::IntrusiveRefCntPtr<clang::DiagnosticIDs> diag_id(new clang::DiagnosticIDs());
     clang::DiagnosticsEngine diags(diag_id, diag_opts, diag_printer);
 
@@ -1325,7 +1336,7 @@ int main(int argc, const char **argv) {
     }
 
     // Add C++20 standard
-    OverflowTool.appendArgumentsAdjuster(getInsertArgumentAdjuster("-std=c++20", clang::tooling::ArgumentInsertPosition::BEGIN));
+    OverflowTool.appendArgumentsAdjuster(getInsertArgumentAdjuster(lang_std, clang::tooling::ArgumentInsertPosition::BEGIN));
 
     // Add Clang resource directory
     if (!resource_dir.empty() && llvm::sys::fs::exists(resource_dir)) {
@@ -1524,7 +1535,7 @@ int main(int argc, const char **argv) {
     }
 
     // Add C++20 standard
-    FPPrecisionTool.appendArgumentsAdjuster(getInsertArgumentAdjuster("-std=c++20", clang::tooling::ArgumentInsertPosition::BEGIN));
+    FPPrecisionTool.appendArgumentsAdjuster(getInsertArgumentAdjuster(lang_std, clang::tooling::ArgumentInsertPosition::BEGIN));
 
     // Add Clang resource directory
     if (!resource_dir.empty() && llvm::sys::fs::exists(resource_dir)) {

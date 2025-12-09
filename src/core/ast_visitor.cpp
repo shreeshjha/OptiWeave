@@ -207,12 +207,12 @@ bool ModernASTVisitor::shouldSkipExpression(const clang::Expr *expr) const {
   auto &source_manager = context_.getSourceManager();
   auto location = expr->getBeginLoc();
   if (location.isValid()) {
-    auto file_entry = source_manager.getFileEntryForID(source_manager.getFileID(location));
+    auto file_entry = source_manager.getFileEntryRefForID(source_manager.getFileID(location));
     if (file_entry) {
       llvm::StringRef filename = file_entry->getName();
       // Skip if the file is in templates/ directory or is named prelude.hpp
-      if (filename.contains("/templates/") || filename.endswith("prelude.hpp") ||
-          filename.endswith("optiweave/prelude.hpp") || filename.contains("/optiweave/")) {
+      if (filename.contains("/templates/") || filename.ends_with("prelude.hpp") ||
+          filename.ends_with("optiweave/prelude.hpp") || filename.contains("/optiweave/")) {
         return true;
       }
     }
@@ -785,6 +785,7 @@ void DependencyTrackerPPCallbacks::InclusionDirective(
     llvm::StringRef search_path,
     llvm::StringRef relative_path,
     const clang::Module* imported,
+    bool module_imported,
     clang::SrcMgr::CharacteristicKind file_type) {
 
   if (!dep_graph_) {
