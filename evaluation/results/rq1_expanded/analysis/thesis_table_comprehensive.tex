@@ -1,0 +1,47 @@
+\begin{table}[h]
+\centering
+\caption{OptiWeave Instrumentation Overhead on Polybench/C Benchmarks}
+\label{tab:rq1-overhead-full}
+\begin{tabular}{lrrrrl}
+\toprule
+\textbf{Benchmark} & \textbf{Baseline (s)} & \textbf{OptiWeave (s)} & \textbf{Overhead (\%)} & \textbf{gprof (\%)} & \textbf{Sig.} \\
+\midrule
+floyd-warshall       &  18.95 &  15.51 & -18.18 & -18.10 & * \\
+seidel-2d            &  37.29 &  31.26 & -16.16 & -23.54 &   \\
+adi                  &  13.20 &  11.32 & -14.25 & -11.10 &   \\
+trmm                 &   1.68 &   1.48 & -11.74 & -15.52 &   \\
+doitgen              &   0.98 &   0.94 &  -3.30 &  -5.13 &   \\
+covariance           &   2.73 &   2.65 &  -2.97 &  -4.80 & * \\
+gramschmidt          &   3.69 &   3.60 &  -2.41 &   4.75 &   \\
+fdtd-2d              &   2.13 &   2.10 &  -1.25 &  -9.04 &   \\
+durbin               &   0.01 &   0.01 &   0.00 &   0.00 &   \\
+gemver               &   0.03 &   0.03 &   0.00 &   0.00 &   \\
+gesummv              &   0.02 &   0.02 &   0.00 &   0.00 &   \\
+deriche              &   0.23 &   0.23 &   0.00 &   0.48 &   \\
+trisolv              &   0.02 &   0.02 &   0.00 &   0.00 &   \\
+mvt                  &   0.03 &   0.03 &   0.00 &   0.00 &   \\
+syr2k                &   1.53 &   1.53 &   0.07 &   0.58 &   \\
+gemm                 &   0.34 &   0.34 &   0.65 &   0.00 &   \\
+symm                 &   1.49 &   1.52 &   1.86 &   0.45 & * \\
+syrk                 &   0.62 &   0.65 &   4.27 &  80.78 & * \\
+jacobi-2d            &   2.06 &   2.15 &   4.64 &  -9.34 & * \\
+correlation          &   2.67 &   2.83 &   5.69 &   2.33 & * \\
+2mm                  &   3.83 &   4.09 &   6.78 &   4.52 & * \\
+3mm                  &   5.95 &   6.95 &  16.75 &   7.45 & * \\
+bicg                 &   0.04 &   0.05 &  19.44 &  25.00 & * \\
+nussinov             &   2.24 &   2.78 &  23.91 &   0.30 & * \\
+heat-3d              &   2.85 &   3.61 &  26.81 &  26.23 & * \\
+jacobi-1d            &   0.01 &   0.01 &  33.33 &   0.00 &   \\
+atax                 &   0.02 &   0.03 &  55.56 &   0.00 & * \\
+cholesky             &  23.58 &    N/A &    N/A &    nan &   \\
+lu                   &  26.17 &    N/A &    N/A &    nan &   \\
+ludcmp               &  24.87 &    N/A &    N/A &    nan &   \\
+\midrule
+\multicolumn{6}{l}{\textbf{Summary Statistics:}} \\
+\multicolumn{6}{l}{Mean OptiWeave overhead: 4.80\%} \\
+\multicolumn{6}{l}{Median OptiWeave overhead: 0.00\%} \\
+\multicolumn{6}{l}{Mean gprof overhead: 2.09\%} \\
+\multicolumn{6}{l}{* Statistically significant at $\alpha=0.05$} \\
+\bottomrule
+\end{tabular}
+\end{table}
