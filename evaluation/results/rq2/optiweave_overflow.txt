@@ -1,0 +1,44 @@
+OptiWeave Configuration:
+  Array subscripts: ON
+  Arithmetic ops: OFF
+  Assignment ops: OFF
+  Comparison ops: OFF
+  Skip system headers: ON
+  Prelude path: /Users/shreesh/Dev/Github/OptiWeave/build/../templates/prelude.hpp
+  Output directory: overwrite
+  Dry run: OFF
+Added include path: /Users/shreesh/Dev/Github/OptiWeave/build/../templates
+Using Clang resource directory: /Library/Developer/CommandLineTools/usr/lib/clang/17
+Processing file: /Users/shreesh/Dev/Github/OptiWeave/evaluation/scripts/../benchmarks/juliet/overflow_test.cpp
+In file included from /Users/shreesh/Dev/Github/OptiWeave/evaluation/scripts/../benchmarks/juliet/overflow_test.cpp:1:
+/Users/shreesh/Dev/Github/OptiWeave/build/../templates/optiweave/prelude.hpp:6:10: fatal error: 'chrono' file not found
+    6 | #include <chrono>
+      |          ^~~~~~~~
+Loop information serialized: 1 loops -> /Users/shreesh/Dev/Github/OptiWeave/evaluation/scripts/../../build/.optiweave_loop_info.bin
+=== Transformation Complete ===
+Transformation Statistics:
+  Array subscripts transformed: 0
+  Arithmetic operators transformed: 0
+  Template instantiations skipped: 0
+  Errors encountered: 0
+1 error generated.
+Error while processing /Users/shreesh/Dev/Github/OptiWeave/evaluation/scripts/../benchmarks/juliet/overflow_test.cpp.
+Parse errors encountered (code: 1), but transformation may have succeeded
+Performing integer overflow detection...
+Added include path for overflow detection: /Users/shreesh/Dev/Github/OptiWeave/build/../templates
+Using Clang resource directory for overflow detection: /Library/Developer/CommandLineTools/usr/lib/clang/17
+In file included from /Users/shreesh/Dev/Github/OptiWeave/evaluation/scripts/../benchmarks/juliet/overflow_test.cpp:1:
+/Users/shreesh/Dev/Github/OptiWeave/build/../templates/optiweave/prelude.hpp:6:10: fatal error: 'chrono' file not found
+    6 | #include <chrono>
+      |          ^~~~~~~~
+1 error generated.
+Error while processing /Users/shreesh/Dev/Github/OptiWeave/evaluation/scripts/../benchmarks/juliet/overflow_test.cpp.
+Overflow detection return code: 1
+Issues detected: 5
+Overflow detection exported to: overflow.txt
+
+Overflow Detection Summary:
+  Total issues: 5
+  Critical: 4
+  Warning: 1
+  Info: 0

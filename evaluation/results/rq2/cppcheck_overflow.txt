@@ -1,0 +1,1 @@
+evaluation/scripts/run_rq2_precision.sh: line 34: cppcheck: command not found
