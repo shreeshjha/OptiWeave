@@ -104,6 +104,7 @@ temp/
 *.iws
 .clangd/
 .ccls-cache/
+.cache/
 
 # OS generated files
 .DS_Store
