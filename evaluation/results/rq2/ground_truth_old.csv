@@ -7,10 +7,8 @@ test_addition.c,test_safe_small_constants,overflow,TRUE_NEGATIVE,INFO,10 + 20 is
 test_addition.c,test_safe_negative,overflow,TRUE_NEGATIVE,INFO,-100 + 50 is safe
 test_addition.c,test_overflow_near_boundary,overflow,TRUE_POSITIVE,CRITICAL,(INT_MAX-10) + 20 overflows
 test_addition.c,test_safe_near_boundary,overflow,TRUE_NEGATIVE,INFO,(INT_MAX-100) + 50 is safe
-test_multiplication.c,test_overflow_large_mult,overflow,TRUE_POSITIVE,CRITICAL,(INT_MAX/2) * 3 overflows
-test_multiplication.c,test_potential_overflow_mult,overflow,TRUE_POSITIVE,WARNING,Unknown a * b may overflow
-test_multiplication.c,test_safe_mult,overflow,TRUE_NEGATIVE,INFO,10 * 20 is safe
-test_multiplication.c,test_overflow_mult_loop,overflow,TRUE_POSITIVE,WARNING,result *= 2 in loop overflows
+test_multiplication.c,test_clear_overflow_max_times_two,overflow,TRUE_POSITIVE,CRITICAL,INT_MAX * 2 overflows
+test_multiplication.c,test_overflow_large_numbers,overflow,TRUE_POSITIVE,CRITICAL,100000 * 100000 overflows
+test_multiplication.c,test_safe_small_multiply,overflow,TRUE_NEGATIVE,INFO,10 * 20 is safe
 test_subtraction.c,test_underflow_min_minus_one,overflow,TRUE_POSITIVE,CRITICAL,INT_MIN - 1 underflows
-test_subtraction.c,test_potential_underflow,overflow,TRUE_POSITIVE,WARNING,Unknown a - b may underflow
 test_subtraction.c,test_safe_subtraction,overflow,TRUE_NEGATIVE,INFO,100 - 50 is safe

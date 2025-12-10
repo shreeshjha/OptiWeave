@@ -227,6 +227,26 @@ private:
   // Track processed source ranges to avoid double-processing
   std::set<std::pair<unsigned, unsigned>> processed_ranges_;
 
+  // Helper to get function prefix based on language (C vs C++)
+  std::string getFunctionPrefix() const {
+    // Check file extension first (LibTooling sometimes treats .c as C++)
+    auto &source_manager = context_.getSourceManager();
+    auto main_file_id = source_manager.getMainFileID();
+    auto file_entry = source_manager.getFileEntryRefForID(main_file_id);
+    if (file_entry) {
+      llvm::StringRef filename = file_entry->getName();
+      if (filename.ends_with(".c")) {
+        return ""; // Pure C file
+      }
+    }
+
+    // Fall back to language options
+    const auto &lang_opts = context_.getLangOpts();
+    bool is_cxx = lang_opts.CPlusPlus || lang_opts.CPlusPlus11 ||
+                  lang_opts.CPlusPlus14 || lang_opts.CPlusPlus17 || lang_opts.CPlusPlus20;
+    return is_cxx ? "optiweave::" : "";
+  }
+
   // Loop analysis data
   std::vector<optiweave::analysis::LoopInfo> loop_info_;
   int current_loop_nesting_ = 0;

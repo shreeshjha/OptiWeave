@@ -212,7 +212,9 @@ bool ModernASTVisitor::shouldSkipExpression(const clang::Expr *expr) const {
       llvm::StringRef filename = file_entry->getName();
       // Skip if the file is in templates/ directory or is named prelude.hpp
       if (filename.contains("/templates/") || filename.ends_with("prelude.hpp") ||
-          filename.ends_with("optiweave/prelude.hpp") || filename.contains("/optiweave/")) {
+          filename.ends_with("optiweave/prelude.hpp") ||
+          filename.ends_with("optiweave/prelude_c.h") ||
+          filename.contains("/optiweave/")) {
         return true;
       }
     }
@@ -377,7 +379,7 @@ std::string ModernASTVisitor::generateArraySubscriptInstrumentation(
   // we directly call __ow_subscript_impl with source location literals
   if (config_.evaluation_safe_wrappers) {
     std::ostringstream helper;
-    helper << "optiweave::__ow_subscript_impl("
+    helper << getFunctionPrefix() << "__ow_subscript_impl("
            << lhs_text.str() << ", " << rhs_text.str() << ", "
            << getSourceLocationLiterals(expr->getExprLoc()) << ")";
     return helper.str();
@@ -385,16 +387,17 @@ std::string ModernASTVisitor::generateArraySubscriptInstrumentation(
 
   std::ostringstream call;
 
+  std::string prefix = getFunctionPrefix();
   if (isTemplateDependentType(lhs_type)) {
     // Template-dependent case
-    call << "optiweave::__maybe_primop_subscript<"
+    call << prefix << "__maybe_primop_subscript<"
          << "decltype(__ow_lhs), "
-         << "!optiweave::has_subscript_overload<decltype(__ow_lhs)>::value"
+         << "!" << prefix << "has_subscript_overload<decltype(__ow_lhs)>::value"
          << ">()(__ow_lhs, __ow_rhs)";
   } else {
     // Non-template case - use compile-time type
     std::string type_str = lhs_type.getAsString(context_.getPrintingPolicy());
-    call << "optiweave::__primop_subscript<" << type_str << ">()"
+    call << prefix << "__primop_subscript<" << type_str << ">()"
          << "(__ow_lhs, __ow_rhs)";
   }
 
@@ -409,14 +412,15 @@ std::string ModernASTVisitor::generateArraySubscriptInstrumentation(
 
   // Fallback: direct call without wrappers
   std::ostringstream direct;
+  std::string prefix2 = getFunctionPrefix();
   if (isTemplateDependentType(lhs_type)) {
-    direct << "optiweave::__maybe_primop_subscript<"
+    direct << prefix2 << "__maybe_primop_subscript<"
            << "decltype(" << lhs_text.str() << "), "
-           << "!optiweave::has_subscript_overload<decltype(" << lhs_text.str() << ")>::value"
+           << "!" << prefix2 << "has_subscript_overload<decltype(" << lhs_text.str() << ")>::value"
            << ">()(" << lhs_text.str() << ", " << rhs_text.str() << ")";
   } else {
     std::string type_str = lhs_type.getAsString(context_.getPrintingPolicy());
-    direct << "optiweave::__primop_subscript<" << type_str << ">()"
+    direct << prefix2 << "__primop_subscript<" << type_str << ">()"
            << "(" << lhs_text.str() << ", " << rhs_text.str() << ")";
   }
   return direct.str();
@@ -426,6 +430,8 @@ std::string ModernASTVisitor::generateBinaryOperatorInstrumentation(
     clang::BinaryOperatorKind op, clang::QualType lhs_type,
     clang::QualType rhs_type, llvm::StringRef lhs_text,
     llvm::StringRef rhs_text) const {
+
+  std::string prefix = getFunctionPrefix();
 
   // Compact helpers for arithmetic operators when evaluation-safe wrappers are enabled
   if (config_.evaluation_safe_wrappers && isArithmeticOp(op)) {
@@ -451,7 +457,7 @@ std::string ModernASTVisitor::generateBinaryOperatorInstrumentation(
     }
     if (fname) {
       std::ostringstream helper;
-      helper << "optiweave::" << fname << "(" << lhs_text.str() << ", "
+      helper << prefix << fname << "(" << lhs_text.str() << ", "
              << rhs_text.str() << ")";
       return helper.str();
     }
@@ -485,7 +491,7 @@ std::string ModernASTVisitor::generateBinaryOperatorInstrumentation(
     }
     if (fname) {
       std::ostringstream helper;
-      helper << "optiweave::" << fname << "(" << lhs_text.str() << ", "
+      helper << prefix << fname << "(" << lhs_text.str() << ", "
              << rhs_text.str() << ")";
       return helper.str();
     }
@@ -519,7 +525,7 @@ std::string ModernASTVisitor::generateBinaryOperatorInstrumentation(
     }
     if (fname) {
       std::ostringstream helper;
-      helper << "optiweave::" << fname << "(" << lhs_text.str() << ", "
+      helper << prefix << fname << "(" << lhs_text.str() << ", "
              << rhs_text.str() << ")";
       return helper.str();
     }
@@ -728,11 +734,20 @@ void TransformationConsumer::HandleTranslationUnit(clang::ASTContext &
   auto main_file_id = source_manager.getMainFileID();
   auto start_loc = source_manager.getLocForStartOfFile(main_file_id);
 
+  // Detect if this is C or C++ code
+  const auto &lang_opts = context.getLangOpts();
+  bool is_cxx = lang_opts.CPlusPlus || lang_opts.CPlusPlus11 ||
+                lang_opts.CPlusPlus14 || lang_opts.CPlusPlus17 || lang_opts.CPlusPlus20;
+
+  const char *prelude_header = is_cxx ? "optiweave/prelude.hpp" : "optiweave/prelude_c.h";
+
   // Only inject if not already present
   auto buffer = source_manager.getBufferData(main_file_id);
   if (buffer.find("#include") == llvm::StringRef::npos ||
-      buffer.find("optiweave/prelude.hpp") == llvm::StringRef::npos) {
-    rewriter_.InsertText(start_loc, "#include <optiweave/prelude.hpp>\n", true);
+      (buffer.find("optiweave/prelude.hpp") == llvm::StringRef::npos &&
+       buffer.find("optiweave/prelude_c.h") == llvm::StringRef::npos)) {
+    std::string include_directive = std::string("#include <") + prelude_header + ">\n";
+    rewriter_.InsertText(start_loc, include_directive, true);
   }
 
   // Set traversal scope to the entire translation unit
