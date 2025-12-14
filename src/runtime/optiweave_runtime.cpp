@@ -1,6 +1,7 @@
 #include "../../templates/prelude.hpp"
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include <mutex>
 #include <chrono>
 #include <iomanip>

@@ -894,6 +894,15 @@ bool compileTransformedFiles(const std::vector<std::string> &source_paths) {
 } // namespace optiweave
 
 int main(int argc, const char **argv) {
+  // Early detection of C vs C++ based on -x flag (before OptionsParser)
+  bool user_specified_c = false;
+  for (int i = 1; i < argc - 1; ++i) {
+    if (std::string(argv[i]) == "-x" && std::string(argv[i + 1]) == "c") {
+      user_specified_c = true;
+      break;
+    }
+  }
+
   // Parse command line arguments
   auto ExpectedParser =
       CommonOptionsParser::create(argc, argv, OptiWeaveCategory);
@@ -933,10 +942,14 @@ int main(int argc, const char **argv) {
   auto source_paths = OptionsParser.getSourcePathList();
 
   // Detect if we're processing C or C++ files
-  bool is_c_file = false;
+  bool is_c_file = user_specified_c; // Use early detection from before OptionsParser
   if (!source_paths.empty()) {
     llvm::StringRef first_file(source_paths[0]);
-    is_c_file = first_file.ends_with(".c");
+    // Also check file extension
+    if (first_file.ends_with(".c")) {
+      is_c_file = true;
+    }
+
     if (Verbose) {
       llvm::errs() << "Detected file type: " << (is_c_file ? "C" : "C++") << "\n";
     }
@@ -997,6 +1010,7 @@ int main(int argc, const char **argv) {
   config.enable_dependency_graph = EnableDependencyGraph;
   config.enable_data_flow_analysis = EnableDataFlowAnalysis;
   config.enable_memory_profiling = EnableMemoryProfiling;
+  config.is_c_language = is_c_file; // Set based on detected language
   config.prelude_path = prelude_path;
 
   if (Verbose) {

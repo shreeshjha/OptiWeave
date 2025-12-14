@@ -41,6 +41,7 @@ struct TransformationConfig {
   bool enable_dependency_graph = false; // Enable dependency graph generation
   bool enable_data_flow_analysis = false; // Enable data flow analysis
   bool enable_memory_profiling = false; // Enable memory profiling
+  bool is_c_language = false;           // True if processing C (not C++) code
   std::string prelude_path;
   std::vector<std::string> include_paths;
 };
@@ -91,6 +92,13 @@ public:
   */
 
   bool VisitArraySubscriptExpr(clang::ArraySubscriptExpr *expr);
+
+  /**
+      @brief Traverse binary operators (handles assignment with array subscript on LHS)
+      @param expr The binary operator expression
+      @return true to continue traversal
+  */
+  bool TraverseBinaryOperator(clang::BinaryOperator *expr);
 
   /**
       @brief Visit binary operators (arithmetic, assignment, etc. )
@@ -271,6 +279,22 @@ private:
   bool shouldSkipExpression(const clang::Expr *expr) const;
 
   /**
+      @brief Check if array subscript is on the LHS of an assignment
+      @param expr The array subscript expression to check
+      @return true if this is arr[i] = value pattern
+      @note We skip instrumenting LHS subscripts because the macro returns an rvalue
+  */
+  bool isArraySubscriptOnLHSOfAssignment(const clang::ArraySubscriptExpr *expr) const;
+
+  /**
+      @brief Check if subscript is part of assignment with array subscript on LHS
+      @param expr The array subscript expression to check
+      @return true if this subscript is in an assignment like: arr[i] = brr[j]
+      @note Used to skip transforming RHS subscripts when we'll handle the whole assignment
+  */
+  bool isPartOfAssignmentWithArraySubscriptLHS(const clang::ArraySubscriptExpr *expr) const;
+
+  /**
       @brief Check if expression is in a system header
       @param expr The expression to check
       @return true if in system header
@@ -308,6 +332,14 @@ private:
   */
 
   bool transformArraySubscript(clang::ArraySubscriptExpr *expr);
+
+  /**
+      @brief Transform assignment with array subscript on LHS
+      @param expr The array subscript expression that is being assigned to
+      @return true on success
+      @note Handles arr[i] = value by wrapping whole assignment: (__record(), arr[i] = value)
+  */
+  bool transformAssignmentWithArraySubscript(clang::ArraySubscriptExpr *expr);
 
   /**
       @brief Transform binary operator expression

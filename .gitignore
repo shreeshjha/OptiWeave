@@ -39,8 +39,9 @@ compile_commands.json
 *.exe
 *.out
 *.app
-optiweave
-optiweave.exe
+/optiweave
+/optiweave.exe
+/build/optiweave
 
 # Debug files
 *.dSYM/
@@ -265,19 +266,49 @@ prelude_temp_*
 *.optiweave.backup
 transformation_cache/
 
-# Documentation files (keep only README.md in root, CHANGELOG.md, CONTRIBUTING.md, and LICENSE)
-*.md
+# Keep important root markdown files
 !README.md
 !CHANGELOG.md
 !CONTRIBUTING.md
 !LICENSE.md
 
-# Keep markdown files in specific directories
+# Keep docs/ directory markdown
 !docs/*.md
-!examples/*.md
-!web/*.md
+
+# Exclude local/evaluation documentation
+TODO.md
+new_todo.md
+Thesis_Plan.md
+FEATURE_PLAN.md
+examples/README_HOTSPOTS.md
+web/README.md
 
 # OptiWeave runtime artifacts
 .optiweave_loop_info.bin
 *.optiweave_*
 *_optiweave.*
+
+# Evaluation and thesis materials (keep local only)
+evaluation/
+test_suite/
+overflow.txt
+Thesis_Proposal*.txt
+Thesis_Proposal*.docx
+
+# Example build artifacts
+examples/**/*.o
+examples/**/benchmark_*
+examples/**/demo
+examples/**/test
+examples/**/profile_*
+examples/**/*_fresh*
+examples/**/*_baseline*
+examples/**/*_instrumented*
+examples/**/cJSON.c
+examples/**/cJSON_*.c
+examples/**/cJSON_*.h
+examples/**/transform.log
+examples/**/optiweave_runtime.c
+
+# Keep the main C runtime template
+!templates/optiweave/optiweave_runtime.c

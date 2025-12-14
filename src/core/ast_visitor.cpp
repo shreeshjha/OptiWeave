@@ -141,15 +141,47 @@ bool ModernASTVisitor::VisitArraySubscriptExpr(clang::ArraySubscriptExpr *
     return true;
   }
 
-  if (config_.transform_array_subscripts) {
-    if (transformArraySubscript(expr)) {
-      markAsProcessed(expr);
-      ++stats_.array_subscripts_transformed;
-    } else {
-      ++stats_.errors_encountered;
+  if (!config_.transform_array_subscripts) {
+    return true;
+  }
+
+  // NOTE: LHS assignments with array subscripts are now handled in TraverseBinaryOperator
+  // This visitor only handles regular READ contexts: x = arr[i], arr[i] + 1, etc.
+
+  // Regular READ context: x = arr[i]
+  if (transformArraySubscript(expr)) {
+    markAsProcessed(expr);
+    ++stats_.array_subscripts_transformed;
+  } else {
+    ++stats_.errors_encountered;
+  }
+
+  return true;
+}
+
+bool ModernASTVisitor::TraverseBinaryOperator(clang::BinaryOperator *expr) {
+  // IMPORTANT: Handle assignments with array subscripts on LHS FIRST, before children are visited
+  // This prevents the RHS from being corrupted when we try to extract the assignment text
+  if (!shouldSkipExpression(expr) && !isAlreadyProcessed(expr)) {
+    if (config_.transform_array_subscripts && expr->isAssignmentOp()) {
+      if (auto *lhs_subscript = clang::dyn_cast<clang::ArraySubscriptExpr>(expr->getLHS())) {
+        // This is an assignment with array subscript on LHS: arr[i] = ...
+        // Transform the ENTIRE assignment before visiting children
+        if (transformAssignmentWithArraySubscript(lhs_subscript)) {
+          markAsProcessed(lhs_subscript);  // Mark LHS subscript as processed
+          markAsProcessed(expr);           // Mark assignment as processed
+          ++stats_.array_subscripts_transformed;
+          return true; // Don't traverse children - we already handled the whole assignment
+        } else {
+          ++stats_.errors_encountered;
+          return true; // Continue but don't visit children
+        }
+      }
     }
   }
-  return true;
+
+  // Default traversal for all other cases
+  return RecursiveASTVisitor::TraverseBinaryOperator(expr);
 }
 
 bool ModernASTVisitor::VisitBinaryOperator(clang::BinaryOperator *expr) {
@@ -160,6 +192,8 @@ bool ModernASTVisitor::VisitBinaryOperator(clang::BinaryOperator *expr) {
   if (isAlreadyProcessed(expr)) {
     return true;
   }
+
+  // NOTE: LHS assignments with array subscripts are now handled in TraverseBinaryOperator
 
   // Check if we should transform this operator type
   bool should_transform = false;
@@ -242,6 +276,56 @@ bool ModernASTVisitor::shouldSkipExpression(const clang::Expr *expr) const {
   return false;
 }
 
+bool ModernASTVisitor::isArraySubscriptOnLHSOfAssignment(const clang::ArraySubscriptExpr *expr) const {
+  // Check if this array subscript is the direct LHS of an assignment operator
+  // Example: arr[i] = 5;  <- we want to detect this pattern
+
+  auto parents = context_.getParents(*expr);
+  if (parents.empty()) {
+    return false;
+  }
+
+  // Check immediate parent
+  for (const auto &parent_node : parents) {
+    if (const auto *binary_op = parent_node.get<clang::BinaryOperator>()) {
+      // Check if this is an assignment operator
+      if (binary_op->isAssignmentOp()) {
+        // Check if our array subscript is the LHS of this assignment
+        if (binary_op->getLHS() == expr) {
+          return true; // Found it: arr[i] = value
+        }
+      }
+    }
+  }
+
+  return false;
+}
+
+bool ModernASTVisitor::isPartOfAssignmentWithArraySubscriptLHS(const clang::ArraySubscriptExpr *expr) const {
+  // Check if this subscript is part of an assignment whose LHS has an array subscript
+  // Example: arr[i] = brr[j];  <- for brr[j], we want to return true
+  // This helps us avoid transforming RHS subscripts when we'll handle the whole assignment
+
+  auto parents = context_.getParents(*expr);
+  if (parents.empty()) {
+    return false;
+  }
+
+  // Look for parent binary operator (assignment)
+  for (const auto &parent_node : parents) {
+    if (const auto *binary_op = parent_node.get<clang::BinaryOperator>()) {
+      if (binary_op->isAssignmentOp()) {
+        // Check if the LHS of this assignment is an array subscript
+        if (clang::isa<clang::ArraySubscriptExpr>(binary_op->getLHS())) {
+          return true; // This subscript is part of an assignment with array subscript on LHS
+        }
+      }
+    }
+  }
+
+  return false;
+}
+
 bool ModernASTVisitor::isInSystemHeader(const clang::Expr *expr) const {
   auto &source_manager = context_.getSourceManager();
   auto location = expr->getBeginLoc();
@@ -274,6 +358,9 @@ void ModernASTVisitor::markAsProcessed(const clang::Expr *expr) {
 bool ModernASTVisitor::transformArraySubscript(clang::ArraySubscriptExpr *
                                                expr) {
   try {
+    // NOTE: LHS assignments are now handled in VisitBinaryOperator
+    // This function only handles READ contexts: x = arr[i], arr[i] + 1, etc.
+
     auto lhs = expr->getLHS();
     auto rhs = expr->getRHS();
 
@@ -305,6 +392,80 @@ bool ModernASTVisitor::transformArraySubscript(clang::ArraySubscriptExpr *
                  << "\n";
     return false;
   }
+}
+
+bool ModernASTVisitor::transformAssignmentWithArraySubscript(clang::ArraySubscriptExpr *subscript_expr) {
+  // Find the parent assignment operator
+  auto parents = context_.getParents(*subscript_expr);
+  if (parents.empty()) {
+    return false;
+  }
+
+  const clang::BinaryOperator *assignment = nullptr;
+  for (const auto &parent_node : parents) {
+    if (const auto *binop = parent_node.get<clang::BinaryOperator>()) {
+      if (binop->isAssignmentOp() && binop->getLHS() == subscript_expr) {
+        assignment = binop;
+        break;
+      }
+    }
+  }
+
+  if (!assignment) {
+    return false; // Couldn't find parent assignment
+  }
+
+  // Get the source text for the entire assignment
+  std::string assignment_text = getSourceText(assignment->getSourceRange());
+  if (assignment_text.empty()) {
+    llvm::errs() << "Warning: Could not extract assignment text\n";
+    return false;
+  }
+
+  // DEBUG: Check if this assignment is already instrumented
+  if (assignment_text.find("__optiweave_record_subscript") != std::string::npos ||
+      assignment_text.find("__ow_subscript_impl") != std::string::npos) {
+    llvm::errs() << "Warning: Skipping already-instrumented assignment\n";
+    return false;
+  }
+
+  auto& SM = context_.getSourceManager();
+  unsigned line = SM.getExpansionLineNumber(assignment->getBeginLoc());
+
+  // SIMPLER FIX: The issue is that we're replacing just the expression, but the
+  // semicolon is part of the statement. Clang's Rewriter doesn't include the semicolon
+  // in the expression range.
+  //
+  // Solution: Add semicolon INSIDE our wrapper, then remove the trailing semicolon
+  // from the original code by extending the replacement range.
+
+  // Get the location just after the assignment expression (where the semicolon should be)
+  auto end_loc = assignment->getEndLoc();
+  auto next_loc = clang::Lexer::findLocationAfterToken(
+      end_loc, clang::tok::semi, SM, context_.getLangOpts(), false);
+
+  clang::SourceRange replace_range;
+  if (next_loc.isValid()) {
+    // Found the semicolon - include it in the replacement range
+    replace_range = clang::SourceRange(assignment->getBeginLoc(), next_loc.getLocWithOffset(-1));
+  } else {
+    // No semicolon found (maybe it's in a different context) - just replace the expression
+    replace_range = assignment->getSourceRange();
+  }
+
+  // Generate instrumented code WITH the semicolon
+  std::ostringstream instrumented;
+  instrumented << "(__optiweave_record_subscript("
+               << getSourceLocationLiterals(subscript_expr->getExprLoc())
+               << "), " << assignment_text << ");";  // Add semicolon here
+
+  // Replace with instrumented version
+  if (rewriter_.ReplaceText(replace_range, instrumented.str())) {
+    llvm::errs() << "Error: Failed to apply assignment transformation at line " << line << "\n";
+    return false;
+  }
+
+  return true;
 }
 
 bool ModernASTVisitor::transformBinaryOperator(clang::BinaryOperator *expr) {
@@ -734,10 +895,8 @@ void TransformationConsumer::HandleTranslationUnit(clang::ASTContext &
   auto main_file_id = source_manager.getMainFileID();
   auto start_loc = source_manager.getLocForStartOfFile(main_file_id);
 
-  // Detect if this is C or C++ code
-  const auto &lang_opts = context.getLangOpts();
-  bool is_cxx = lang_opts.CPlusPlus || lang_opts.CPlusPlus11 ||
-                lang_opts.CPlusPlus14 || lang_opts.CPlusPlus17 || lang_opts.CPlusPlus20;
+  // Use config to determine C vs C++ (set from main based on -x flag or file extension)
+  bool is_cxx = !config_.is_c_language;
 
   const char *prelude_header = is_cxx ? "optiweave/prelude.hpp" : "optiweave/prelude_c.h";
 
