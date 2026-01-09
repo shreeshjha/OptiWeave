@@ -160,10 +160,11 @@ template <typename Element> struct __primop_subscript<Element *> {
 template <typename Subscripted, bool HasOverload>
 struct __maybe_primop_subscript {
   // Default case: use the overloaded operator
-  template <typename IndexType>
-  constexpr auto operator()(Subscripted &&obj, IndexType &&index) const
-      -> decltype(std::forward<Subscripted>(
-          obj)[std::forward<IndexType>(index)]) {
+  // Note: We don't use Subscripted&&/IndexType&& here because they won't work with const objects
+  // Instead, use the actual forwarded types from the caller
+  template <typename ArrayType, typename IndexType>
+  constexpr auto operator()(ArrayType &&obj, IndexType &&index) const
+      -> decltype(std::forward<ArrayType>(obj)[std::forward<IndexType>(index)]) {
 
     if (g_config.log_array_accesses) {
       __optiweave_log_access("overloaded_subscript", &obj,
@@ -171,7 +172,7 @@ struct __maybe_primop_subscript {
                              __LINE__);
     }
 
-    return std::forward<Subscripted>(obj)[std::forward<IndexType>(index)];
+    return std::forward<ArrayType>(obj)[std::forward<IndexType>(index)];
   }
 };
 
@@ -334,6 +335,7 @@ public:
 template <typename Array, typename Index>
 inline decltype(auto) __ow_subscript_impl(Array&& arr, Index&& idx, const char* file, int line, const char* func) {
   using DecayedArray = std::decay_t<Array>;
+  using IndexType = std::decay_t<Index>;
 
 #if defined(OPTIWEAVE_ENABLE_HOTSPOTS) || defined(OPTIWEAVE_ENABLE_TIMING)
   timing::OperationTimer hotspot_timer;
@@ -347,7 +349,9 @@ inline decltype(auto) __ow_subscript_impl(Array&& arr, Index&& idx, const char* 
     __optiweave_log_access("array_subscript", &arr, static_cast<size_t>(idx), file, line);
   }
 
-  auto& result = __primop_subscript<DecayedArray>()(std::forward<Array>(arr), std::forward<Index>(idx));
+  // Use __maybe_primop_subscript to handle both raw arrays and types with overloaded operator[]
+  constexpr bool has_overload = has_subscript_overload<DecayedArray>::value;
+  auto& result = __maybe_primop_subscript<DecayedArray, has_overload>()(std::forward<Array>(arr), std::forward<Index>(idx));
 
 #if defined(OPTIWEAVE_ENABLE_HOTSPOTS) || defined(OPTIWEAVE_ENABLE_TIMING)
   uint64_t duration_ns = hotspot_timer.elapsed_ns();
@@ -370,6 +374,16 @@ inline decltype(auto) __ow_subscript_impl(Array&& arr, Index&& idx, const char* 
 }
 
 } // namespace optiweave
+
+// Compatibility function for assignment transformations (used by comma operator syntax)
+inline void __optiweave_record_subscript(const char* file, int line, const char* func) {
+#ifdef OPTIWEAVE_ENABLE_STATS
+  optiweave::statistics::increment_array_subscript();
+#endif
+#ifdef OPTIWEAVE_ENABLE_HOTSPOTS
+  optiweave::hotspots::record_subscript(file, line, func);
+#endif
+}
 
 // Macro version that captures source location at call site - MUST be outside namespace
 #define ow_subscript(arr, idx) \
