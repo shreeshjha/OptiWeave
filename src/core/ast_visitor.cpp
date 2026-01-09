@@ -159,11 +159,45 @@ bool ModernASTVisitor::VisitArraySubscriptExpr(clang::ArraySubscriptExpr *
   return true;
 }
 
+bool ModernASTVisitor::TraverseUnaryOperator(clang::UnaryOperator *expr) {
+  // IMPORTANT: Skip array subscripts that are operands of increment/decrement
+  // These operations require lvalue references which C doesn't support
+  if (!shouldSkipExpression(expr) && !isAlreadyProcessed(expr)) {
+    auto opcode = expr->getOpcode();
+    if (opcode == clang::UO_PreInc || opcode == clang::UO_PreDec ||
+        opcode == clang::UO_PostInc || opcode == clang::UO_PostDec) {
+      if (auto *sub_expr = clang::dyn_cast<clang::ArraySubscriptExpr>(expr->getSubExpr())) {
+        // This is an increment/decrement on an array subscript: arr[i]++, ++arr[i], etc.
+        // Mark it as processed so we don't try to transform it
+        markAsProcessed(sub_expr);
+        markAsProcessed(expr);
+        // Don't count as error - this is an expected limitation
+        return true; // Skip this entire subtree
+      }
+    }
+  }
+
+  // Default traversal for all other cases
+  return RecursiveASTVisitor::TraverseUnaryOperator(expr);
+}
+
 bool ModernASTVisitor::TraverseBinaryOperator(clang::BinaryOperator *expr) {
   // IMPORTANT: Handle assignments with array subscripts on LHS FIRST, before children are visited
   // This prevents the RHS from being corrupted when we try to extract the assignment text
   if (!shouldSkipExpression(expr) && !isAlreadyProcessed(expr)) {
-    if (config_.transform_array_subscripts && expr->isAssignmentOp()) {
+    // Skip compound assignments on array subscripts - C doesn't support lvalue references
+    if (config_.transform_array_subscripts && expr->isCompoundAssignmentOp()) {
+      if (auto *lhs_subscript = clang::dyn_cast<clang::ArraySubscriptExpr>(expr->getLHS())) {
+        // This is a compound assignment with array subscript on LHS: arr[i] += val
+        // Mark it as processed so we don't try to transform it
+        markAsProcessed(lhs_subscript);
+        markAsProcessed(expr);
+        // Don't count as error - this is an expected limitation
+        return RecursiveASTVisitor::TraverseBinaryOperator(expr); // Continue with default traversal
+      }
+    }
+
+    if (config_.transform_array_subscripts && expr->isAssignmentOp() && !expr->isCompoundAssignmentOp()) {
       if (auto *lhs_subscript = clang::dyn_cast<clang::ArraySubscriptExpr>(expr->getLHS())) {
         // This is an assignment with array subscript on LHS: arr[i] = ...
         // Transform the ENTIRE assignment before visiting children
@@ -262,6 +296,45 @@ bool ModernASTVisitor::shouldSkipExpression(const clang::Expr *expr) const {
       if (const auto *unary_op =
               clang::dyn_cast<clang::UnaryOperator>(stmt)) {
         if (unary_op->getOpcode() == clang::UO_AddrOf) {
+          return true;
+        }
+        // Skip array subscripts under increment/decrement operators
+        // These require lvalue references which C doesn't support
+        if (unary_op->getOpcode() == clang::UO_PreInc ||
+            unary_op->getOpcode() == clang::UO_PreDec ||
+            unary_op->getOpcode() == clang::UO_PostInc ||
+            unary_op->getOpcode() == clang::UO_PostDec) {
+          return true;
+        }
+      }
+
+      // Skip array subscripts on LHS of compound assignments
+      // These also require lvalue references which C doesn't support
+      if (const auto *bin_op = clang::dyn_cast<clang::BinaryOperator>(stmt)) {
+        if (bin_op->isCompoundAssignmentOp()) {
+          // Check if this expression is the LHS of the compound assignment
+          if (bin_op->getLHS() == expr) {
+            return true;
+          }
+        }
+      }
+
+      // Skip array subscripts followed by member access (arr[i].field or arr[i]->field)
+      // Transformation returns a value, not an lvalue, so member access on LHS won't work
+      if (const auto *member_expr = clang::dyn_cast<clang::MemberExpr>(stmt)) {
+        // Check if this array subscript is the base of the member access
+        const clang::Expr *base = member_expr->getBase();
+        // Strip away implicit casts and parentheses
+        while (base) {
+          if (auto *ice = clang::dyn_cast<clang::ImplicitCastExpr>(base)) {
+            base = ice->getSubExpr();
+          } else if (auto *pe = clang::dyn_cast<clang::ParenExpr>(base)) {
+            base = pe->getSubExpr();
+          } else {
+            break;
+          }
+        }
+        if (base == expr) {
           return true;
         }
       }

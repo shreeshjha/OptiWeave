@@ -101,6 +101,13 @@ public:
   bool TraverseBinaryOperator(clang::BinaryOperator *expr);
 
   /**
+      @brief Traverse unary operators (handles increment/decrement on array subscripts)
+      @param expr The unary operator expression
+      @return true to continue traversal
+  */
+  bool TraverseUnaryOperator(clang::UnaryOperator *expr);
+
+  /**
       @brief Visit binary operators (arithmetic, assignment, etc. )
       @param expr The binary operator expression
       @return true to continue traversal

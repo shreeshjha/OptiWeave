@@ -19,6 +19,13 @@ void optiweave_increment_array_subscript(void) {
   __sync_fetch_and_add(&g_optiweave_array_subscript_count, 1);
 }
 
+/* Profile-enabled subscript recording (used by prelude_c.h) */
+void __optiweave_record_subscript_with_profile(const char *file, int line, const char *func) {
+  /* For now, just increment the counter.
+     TODO: Add file/line/function profiling like the C++ version */
+  optiweave_increment_array_subscript();
+}
+
 void optiweave_increment_addition(void) {
   __sync_fetch_and_add(&g_optiweave_addition_count, 1);
 }

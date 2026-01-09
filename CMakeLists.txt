@@ -106,6 +106,7 @@ target_link_libraries(optiweave_core
 add_library(optiweave_runtime STATIC
     src/runtime/optiweave_runtime.cpp
     src/runtime/statistics.cpp
+    src/runtime/c_compat/statistics_c.c
     src/runtime/timing.cpp
     src/runtime/hotspot_tracker.cpp
     src/runtime/optimization_suggestions.cpp
