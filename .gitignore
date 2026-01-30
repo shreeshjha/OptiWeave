@@ -322,6 +322,8 @@ examples/**/transform.log
 examples/**/optiweave_runtime.c
 examples/**/*.txt
 examples/**/*.sh
+# But keep use case experiment scripts (thesis evaluation)
+!examples/use_cases/**/*.sh
 
 # Keep the main C runtime template
 !templates/optiweave/optiweave_runtime.c
