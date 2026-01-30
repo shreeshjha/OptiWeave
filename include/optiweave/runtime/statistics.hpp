@@ -5,6 +5,21 @@
 #include <cstdint>
 #include <string>
 
+// Force inline macro for hot paths
+#if defined(__GNUC__) || defined(__clang__)
+  #define OPTIWEAVE_FORCE_INLINE __attribute__((always_inline)) inline
+  #define OPTIWEAVE_LIKELY(x) __builtin_expect(!!(x), 1)
+  #define OPTIWEAVE_UNLIKELY(x) __builtin_expect(!!(x), 0)
+#elif defined(_MSC_VER)
+  #define OPTIWEAVE_FORCE_INLINE __forceinline
+  #define OPTIWEAVE_LIKELY(x) (x)
+  #define OPTIWEAVE_UNLIKELY(x) (x)
+#else
+  #define OPTIWEAVE_FORCE_INLINE inline
+  #define OPTIWEAVE_LIKELY(x) (x)
+  #define OPTIWEAVE_UNLIKELY(x) (x)
+#endif
+
 namespace optiweave {
 namespace statistics {
 
@@ -82,111 +97,111 @@ uint64_t get_total_operations();
 // Get elapsed time in seconds
 double get_elapsed_seconds();
 
-// Helper functions for incrementing counters (inline for performance)
-inline void increment_array_subscript() {
-  if (g_stats_enabled) {
+// Helper functions for incrementing counters (force-inlined for performance)
+OPTIWEAVE_FORCE_INLINE void increment_array_subscript() {
+  if (OPTIWEAVE_LIKELY(g_stats_enabled)) {
     g_counters.array_subscript.fetch_add(1, std::memory_order_relaxed);
   }
 }
 
-inline void increment_addition() {
-  if (g_stats_enabled) {
+OPTIWEAVE_FORCE_INLINE void increment_addition() {
+  if (OPTIWEAVE_LIKELY(g_stats_enabled)) {
     g_counters.addition.fetch_add(1, std::memory_order_relaxed);
   }
 }
 
-inline void increment_subtraction() {
-  if (g_stats_enabled) {
+OPTIWEAVE_FORCE_INLINE void increment_subtraction() {
+  if (OPTIWEAVE_LIKELY(g_stats_enabled)) {
     g_counters.subtraction.fetch_add(1, std::memory_order_relaxed);
   }
 }
 
-inline void increment_multiplication() {
-  if (g_stats_enabled) {
+OPTIWEAVE_FORCE_INLINE void increment_multiplication() {
+  if (OPTIWEAVE_LIKELY(g_stats_enabled)) {
     g_counters.multiplication.fetch_add(1, std::memory_order_relaxed);
   }
 }
 
-inline void increment_division() {
-  if (g_stats_enabled) {
+OPTIWEAVE_FORCE_INLINE void increment_division() {
+  if (OPTIWEAVE_LIKELY(g_stats_enabled)) {
     g_counters.division.fetch_add(1, std::memory_order_relaxed);
   }
 }
 
-inline void increment_modulo() {
-  if (g_stats_enabled) {
+OPTIWEAVE_FORCE_INLINE void increment_modulo() {
+  if (OPTIWEAVE_LIKELY(g_stats_enabled)) {
     g_counters.modulo.fetch_add(1, std::memory_order_relaxed);
   }
 }
 
-inline void increment_assignment() {
-  if (g_stats_enabled) {
+OPTIWEAVE_FORCE_INLINE void increment_assignment() {
+  if (OPTIWEAVE_LIKELY(g_stats_enabled)) {
     g_counters.assignment.fetch_add(1, std::memory_order_relaxed);
   }
 }
 
-inline void increment_add_assign() {
-  if (g_stats_enabled) {
+OPTIWEAVE_FORCE_INLINE void increment_add_assign() {
+  if (OPTIWEAVE_LIKELY(g_stats_enabled)) {
     g_counters.add_assign.fetch_add(1, std::memory_order_relaxed);
   }
 }
 
-inline void increment_sub_assign() {
-  if (g_stats_enabled) {
+OPTIWEAVE_FORCE_INLINE void increment_sub_assign() {
+  if (OPTIWEAVE_LIKELY(g_stats_enabled)) {
     g_counters.sub_assign.fetch_add(1, std::memory_order_relaxed);
   }
 }
 
-inline void increment_mul_assign() {
-  if (g_stats_enabled) {
+OPTIWEAVE_FORCE_INLINE void increment_mul_assign() {
+  if (OPTIWEAVE_LIKELY(g_stats_enabled)) {
     g_counters.mul_assign.fetch_add(1, std::memory_order_relaxed);
   }
 }
 
-inline void increment_div_assign() {
-  if (g_stats_enabled) {
+OPTIWEAVE_FORCE_INLINE void increment_div_assign() {
+  if (OPTIWEAVE_LIKELY(g_stats_enabled)) {
     g_counters.div_assign.fetch_add(1, std::memory_order_relaxed);
   }
 }
 
-inline void increment_mod_assign() {
-  if (g_stats_enabled) {
+OPTIWEAVE_FORCE_INLINE void increment_mod_assign() {
+  if (OPTIWEAVE_LIKELY(g_stats_enabled)) {
     g_counters.mod_assign.fetch_add(1, std::memory_order_relaxed);
   }
 }
 
-inline void increment_equal() {
-  if (g_stats_enabled) {
+OPTIWEAVE_FORCE_INLINE void increment_equal() {
+  if (OPTIWEAVE_LIKELY(g_stats_enabled)) {
     g_counters.equal.fetch_add(1, std::memory_order_relaxed);
   }
 }
 
-inline void increment_not_equal() {
-  if (g_stats_enabled) {
+OPTIWEAVE_FORCE_INLINE void increment_not_equal() {
+  if (OPTIWEAVE_LIKELY(g_stats_enabled)) {
     g_counters.not_equal.fetch_add(1, std::memory_order_relaxed);
   }
 }
 
-inline void increment_less_than() {
-  if (g_stats_enabled) {
+OPTIWEAVE_FORCE_INLINE void increment_less_than() {
+  if (OPTIWEAVE_LIKELY(g_stats_enabled)) {
     g_counters.less_than.fetch_add(1, std::memory_order_relaxed);
   }
 }
 
-inline void increment_greater_than() {
-  if (g_stats_enabled) {
+OPTIWEAVE_FORCE_INLINE void increment_greater_than() {
+  if (OPTIWEAVE_LIKELY(g_stats_enabled)) {
     g_counters.greater_than.fetch_add(1, std::memory_order_relaxed);
   }
 }
 
-inline void increment_less_equal() {
-  if (g_stats_enabled) {
+OPTIWEAVE_FORCE_INLINE void increment_less_equal() {
+  if (OPTIWEAVE_LIKELY(g_stats_enabled)) {
     g_counters.less_equal.fetch_add(1, std::memory_order_relaxed);
   }
 }
 
-inline void increment_greater_equal() {
-  if (g_stats_enabled) {
+OPTIWEAVE_FORCE_INLINE void increment_greater_equal() {
+  if (OPTIWEAVE_LIKELY(g_stats_enabled)) {
     g_counters.greater_equal.fetch_add(1, std::memory_order_relaxed);
   }
 }

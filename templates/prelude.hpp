@@ -9,6 +9,21 @@
 #include <string>
 #include <type_traits>
 
+// Performance optimization macros
+#if defined(__GNUC__) || defined(__clang__)
+  #define OPTIWEAVE_FORCE_INLINE __attribute__((always_inline)) inline
+  #define OPTIWEAVE_LIKELY(x) __builtin_expect(!!(x), 1)
+  #define OPTIWEAVE_UNLIKELY(x) __builtin_expect(!!(x), 0)
+#elif defined(_MSC_VER)
+  #define OPTIWEAVE_FORCE_INLINE __forceinline
+  #define OPTIWEAVE_LIKELY(x) (x)
+  #define OPTIWEAVE_UNLIKELY(x) (x)
+#else
+  #define OPTIWEAVE_FORCE_INLINE inline
+  #define OPTIWEAVE_LIKELY(x) (x)
+  #define OPTIWEAVE_UNLIKELY(x) (x)
+#endif
+
 #ifdef OPTIWEAVE_ENABLE_STATS
 #include <optiweave/runtime/statistics.hpp>
 #endif
@@ -185,8 +200,10 @@ struct __maybe_primop_subscript<Subscripted, false>
 
 /**
  * @brief Arithmetic operation instrumentation templates
+ * Optimized for minimal overhead in the common case (no logging)
  */
 template <typename LHS, typename RHS> struct __primop_add {
+  OPTIWEAVE_FORCE_INLINE
 #ifndef OPTIWEAVE_ENABLE_TIMING
   constexpr
 #endif
@@ -200,32 +217,35 @@ template <typename LHS, typename RHS> struct __primop_add {
     statistics::increment_addition();
 #endif
 
-    if (g_config.log_arithmetic_ops) {
-      __optiweave_log_operation("add", typeid(LHS).name(), typeid(RHS).name(),
-                                __FILE__, __LINE__);
+#ifdef OPTIWEAVE_ENABLE_LOGGING
+    if (OPTIWEAVE_UNLIKELY(g_config.log_arithmetic_ops)) {
+      __optiweave_log_operation("add", "lhs", "rhs", __FILE__, __LINE__);
     }
+#endif
 
     return lhs + rhs;
   }
 };
 
 template <typename LHS, typename RHS> struct __primop_sub {
-  constexpr auto operator()(const LHS &lhs, const RHS &rhs) const
+  OPTIWEAVE_FORCE_INLINE constexpr auto operator()(const LHS &lhs, const RHS &rhs) const
       -> decltype(lhs - rhs) {
 #ifdef OPTIWEAVE_ENABLE_STATS
     statistics::increment_subtraction();
 #endif
 
-    if (g_config.log_arithmetic_ops) {
-      __optiweave_log_operation("sub", typeid(LHS).name(), typeid(RHS).name(),
-                                __FILE__, __LINE__);
+#ifdef OPTIWEAVE_ENABLE_LOGGING
+    if (OPTIWEAVE_UNLIKELY(g_config.log_arithmetic_ops)) {
+      __optiweave_log_operation("sub", "lhs", "rhs", __FILE__, __LINE__);
     }
+#endif
 
     return lhs - rhs;
   }
 };
 
 template <typename LHS, typename RHS> struct __primop_mul {
+  OPTIWEAVE_FORCE_INLINE
 #ifndef OPTIWEAVE_ENABLE_TIMING
   constexpr
 #endif
@@ -239,16 +259,18 @@ template <typename LHS, typename RHS> struct __primop_mul {
     statistics::increment_multiplication();
 #endif
 
-    if (g_config.log_arithmetic_ops) {
-      __optiweave_log_operation("mul", typeid(LHS).name(), typeid(RHS).name(),
-                                __FILE__, __LINE__);
+#ifdef OPTIWEAVE_ENABLE_LOGGING
+    if (OPTIWEAVE_UNLIKELY(g_config.log_arithmetic_ops)) {
+      __optiweave_log_operation("mul", "lhs", "rhs", __FILE__, __LINE__);
     }
+#endif
 
     return lhs * rhs;
   }
 };
 
 template <typename LHS, typename RHS> struct __primop_div {
+  OPTIWEAVE_FORCE_INLINE
 #ifndef OPTIWEAVE_ENABLE_TIMING
   constexpr
 #endif
@@ -262,10 +284,11 @@ template <typename LHS, typename RHS> struct __primop_div {
     statistics::increment_division();
 #endif
 
-    if (g_config.log_arithmetic_ops) {
-      __optiweave_log_operation("div", typeid(LHS).name(), typeid(RHS).name(),
-                                __FILE__, __LINE__);
+#ifdef OPTIWEAVE_ENABLE_LOGGING
+    if (OPTIWEAVE_UNLIKELY(g_config.log_arithmetic_ops)) {
+      __optiweave_log_operation("div", "lhs", "rhs", __FILE__, __LINE__);
     }
+#endif
 
 #ifdef OPTIWEAVE_DEBUG
     if constexpr (std::is_arithmetic_v<RHS>) {
@@ -281,16 +304,17 @@ template <typename LHS, typename RHS> struct __primop_div {
 };
 
 template <typename LHS, typename RHS> struct __primop_rem {
-  constexpr auto operator()(const LHS &lhs, const RHS &rhs) const
+  OPTIWEAVE_FORCE_INLINE constexpr auto operator()(const LHS &lhs, const RHS &rhs) const
       -> decltype(lhs % rhs) {
 #ifdef OPTIWEAVE_ENABLE_STATS
     statistics::increment_modulo();
 #endif
 
-    if (g_config.log_arithmetic_ops) {
-      __optiweave_log_operation("rem", typeid(LHS).name(), typeid(RHS).name(),
-                                __FILE__, __LINE__);
+#ifdef OPTIWEAVE_ENABLE_LOGGING
+    if (OPTIWEAVE_UNLIKELY(g_config.log_arithmetic_ops)) {
+      __optiweave_log_operation("rem", "lhs", "rhs", __FILE__, __LINE__);
     }
+#endif
 
 #ifdef OPTIWEAVE_DEBUG
     if constexpr (std::is_arithmetic_v<RHS>) {
@@ -307,98 +331,105 @@ template <typename LHS, typename RHS> struct __primop_rem {
 
 /**
  * @brief Comparison operation instrumentation templates
+ * Optimized for minimal overhead
  */
 template <typename LHS, typename RHS> struct __primop_eq {
-  constexpr auto operator()(const LHS &lhs, const RHS &rhs) const
+  OPTIWEAVE_FORCE_INLINE constexpr auto operator()(const LHS &lhs, const RHS &rhs) const
       -> decltype(lhs == rhs) {
 #ifdef OPTIWEAVE_ENABLE_STATS
     statistics::increment_equal();
 #endif
 
-    if (g_config.log_arithmetic_ops) {
-      __optiweave_log_operation("eq", typeid(LHS).name(), typeid(RHS).name(),
-                                __FILE__, __LINE__);
+#ifdef OPTIWEAVE_ENABLE_LOGGING
+    if (OPTIWEAVE_UNLIKELY(g_config.log_arithmetic_ops)) {
+      __optiweave_log_operation("eq", "lhs", "rhs", __FILE__, __LINE__);
     }
+#endif
 
     return lhs == rhs;
   }
 };
 
 template <typename LHS, typename RHS> struct __primop_ne {
-  constexpr auto operator()(const LHS &lhs, const RHS &rhs) const
+  OPTIWEAVE_FORCE_INLINE constexpr auto operator()(const LHS &lhs, const RHS &rhs) const
       -> decltype(lhs != rhs) {
 #ifdef OPTIWEAVE_ENABLE_STATS
     statistics::increment_not_equal();
 #endif
 
-    if (g_config.log_arithmetic_ops) {
-      __optiweave_log_operation("ne", typeid(LHS).name(), typeid(RHS).name(),
-                                __FILE__, __LINE__);
+#ifdef OPTIWEAVE_ENABLE_LOGGING
+    if (OPTIWEAVE_UNLIKELY(g_config.log_arithmetic_ops)) {
+      __optiweave_log_operation("ne", "lhs", "rhs", __FILE__, __LINE__);
     }
+#endif
 
     return lhs != rhs;
   }
 };
 
 template <typename LHS, typename RHS> struct __primop_lt {
-  constexpr auto operator()(const LHS &lhs, const RHS &rhs) const
+  OPTIWEAVE_FORCE_INLINE constexpr auto operator()(const LHS &lhs, const RHS &rhs) const
       -> decltype(lhs < rhs) {
 #ifdef OPTIWEAVE_ENABLE_STATS
     statistics::increment_less_than();
 #endif
 
-    if (g_config.log_arithmetic_ops) {
-      __optiweave_log_operation("lt", typeid(LHS).name(), typeid(RHS).name(),
-                                __FILE__, __LINE__);
+#ifdef OPTIWEAVE_ENABLE_LOGGING
+    if (OPTIWEAVE_UNLIKELY(g_config.log_arithmetic_ops)) {
+      __optiweave_log_operation("lt", "lhs", "rhs", __FILE__, __LINE__);
     }
+#endif
 
     return lhs < rhs;
   }
 };
 
 template <typename LHS, typename RHS> struct __primop_gt {
-  constexpr auto operator()(const LHS &lhs, const RHS &rhs) const
+  OPTIWEAVE_FORCE_INLINE constexpr auto operator()(const LHS &lhs, const RHS &rhs) const
       -> decltype(lhs > rhs) {
 #ifdef OPTIWEAVE_ENABLE_STATS
     statistics::increment_greater_than();
 #endif
 
-    if (g_config.log_arithmetic_ops) {
-      __optiweave_log_operation("gt", typeid(LHS).name(), typeid(RHS).name(),
-                                __FILE__, __LINE__);
+#ifdef OPTIWEAVE_ENABLE_LOGGING
+    if (OPTIWEAVE_UNLIKELY(g_config.log_arithmetic_ops)) {
+      __optiweave_log_operation("gt", "lhs", "rhs", __FILE__, __LINE__);
     }
+#endif
 
     return lhs > rhs;
   }
 };
 
 template <typename LHS, typename RHS> struct __primop_le {
-  constexpr auto operator()(const LHS &lhs, const RHS &rhs) const
+  OPTIWEAVE_FORCE_INLINE constexpr auto operator()(const LHS &lhs, const RHS &rhs) const
       -> decltype(lhs <= rhs) {
 #ifdef OPTIWEAVE_ENABLE_STATS
     statistics::increment_less_equal();
 #endif
 
-    if (g_config.log_arithmetic_ops) {
-      __optiweave_log_operation("le", typeid(LHS).name(), typeid(RHS).name(),
-                                __FILE__, __LINE__);
+#ifdef OPTIWEAVE_ENABLE_LOGGING
+    if (OPTIWEAVE_UNLIKELY(g_config.log_arithmetic_ops)) {
+      __optiweave_log_operation("le", "lhs", "rhs", __FILE__, __LINE__);
     }
+#endif
 
     return lhs <= rhs;
   }
 };
 
 template <typename LHS, typename RHS> struct __primop_ge {
-  constexpr auto operator()(const LHS &lhs, const RHS &rhs) const
+  OPTIWEAVE_FORCE_INLINE constexpr auto operator()(const LHS &lhs, const RHS &rhs) const
       -> decltype(lhs >= rhs) {
 #ifdef OPTIWEAVE_ENABLE_STATS
     statistics::increment_greater_equal();
 #endif
 
-    if (g_config.log_arithmetic_ops) {
-      __optiweave_log_operation("ge", typeid(LHS).name(), typeid(RHS).name(),
-                                __FILE__, __LINE__);
+#ifdef OPTIWEAVE_ENABLE_LOGGING
+    if (OPTIWEAVE_UNLIKELY(g_config.log_arithmetic_ops)) {
+      __optiweave_log_operation("ge", "lhs", "rhs", __FILE__, __LINE__);
     }
+#endif
 
     return lhs >= rhs;
   }
@@ -406,82 +437,88 @@ template <typename LHS, typename RHS> struct __primop_ge {
 
 /**
  * @brief Assignment operation instrumentation templates
+ * Optimized for minimal overhead
  */
 template <typename LHS, typename RHS> struct __primop_assign {
-  constexpr auto operator()(LHS &lhs, const RHS &rhs) const
+  OPTIWEAVE_FORCE_INLINE constexpr auto operator()(LHS &lhs, const RHS &rhs) const
       -> decltype(lhs = rhs) {
 #ifdef OPTIWEAVE_ENABLE_STATS
     statistics::increment_assignment();
 #endif
 
-    if (g_config.log_arithmetic_ops) {
-      __optiweave_log_operation("assign", typeid(LHS).name(), typeid(RHS).name(),
-                                __FILE__, __LINE__);
+#ifdef OPTIWEAVE_ENABLE_LOGGING
+    if (OPTIWEAVE_UNLIKELY(g_config.log_arithmetic_ops)) {
+      __optiweave_log_operation("assign", "lhs", "rhs", __FILE__, __LINE__);
     }
+#endif
 
     return lhs = rhs;
   }
 };
 
 template <typename LHS, typename RHS> struct __primop_add_assign {
-  constexpr auto operator()(LHS &lhs, const RHS &rhs) const
+  OPTIWEAVE_FORCE_INLINE constexpr auto operator()(LHS &lhs, const RHS &rhs) const
       -> decltype(lhs += rhs) {
 #ifdef OPTIWEAVE_ENABLE_STATS
     statistics::increment_add_assign();
 #endif
 
-    if (g_config.log_arithmetic_ops) {
-      __optiweave_log_operation("add_assign", typeid(LHS).name(), typeid(RHS).name(),
-                                __FILE__, __LINE__);
+#ifdef OPTIWEAVE_ENABLE_LOGGING
+    if (OPTIWEAVE_UNLIKELY(g_config.log_arithmetic_ops)) {
+      __optiweave_log_operation("add_assign", "lhs", "rhs", __FILE__, __LINE__);
     }
+#endif
 
     return lhs += rhs;
   }
 };
 
 template <typename LHS, typename RHS> struct __primop_sub_assign {
-  constexpr auto operator()(LHS &lhs, const RHS &rhs) const
+  OPTIWEAVE_FORCE_INLINE constexpr auto operator()(LHS &lhs, const RHS &rhs) const
       -> decltype(lhs -= rhs) {
 #ifdef OPTIWEAVE_ENABLE_STATS
     statistics::increment_sub_assign();
 #endif
 
-    if (g_config.log_arithmetic_ops) {
-      __optiweave_log_operation("sub_assign", typeid(LHS).name(), typeid(RHS).name(),
-                                __FILE__, __LINE__);
+#ifdef OPTIWEAVE_ENABLE_LOGGING
+    if (OPTIWEAVE_UNLIKELY(g_config.log_arithmetic_ops)) {
+      __optiweave_log_operation("sub_assign", "lhs", "rhs", __FILE__, __LINE__);
     }
+#endif
 
     return lhs -= rhs;
   }
 };
 
 template <typename LHS, typename RHS> struct __primop_mul_assign {
-  constexpr auto operator()(LHS &lhs, const RHS &rhs) const
+  OPTIWEAVE_FORCE_INLINE constexpr auto operator()(LHS &lhs, const RHS &rhs) const
       -> decltype(lhs *= rhs) {
 #ifdef OPTIWEAVE_ENABLE_STATS
     statistics::increment_mul_assign();
 #endif
 
-    if (g_config.log_arithmetic_ops) {
-      __optiweave_log_operation("mul_assign", typeid(LHS).name(), typeid(RHS).name(),
-                                __FILE__, __LINE__);
+#ifdef OPTIWEAVE_ENABLE_LOGGING
+    if (OPTIWEAVE_UNLIKELY(g_config.log_arithmetic_ops)) {
+      __optiweave_log_operation("mul_assign", "lhs", "rhs", __FILE__, __LINE__);
     }
+#endif
 
     return lhs *= rhs;
   }
 };
 
 template <typename LHS, typename RHS> struct __primop_div_assign {
-  constexpr auto operator()(LHS &lhs, const RHS &rhs) const
+  OPTIWEAVE_FORCE_INLINE constexpr auto operator()(LHS &lhs, const RHS &rhs) const
       -> decltype(lhs /= rhs) {
 #ifdef OPTIWEAVE_ENABLE_STATS
     statistics::increment_div_assign();
 #endif
 
-    if (g_config.log_arithmetic_ops) {
-      __optiweave_log_operation("div_assign", typeid(LHS).name(), typeid(RHS).name(),
-                                __FILE__, __LINE__);
+#ifdef OPTIWEAVE_ENABLE_LOGGING
+    if (OPTIWEAVE_UNLIKELY(g_config.log_arithmetic_ops)) {
+      __optiweave_log_operation("div_assign", "lhs", "rhs", __FILE__, __LINE__);
     }
+#endif
 
 #ifdef OPTIWEAVE_DEBUG
     if constexpr (std::is_arithmetic_v<RHS>) {
@@ -497,16 +534,17 @@ template <typename LHS, typename RHS> struct __primop_div_assign {
 };
 
 template <typename LHS, typename RHS> struct __primop_mod_assign {
-  constexpr auto operator()(LHS &lhs, const RHS &rhs) const
+  OPTIWEAVE_FORCE_INLINE constexpr auto operator()(LHS &lhs, const RHS &rhs) const
       -> decltype(lhs %= rhs) {
 #ifdef OPTIWEAVE_ENABLE_STATS
     statistics::increment_mod_assign();
 #endif
 
-    if (g_config.log_arithmetic_ops) {
-      __optiweave_log_operation("mod_assign", typeid(LHS).name(), typeid(RHS).name(),
-                                __FILE__, __LINE__);
+#ifdef OPTIWEAVE_ENABLE_LOGGING
+    if (OPTIWEAVE_UNLIKELY(g_config.log_arithmetic_ops)) {
+      __optiweave_log_operation("mod_assign", "lhs", "rhs", __FILE__, __LINE__);
     }
+#endif
 
 #ifdef OPTIWEAVE_DEBUG
     if constexpr (std::is_arithmetic_v<RHS>) {
