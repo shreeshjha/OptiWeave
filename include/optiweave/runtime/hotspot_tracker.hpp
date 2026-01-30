@@ -72,6 +72,20 @@ struct HotspotInfo {
 };
 
 /**
+ * @brief Thread-local hotspot buffer for lock-free fast path
+ * Each thread accumulates hotspot data locally, then flushes to global tracker
+ */
+struct ThreadLocalHotspotBuffer {
+  std::unordered_map<SourceLocation, HotspotInfo> hotspots;
+  
+  // Flush threshold - flush when buffer reaches this size
+  static constexpr size_t FLUSH_THRESHOLD = 1000;
+  
+  // Track if this buffer has been registered for flushing
+  bool registered = false;
+};
+
+/**
  * @brief Tracks performance hotspots by source location
  */
 class HotspotTracker {
@@ -147,10 +161,19 @@ public:
    * @brief Finalize tracking (stop timer)
    */
   void finalize();
+
+  /**
+   * @brief Merge thread-local hotspot buffer into global tracker
+   * Thread-safe: uses internal mutex
+   */
+  void merge_thread_local_buffer(ThreadLocalHotspotBuffer& buffer);
 };
 
 // Global hotspot tracker instance
 extern HotspotTracker g_hotspot_tracker;
+
+// Thread-local hotspot buffer (fast path - no locking)
+extern thread_local ThreadLocalHotspotBuffer tl_hotspot_buffer;
 
 // Runtime flags
 extern bool g_hotspots_enabled;
@@ -171,6 +194,12 @@ void initialize();
 void finalize();
 
 /**
+ * @brief Flush thread-local hotspot buffer to global tracker
+ * Call this before reading global hotspot data (e.g., before finalize)
+ */
+void flush_thread_local_hotspots();
+
+/**
  * @brief Manually print hotspot report (call this before program exits)
  * This is the recommended way to get hotspot reports, as it avoids
  * potential corruption issues with atexit() handlers.
@@ -180,11 +209,22 @@ void print_report(size_t top_n = 10);
 /**
  * @brief Helper function to record array subscript operations
  * Called from instrumented code in prelude.hpp
+ * Uses thread-local buffering for lock-free fast path
  */
 inline void record_subscript(const char* file, int line, const char* func) {
   if (g_hotspots_enabled) {
     SourceLocation loc(file, line, func);
-    g_hotspot_tracker.record_operation("array_subscript", loc, 0);
+    
+    // Fast path: record in thread-local buffer (no locking)
+    auto& info = tl_hotspot_buffer.hotspots[loc];
+    info.location = loc;
+    info.operation_count++;
+    info.operation_breakdown["array_subscript"]++;
+    
+    // Periodic flush to avoid unbounded memory growth
+    if (tl_hotspot_buffer.hotspots.size() > ThreadLocalHotspotBuffer::FLUSH_THRESHOLD) {
+      flush_thread_local_hotspots();
+    }
   }
 }
 

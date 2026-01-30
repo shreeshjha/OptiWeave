@@ -11,8 +11,11 @@
 namespace optiweave {
 namespace statistics {
 
-// Global counter instance
+// Global counter instance (for final aggregation)
 OperationCounters g_counters;
+
+// Thread-local counter instance (fast path - no atomic contention)
+thread_local ThreadLocalCounters tl_counters;
 
 // Timing
 std::chrono::high_resolution_clock::time_point g_start_time;
@@ -33,6 +36,85 @@ struct OperationInfo {
   double percentage;
   double ops_per_second;
 };
+
+// Flush thread-local counters to global atomics
+// This should be called before reading the global counters
+void flush_thread_local_counters() {
+  // Flush all thread-local counters to global atomics using relaxed ordering
+  // (sufficient since we only need eventual consistency at finalize time)
+  if (tl_counters.array_subscript > 0) {
+    g_counters.array_subscript.fetch_add(tl_counters.array_subscript, std::memory_order_relaxed);
+    tl_counters.array_subscript = 0;
+  }
+  if (tl_counters.addition > 0) {
+    g_counters.addition.fetch_add(tl_counters.addition, std::memory_order_relaxed);
+    tl_counters.addition = 0;
+  }
+  if (tl_counters.subtraction > 0) {
+    g_counters.subtraction.fetch_add(tl_counters.subtraction, std::memory_order_relaxed);
+    tl_counters.subtraction = 0;
+  }
+  if (tl_counters.multiplication > 0) {
+    g_counters.multiplication.fetch_add(tl_counters.multiplication, std::memory_order_relaxed);
+    tl_counters.multiplication = 0;
+  }
+  if (tl_counters.division > 0) {
+    g_counters.division.fetch_add(tl_counters.division, std::memory_order_relaxed);
+    tl_counters.division = 0;
+  }
+  if (tl_counters.modulo > 0) {
+    g_counters.modulo.fetch_add(tl_counters.modulo, std::memory_order_relaxed);
+    tl_counters.modulo = 0;
+  }
+  if (tl_counters.assignment > 0) {
+    g_counters.assignment.fetch_add(tl_counters.assignment, std::memory_order_relaxed);
+    tl_counters.assignment = 0;
+  }
+  if (tl_counters.add_assign > 0) {
+    g_counters.add_assign.fetch_add(tl_counters.add_assign, std::memory_order_relaxed);
+    tl_counters.add_assign = 0;
+  }
+  if (tl_counters.sub_assign > 0) {
+    g_counters.sub_assign.fetch_add(tl_counters.sub_assign, std::memory_order_relaxed);
+    tl_counters.sub_assign = 0;
+  }
+  if (tl_counters.mul_assign > 0) {
+    g_counters.mul_assign.fetch_add(tl_counters.mul_assign, std::memory_order_relaxed);
+    tl_counters.mul_assign = 0;
+  }
+  if (tl_counters.div_assign > 0) {
+    g_counters.div_assign.fetch_add(tl_counters.div_assign, std::memory_order_relaxed);
+    tl_counters.div_assign = 0;
+  }
+  if (tl_counters.mod_assign > 0) {
+    g_counters.mod_assign.fetch_add(tl_counters.mod_assign, std::memory_order_relaxed);
+    tl_counters.mod_assign = 0;
+  }
+  if (tl_counters.equal > 0) {
+    g_counters.equal.fetch_add(tl_counters.equal, std::memory_order_relaxed);
+    tl_counters.equal = 0;
+  }
+  if (tl_counters.not_equal > 0) {
+    g_counters.not_equal.fetch_add(tl_counters.not_equal, std::memory_order_relaxed);
+    tl_counters.not_equal = 0;
+  }
+  if (tl_counters.less_than > 0) {
+    g_counters.less_than.fetch_add(tl_counters.less_than, std::memory_order_relaxed);
+    tl_counters.less_than = 0;
+  }
+  if (tl_counters.greater_than > 0) {
+    g_counters.greater_than.fetch_add(tl_counters.greater_than, std::memory_order_relaxed);
+    tl_counters.greater_than = 0;
+  }
+  if (tl_counters.less_equal > 0) {
+    g_counters.less_equal.fetch_add(tl_counters.less_equal, std::memory_order_relaxed);
+    tl_counters.less_equal = 0;
+  }
+  if (tl_counters.greater_equal > 0) {
+    g_counters.greater_equal.fetch_add(tl_counters.greater_equal, std::memory_order_relaxed);
+    tl_counters.greater_equal = 0;
+  }
+}
 
 void initialize() {
   // Check environment variables
@@ -64,6 +146,11 @@ void finalize() {
   if (!g_stats_enabled) {
     return;
   }
+
+  // Flush thread-local counters to global atomics before reporting
+  // Note: In multi-threaded programs, each thread should call this before exit
+  // For single-threaded programs or main thread, this captures all counts
+  flush_thread_local_counters();
 
   // Print to stdout
   print_statistics();

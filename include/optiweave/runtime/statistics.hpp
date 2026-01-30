@@ -23,7 +23,7 @@
 namespace optiweave {
 namespace statistics {
 
-// Atomic counters for each operation type (thread-safe)
+// Atomic counters for each operation type (thread-safe, used for final aggregation)
 struct OperationCounters {
   // Array operations
   std::atomic<uint64_t> array_subscript{0};
@@ -65,8 +65,41 @@ struct OperationCounters {
   std::atomic<uint64_t> logical_not{0};
 };
 
-// Global counter instance
+// Thread-local counters (non-atomic, fast path - no contention)
+// Each thread accumulates counts locally, then flushes to global atomics on finalize
+struct ThreadLocalCounters {
+  // Array operations
+  uint64_t array_subscript = 0;
+
+  // Arithmetic operations
+  uint64_t addition = 0;
+  uint64_t subtraction = 0;
+  uint64_t multiplication = 0;
+  uint64_t division = 0;
+  uint64_t modulo = 0;
+
+  // Assignment operations
+  uint64_t assignment = 0;
+  uint64_t add_assign = 0;
+  uint64_t sub_assign = 0;
+  uint64_t mul_assign = 0;
+  uint64_t div_assign = 0;
+  uint64_t mod_assign = 0;
+
+  // Comparison operations
+  uint64_t equal = 0;
+  uint64_t not_equal = 0;
+  uint64_t less_than = 0;
+  uint64_t greater_than = 0;
+  uint64_t less_equal = 0;
+  uint64_t greater_equal = 0;
+};
+
+// Global counter instance (for final aggregation)
 extern OperationCounters g_counters;
+
+// Thread-local counter instance (fast path)
+extern thread_local ThreadLocalCounters tl_counters;
 
 // Timing information
 extern std::chrono::high_resolution_clock::time_point g_start_time;
@@ -97,112 +130,117 @@ uint64_t get_total_operations();
 // Get elapsed time in seconds
 double get_elapsed_seconds();
 
+// Flush thread-local counters to global atomics
+// Call this before reading global counters (e.g., in finalize)
+void flush_thread_local_counters();
+
 // Helper functions for incrementing counters (force-inlined for performance)
+// Uses thread-local counters to avoid atomic contention in hot path
 OPTIWEAVE_FORCE_INLINE void increment_array_subscript() {
   if (OPTIWEAVE_LIKELY(g_stats_enabled)) {
-    g_counters.array_subscript.fetch_add(1, std::memory_order_relaxed);
+    ++tl_counters.array_subscript;
   }
 }
 
 OPTIWEAVE_FORCE_INLINE void increment_addition() {
   if (OPTIWEAVE_LIKELY(g_stats_enabled)) {
-    g_counters.addition.fetch_add(1, std::memory_order_relaxed);
+    ++tl_counters.addition;
   }
 }
 
 OPTIWEAVE_FORCE_INLINE void increment_subtraction() {
   if (OPTIWEAVE_LIKELY(g_stats_enabled)) {
-    g_counters.subtraction.fetch_add(1, std::memory_order_relaxed);
+    ++tl_counters.subtraction;
   }
 }
 
 OPTIWEAVE_FORCE_INLINE void increment_multiplication() {
   if (OPTIWEAVE_LIKELY(g_stats_enabled)) {
-    g_counters.multiplication.fetch_add(1, std::memory_order_relaxed);
+    ++tl_counters.multiplication;
   }
 }
 
 OPTIWEAVE_FORCE_INLINE void increment_division() {
   if (OPTIWEAVE_LIKELY(g_stats_enabled)) {
-    g_counters.division.fetch_add(1, std::memory_order_relaxed);
+    ++tl_counters.division;
   }
 }
 
 OPTIWEAVE_FORCE_INLINE void increment_modulo() {
   if (OPTIWEAVE_LIKELY(g_stats_enabled)) {
-    g_counters.modulo.fetch_add(1, std::memory_order_relaxed);
+    ++tl_counters.modulo;
   }
 }
 
 OPTIWEAVE_FORCE_INLINE void increment_assignment() {
   if (OPTIWEAVE_LIKELY(g_stats_enabled)) {
-    g_counters.assignment.fetch_add(1, std::memory_order_relaxed);
+    ++tl_counters.assignment;
   }
 }
 
 OPTIWEAVE_FORCE_INLINE void increment_add_assign() {
   if (OPTIWEAVE_LIKELY(g_stats_enabled)) {
-    g_counters.add_assign.fetch_add(1, std::memory_order_relaxed);
+    ++tl_counters.add_assign;
   }
 }
 
 OPTIWEAVE_FORCE_INLINE void increment_sub_assign() {
   if (OPTIWEAVE_LIKELY(g_stats_enabled)) {
-    g_counters.sub_assign.fetch_add(1, std::memory_order_relaxed);
+    ++tl_counters.sub_assign;
   }
 }
 
 OPTIWEAVE_FORCE_INLINE void increment_mul_assign() {
   if (OPTIWEAVE_LIKELY(g_stats_enabled)) {
-    g_counters.mul_assign.fetch_add(1, std::memory_order_relaxed);
+    ++tl_counters.mul_assign;
   }
 }
 
 OPTIWEAVE_FORCE_INLINE void increment_div_assign() {
   if (OPTIWEAVE_LIKELY(g_stats_enabled)) {
-    g_counters.div_assign.fetch_add(1, std::memory_order_relaxed);
+    ++tl_counters.div_assign;
   }
 }
 
 OPTIWEAVE_FORCE_INLINE void increment_mod_assign() {
   if (OPTIWEAVE_LIKELY(g_stats_enabled)) {
-    g_counters.mod_assign.fetch_add(1, std::memory_order_relaxed);
+    ++tl_counters.mod_assign;
   }
 }
 
 OPTIWEAVE_FORCE_INLINE void increment_equal() {
   if (OPTIWEAVE_LIKELY(g_stats_enabled)) {
-    g_counters.equal.fetch_add(1, std::memory_order_relaxed);
+    ++tl_counters.equal;
   }
 }
 
 OPTIWEAVE_FORCE_INLINE void increment_not_equal() {
   if (OPTIWEAVE_LIKELY(g_stats_enabled)) {
-    g_counters.not_equal.fetch_add(1, std::memory_order_relaxed);
+    ++tl_counters.not_equal;
   }
 }
 
 OPTIWEAVE_FORCE_INLINE void increment_less_than() {
   if (OPTIWEAVE_LIKELY(g_stats_enabled)) {
-    g_counters.less_than.fetch_add(1, std::memory_order_relaxed);
+    ++tl_counters.less_than;
   }
 }
 
 OPTIWEAVE_FORCE_INLINE void increment_greater_than() {
   if (OPTIWEAVE_LIKELY(g_stats_enabled)) {
-    g_counters.greater_than.fetch_add(1, std::memory_order_relaxed);
+    ++tl_counters.greater_than;
   }
 }
 
 OPTIWEAVE_FORCE_INLINE void increment_less_equal() {
   if (OPTIWEAVE_LIKELY(g_stats_enabled)) {
-    g_counters.less_equal.fetch_add(1, std::memory_order_relaxed);
+    ++tl_counters.less_equal;
   }
 }
 
 OPTIWEAVE_FORCE_INLINE void increment_greater_equal() {
   if (OPTIWEAVE_LIKELY(g_stats_enabled)) {
-    g_counters.greater_equal.fetch_add(1, std::memory_order_relaxed);
+    ++tl_counters.greater_equal;
   }
 }
 

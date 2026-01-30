@@ -19,6 +19,9 @@ bool g_hotspots_enabled = false;
 
 HotspotTracker g_hotspot_tracker;
 
+// Thread-local hotspot buffer (fast path - no locking)
+thread_local ThreadLocalHotspotBuffer tl_hotspot_buffer;
+
 size_t g_hotspots_top_n = 10;
 std::string g_hotspots_csv_file;
 std::string g_hotspots_json_file;
@@ -30,6 +33,16 @@ static std::atomic<bool> g_in_finalization{false};
 
 // Track recording errors (for diagnostics)
 static std::atomic<uint64_t> g_recording_errors{0};
+
+// Flush thread-local hotspot buffer to global tracker
+void flush_thread_local_hotspots() {
+  if (tl_hotspot_buffer.hotspots.empty()) {
+    return;
+  }
+  
+  // Merge thread-local hotspots into global tracker
+  g_hotspot_tracker.merge_thread_local_buffer(tl_hotspot_buffer);
+}
 
 // HotspotTracker implementation
 HotspotTracker::HotspotTracker()
@@ -162,6 +175,37 @@ void HotspotTracker::finalize() {
       std::chrono::duration_cast<std::chrono::nanoseconds>(end_time -
                                                             start_time_)
           .count();
+}
+
+void HotspotTracker::merge_thread_local_buffer(ThreadLocalHotspotBuffer& buffer) {
+  if (buffer.hotspots.empty()) {
+    return;
+  }
+  
+  try {
+    std::lock_guard<std::mutex> lock(mutex_);
+    
+    for (auto& pair : buffer.hotspots) {
+      const auto& loc = pair.first;
+      auto& local_info = pair.second;
+      
+      // Merge into global hotspots
+      auto& global_info = (*hotspots_)[loc];
+      global_info.location = loc;
+      global_info.operation_count += local_info.operation_count;
+      global_info.total_time_ns += local_info.total_time_ns;
+      
+      // Merge operation breakdown
+      for (const auto& op : local_info.operation_breakdown) {
+        global_info.operation_breakdown[op.first] += op.second;
+      }
+    }
+    
+    // Clear thread-local buffer after successful flush
+    buffer.hotspots.clear();
+  } catch (...) {
+    ++g_recording_errors;
+  }
 }
 
 // Helper function to format time
@@ -752,6 +796,10 @@ void print_report(size_t top_n) {
   if (!g_hotspots_enabled) {
     return;
   }
+
+  // Flush thread-local hotspots to global tracker before reporting
+  // Note: In multi-threaded programs, each thread should call flush before exit
+  flush_thread_local_hotspots();
 
   // Finalize timing first
   g_hotspot_tracker.finalize();
