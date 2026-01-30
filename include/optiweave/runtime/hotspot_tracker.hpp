@@ -177,5 +177,16 @@ void finalize();
  */
 void print_report(size_t top_n = 10);
 
+/**
+ * @brief Helper function to record array subscript operations
+ * Called from instrumented code in prelude.hpp
+ */
+inline void record_subscript(const char* file, int line, const char* func) {
+  if (g_hotspots_enabled) {
+    SourceLocation loc(file, line, func);
+    g_hotspot_tracker.record_operation("array_subscript", loc, 0);
+  }
+}
+
 } // namespace hotspots
 } // namespace optiweave

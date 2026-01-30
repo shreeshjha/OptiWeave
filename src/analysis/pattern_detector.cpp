@@ -9,6 +9,41 @@ namespace optiweave {
 namespace analysis {
 
 // ============================================================================
+// Threshold Constants
+// ============================================================================
+// These thresholds determine when optimization patterns are flagged.
+// Values can be adjusted based on target platform and use case.
+
+namespace thresholds {
+    // Minimum time spent in a loop to consider it "hot" (10 microseconds)
+    constexpr uint64_t kMinHotLoopTimeNs = 10000;
+
+    // Minimum time for O(n^2) algorithm detection (10 milliseconds)
+    constexpr uint64_t kMinQuadraticAlgoTimeNs = 10000000;
+
+    // Minimum time for branch misprediction detection (50 microseconds)
+    constexpr uint64_t kMinBranchAnalysisTimeNs = 50000;
+
+    // Minimum time for loop-invariant code motion suggestion (100 microseconds)
+    constexpr uint64_t kMinLoopInvariantTimeNs = 100000;
+
+    // Minimum iterations for loop-invariant code motion suggestion
+    constexpr uint64_t kMinLoopInvariantIterations = 5000;
+
+    // Minimum iterations for branch optimization to be worthwhile
+    constexpr uint64_t kMinBranchOptIterations = 1000;
+
+    // Comparison ratio threshold for branch misprediction detection (15%)
+    constexpr double kBranchComparisonRatioThreshold = 0.15;
+
+    // Typical cache line size on x86_64 (bytes)
+    constexpr int kCacheLineSize = 64;
+
+    // Assumed element size for cache analysis (bytes, e.g., double)
+    constexpr int kAssumedElementSize = 8;
+} // namespace thresholds
+
+// ============================================================================
 // OptimizationAnalyzer Implementation
 // ============================================================================
 
@@ -234,9 +269,299 @@ std::string OptimizationAnalyzer::generate_markdown_report(const AnalysisResult&
 }
 
 std::string OptimizationAnalyzer::generate_html_report(const AnalysisResult& result) const {
-    // Similar to markdown but with HTML formatting
-    // Implementation omitted for brevity - would generate full HTML with CSS
-    return "<html><!-- HTML report implementation --></html>";
+    std::ostringstream oss;
+
+    oss << R"(<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OptiWeave Optimization Suggestions</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f5f5f5;
+      color: #333;
+      line-height: 1.6;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 30px;
+      border-radius: 10px;
+      margin-bottom: 30px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    header h1 { font-size: 2.5em; margin-bottom: 10px; }
+    header p { font-size: 1.1em; opacity: 0.9; }
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+    .stat-card {
+      background: white;
+      padding: 25px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+    .stat-card.high { border-top: 4px solid #e63946; }
+    .stat-card.medium { border-top: 4px solid #f9a825; }
+    .stat-card.low { border-top: 4px solid #4caf50; }
+    .stat-card.speedup { border-top: 4px solid #667eea; }
+    .stat-card h3 { color: #666; margin-bottom: 10px; font-size: 0.9em; text-transform: uppercase; }
+    .stat-card .value { font-size: 2.2em; font-weight: bold; }
+    .stat-card.high .value { color: #e63946; }
+    .stat-card.medium .value { color: #f9a825; }
+    .stat-card.low .value { color: #4caf50; }
+    .stat-card.speedup .value { color: #667eea; }
+    .suggestion {
+      background: white;
+      padding: 25px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .suggestion.high { border-left: 5px solid #e63946; }
+    .suggestion.medium { border-left: 5px solid #f9a825; }
+    .suggestion.low { border-left: 5px solid #4caf50; }
+    .suggestion-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+    .suggestion h3 { font-size: 1.3em; color: #333; }
+    .badge {
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 0.8em;
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+    .badge.high { background: #ffebee; color: #e63946; }
+    .badge.medium { background: #fff8e1; color: #f9a825; }
+    .badge.low { background: #e8f5e9; color: #4caf50; }
+    .location {
+      font-family: 'Consolas', 'Monaco', monospace;
+      font-size: 0.9em;
+      color: #666;
+      margin-bottom: 15px;
+    }
+    .description { margin-bottom: 15px; }
+    .why-slow {
+      background: #fff3e0;
+      padding: 12px;
+      border-radius: 5px;
+      margin-bottom: 15px;
+      border-left: 3px solid #ff9800;
+    }
+    .why-slow strong { color: #e65100; }
+    .code-section { margin-bottom: 15px; }
+    .code-section h4 {
+      font-size: 0.9em;
+      color: #666;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+    }
+    pre {
+      background: #263238;
+      color: #eeffff;
+      padding: 15px;
+      border-radius: 5px;
+      overflow-x: auto;
+      font-family: 'Consolas', 'Monaco', monospace;
+      font-size: 0.9em;
+      line-height: 1.4;
+    }
+    .optimized pre {
+      background: #1b5e20;
+    }
+    .speedup-info {
+      background: #e3f2fd;
+      padding: 12px;
+      border-radius: 5px;
+      display: inline-block;
+    }
+    .speedup-info strong { color: #1565c0; }
+    .requirements {
+      margin-top: 15px;
+      padding: 12px;
+      background: #f5f5f5;
+      border-radius: 5px;
+    }
+    .requirements h4 {
+      font-size: 0.9em;
+      color: #666;
+      margin-bottom: 8px;
+    }
+    .requirements ul {
+      margin-left: 20px;
+      color: #555;
+    }
+    .section-title {
+      font-size: 1.5em;
+      color: #333;
+      margin: 30px 0 20px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #e0e0e0;
+    }
+    .no-suggestions {
+      text-align: center;
+      padding: 60px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .no-suggestions h2 { color: #4caf50; margin-bottom: 10px; }
+    footer {
+      text-align: center;
+      padding: 20px;
+      color: #999;
+      font-size: 0.9em;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>OptiWeave Optimization Suggestions</h1>
+      <p>Automated performance analysis and optimization recommendations</p>
+    </header>
+)";
+
+    if (result.total_count() == 0) {
+        oss << R"(
+    <div class="no-suggestions">
+      <h2>No Optimization Opportunities Detected</h2>
+      <p>Your code looks well-optimized! Great job!</p>
+    </div>
+)";
+    } else {
+        // Summary cards
+        oss << R"(
+    <div class="summary">
+      <div class="stat-card high">
+        <h3>High Impact</h3>
+        <div class="value">)" << result.high_impact_count << R"(</div>
+      </div>
+      <div class="stat-card medium">
+        <h3>Medium Impact</h3>
+        <div class="value">)" << result.medium_impact_count << R"(</div>
+      </div>
+      <div class="stat-card low">
+        <h3>Low Impact</h3>
+        <div class="value">)" << result.low_impact_count << R"(</div>
+      </div>
+      <div class="stat-card speedup">
+        <h3>Potential Speedup</h3>
+        <div class="value">)" << std::fixed << std::setprecision(1)
+            << result.combined_speedup_min << "-" << result.combined_speedup_max << R"(x</div>
+      </div>
+    </div>
+)";
+
+        // Helper lambda to output patterns by severity
+        auto output_patterns = [&](Severity sev, const std::string& title) {
+            bool has_patterns = false;
+            for (const auto& pattern : result.patterns) {
+                if (pattern.severity == sev) {
+                    has_patterns = true;
+                    break;
+                }
+            }
+            if (!has_patterns) return;
+
+            oss << "    <h2 class=\"section-title\">" << title << "</h2>\n";
+
+            for (const auto& pattern : result.patterns) {
+                if (pattern.severity != sev) continue;
+
+                std::string sev_class;
+                switch (sev) {
+                    case Severity::HIGH: sev_class = "high"; break;
+                    case Severity::MEDIUM: sev_class = "medium"; break;
+                    case Severity::LOW: sev_class = "low"; break;
+                }
+
+                oss << "    <div class=\"suggestion " << sev_class << "\">\n";
+                oss << "      <div class=\"suggestion-header\">\n";
+                oss << "        <h3>" << pattern.pattern_name << "</h3>\n";
+                oss << "        <span class=\"badge " << sev_class << "\">"
+                    << (sev == Severity::HIGH ? "High Impact" :
+                        sev == Severity::MEDIUM ? "Medium Impact" : "Low Impact")
+                    << "</span>\n";
+                oss << "      </div>\n";
+
+                oss << "      <div class=\"location\">" << pattern.location.file
+                    << ":" << pattern.location.line;
+                if (!pattern.location.function.empty()) {
+                    oss << " (" << pattern.location.function << ")";
+                }
+                oss << "</div>\n";
+
+                oss << "      <div class=\"description\">" << pattern.description << "</div>\n";
+
+                if (!pattern.why_slow.empty()) {
+                    oss << "      <div class=\"why-slow\"><strong>Why it's slow:</strong> "
+                        << pattern.why_slow << "</div>\n";
+                }
+
+                if (!pattern.current_code.empty()) {
+                    oss << "      <div class=\"code-section\">\n";
+                    oss << "        <h4>Current Code</h4>\n";
+                    oss << "        <pre>" << pattern.current_code << "</pre>\n";
+                    oss << "      </div>\n";
+                }
+
+                if (!pattern.optimized_code.empty()) {
+                    oss << "      <div class=\"code-section optimized\">\n";
+                    oss << "        <h4>Recommended Fix</h4>\n";
+                    oss << "        <pre>" << pattern.optimized_code << "</pre>\n";
+                    oss << "      </div>\n";
+                }
+
+                oss << "      <div class=\"speedup-info\"><strong>Expected Speedup:</strong> "
+                    << pattern.speedup_string() << "</div>\n";
+
+                if (!pattern.requirements.empty()) {
+                    oss << "      <div class=\"requirements\">\n";
+                    oss << "        <h4>Requirements</h4>\n";
+                    oss << "        <ul>\n";
+                    for (const auto& req : pattern.requirements) {
+                        oss << "          <li>" << req << "</li>\n";
+                    }
+                    oss << "        </ul>\n";
+                    oss << "      </div>\n";
+                }
+
+                oss << "    </div>\n";
+            }
+        };
+
+        output_patterns(Severity::HIGH, "High Impact Optimizations (10x+ speedup)");
+        output_patterns(Severity::MEDIUM, "Medium Impact Optimizations (2-10x speedup)");
+        output_patterns(Severity::LOW, "Low Impact Optimizations (&lt;2x speedup)");
+    }
+
+    oss << R"(
+    <footer>
+      <p>Generated by OptiWeave Profiler | <a href="https://github.com/OptiWeave">github.com/OptiWeave</a></p>
+    </footer>
+  </div>
+</body>
+</html>
+)";
+
+    return oss.str();
 }
 
 bool OptimizationAnalyzer::export_to_file(
@@ -280,7 +605,7 @@ void DivisionInLoopDetector::analyze(
         if (!loop.has_constant_divisor) continue;  // Only optimize constant divisors
 
         // Only flag if it's in a hot spot
-        if (loop.total_time_ns < 10000) continue;  // Less than 10μs - not worth it (lowered for testing)
+        if (loop.total_time_ns < thresholds::kMinHotLoopTimeNs) continue;
 
         OptimizationPattern pattern;
         pattern.pattern_name = "Division in Hot Loop";
@@ -378,7 +703,7 @@ void ComplexityDetector::analyze(
             patterns_.push_back(pattern);
         }
         // Other O(n²) patterns
-        else if (loop.nesting_level == 2 && loop.total_time_ns > 10000000) {  // > 10ms
+        else if (loop.nesting_level == 2 && loop.total_time_ns > thresholds::kMinQuadraticAlgoTimeNs) {
             OptimizationPattern pattern;
             pattern.pattern_name = "O(n²) Algorithm";
             pattern.location = loop.location;
@@ -458,11 +783,11 @@ void MemoryAccessDetector::analyze(
 bool MemoryAccessDetector::has_poor_locality(const LoopInfo& loop) const {
     int cache_line = estimate_cache_line_size();
     // If stride is larger than cache line, we're definitely missing cache
-    return loop.stride_value * 8 > cache_line;  // Assuming 8-byte elements
+    return loop.stride_value * thresholds::kAssumedElementSize > cache_line;
 }
 
 int MemoryAccessDetector::estimate_cache_line_size() const {
-    return 64;  // Typical on x86_64
+    return thresholds::kCacheLineSize;
 }
 
 // ============================================================================
@@ -478,7 +803,7 @@ void VectorizationDetector::analyze(
 
     for (const auto& loop : loop_info) {
         if (!loop.is_vectorizable) continue;
-        if (loop.total_time_ns < 10000) continue;  // < 10μs, not worth it (lowered for testing)
+        if (loop.total_time_ns < thresholds::kMinHotLoopTimeNs) continue;
 
         if (is_simd_friendly(loop)) {
             OptimizationPattern pattern;
@@ -544,7 +869,7 @@ void RepeatedComputationDetector::analyze(
     // Look for loops with expensive operations that might be loop-invariant
     // Heuristic: loops with high iteration counts and significant time
     for (const auto& loop : loop_info) {
-        if (loop.total_time_ns < 10000) continue;  // Less than 10μs, skip
+        if (loop.total_time_ns < thresholds::kMinHotLoopTimeNs) continue;
 
         // Check if loop likely has loop-invariant code that could be hoisted
         if (has_loop_invariant_code(loop)) {
@@ -592,7 +917,8 @@ bool RepeatedComputationDetector::has_loop_invariant_code(const LoopInfo& loop) 
 
     // Only flag loops that spend significant time (>100μs) AND have many iterations (>5000)
     // This avoids false positives on already-optimized loops
-    return loop.total_time_ns > 100000 && loop.iteration_count > 5000;
+    return loop.total_time_ns > thresholds::kMinLoopInvariantTimeNs &&
+           loop.iteration_count > thresholds::kMinLoopInvariantIterations;
 }
 
 // ============================================================================
@@ -624,11 +950,11 @@ void BranchMispredictionDetector::analyze(
     // If comparisons are >15% of operations, might have branch issues
     double comparison_ratio = static_cast<double>(comparison_ops) / total_ops;
 
-    if (comparison_ratio > 0.15) {
+    if (comparison_ratio > thresholds::kBranchComparisonRatioThreshold) {
         // Look for loops that might benefit from branchless code
         for (const auto& loop : loop_info) {
-            if (loop.total_time_ns < 50000) continue;  // Less than 50μs, skip
-            if (loop.iteration_count < 1000) continue;  // Small loops unlikely to benefit
+            if (loop.total_time_ns < thresholds::kMinBranchAnalysisTimeNs) continue;
+            if (loop.iteration_count < thresholds::kMinBranchOptIterations) continue;
 
             if (likely_has_unpredictable_branches(loop)) {
                 OptimizationPattern pattern;
@@ -690,7 +1016,7 @@ bool BranchMispredictionDetector::likely_has_unpredictable_branches(const LoopIn
     // - Actual branch prediction miss rate (requires perf counters)
     // - Pattern of branches (random vs predictable)
     // For now, use a simple heuristic: high iteration count suggests benefit from branchless code
-    return loop.iteration_count > 1000;
+    return loop.iteration_count > thresholds::kMinBranchOptIterations;
 }
 
 } // namespace analysis

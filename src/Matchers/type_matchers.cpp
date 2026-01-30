@@ -1,6 +1,7 @@
 #include <optiweave/matchers/type_matchers.hpp>
 #include <clang/ASTMatchers/ASTMatchers.h>
 #include <clang/AST/ASTContext.h>
+#include <clang/AST/DeclCXX.h>
 
 using namespace clang::ast_matchers;
 
@@ -80,8 +81,71 @@ bool TypeMatchers::isIntegralType(clang::QualType type) {
 
 bool TypeMatchers::hasOperatorOverload(clang::QualType type, 
                                      const std::string &operator_name) {
-    // This would require more complex analysis of the type's methods
-    // For now, return false as a placeholder
+    // Get the canonical unqualified type
+    clang::QualType canonicalType = type.getCanonicalType().getUnqualifiedType();
+    
+    // Handle reference types - look at the referenced type
+    if (canonicalType->isReferenceType()) {
+        canonicalType = canonicalType.getNonReferenceType();
+    }
+    
+    // Handle pointer types - we generally don't have operator overloads on pointers
+    if (canonicalType->isPointerType()) {
+        return false;
+    }
+    
+    // For builtin/arithmetic types, there are no custom operator overloads
+    if (canonicalType->isBuiltinType() || canonicalType->isArithmeticType()) {
+        return false;
+    }
+    
+    // Get the CXXRecordDecl for class types
+    const clang::CXXRecordDecl *recordDecl = canonicalType->getAsCXXRecordDecl();
+    if (!recordDecl) {
+        // Not a class type, check if it's a template type parameter
+        if (canonicalType->isDependentType()) {
+            // For dependent types, we can't know at compile time
+            // Return true to be conservative (use SFINAE wrapper)
+            return true;
+        }
+        return false;
+    }
+    
+    // Map operator names to what Clang calls them
+    // operator_name could be: "[]", "+", "-", "*", "/", "%", "=", "+=", etc.
+    // or Clang's internal names like "operator[]", "operator+", etc.
+    std::string searchName = operator_name;
+    if (operator_name.find("operator") == std::string::npos) {
+        searchName = "operator" + operator_name;
+    }
+    
+    // Search for the operator in the class methods
+    for (const auto *method : recordDecl->methods()) {
+        if (const auto *opDecl = clang::dyn_cast<clang::CXXMethodDecl>(method)) {
+            if (opDecl->isOverloadedOperator()) {
+                // Get the overloaded operator kind
+                clang::OverloadedOperatorKind opKind = opDecl->getOverloadedOperator();
+                std::string opSpelling = clang::getOperatorSpelling(opKind);
+                
+                // Check if this matches what we're looking for
+                if (operator_name == opSpelling || 
+                    searchName == ("operator" + std::string(opSpelling))) {
+                    return true;
+                }
+            }
+        }
+    }
+    
+    // Also check base classes
+    if (recordDecl->hasDefinition()) {
+        for (const auto &base : recordDecl->bases()) {
+            clang::QualType baseType = base.getType();
+            if (hasOperatorOverload(baseType, operator_name)) {
+                return true;
+            }
+        }
+    }
+    
     return false;
 }
 

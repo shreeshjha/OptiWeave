@@ -25,6 +25,12 @@ std::string g_hotspots_json_file;
 std::string g_hotspots_flamegraph_file;
 std::string g_hotspots_html_file;
 
+// Track if we're in finalization to avoid mutex issues
+static std::atomic<bool> g_in_finalization{false};
+
+// Track recording errors (for diagnostics)
+static std::atomic<uint64_t> g_recording_errors{0};
+
 // HotspotTracker implementation
 HotspotTracker::HotspotTracker()
     : hotspots_(new std::unordered_map<SourceLocation, HotspotInfo>()),
@@ -45,15 +51,22 @@ void HotspotTracker::record_operation(const std::string &op_type,
     info.operation_count++;
     info.total_time_ns += duration_ns;
     info.operation_breakdown[op_type]++;
+  } catch (const std::exception& e) {
+    // Count errors but don't spam logs during high-frequency operations
+    ++g_recording_errors;
   } catch (...) {
-    // Silently ignore errors during hotspot recording
+    // Count unknown errors
+    ++g_recording_errors;
   }
 }
 
 std::vector<HotspotInfo>
 HotspotTracker::get_top_hotspots(size_t n) const {
-  // Don't lock in finalize path to avoid mutex destruction issues
-  // std::lock_guard<std::mutex> lock(mutex_);
+  // Only lock if not in finalization path (avoids mutex destruction issues)
+  std::unique_lock<std::mutex> lock(mutex_, std::defer_lock);
+  if (!g_in_finalization.load(std::memory_order_acquire)) {
+    lock.lock();
+  }
 
   std::vector<HotspotInfo> all_hotspots;
   all_hotspots.reserve(hotspots_->size());
@@ -78,8 +91,11 @@ HotspotTracker::get_top_hotspots(size_t n) const {
 
 std::map<std::string, HotspotInfo>
 HotspotTracker::get_hotspots_by_function() const {
-  // Don't lock in finalize path to avoid mutex destruction issues
-  // std::lock_guard<std::mutex> lock(mutex_);
+  // Only lock if not in finalization path (avoids mutex destruction issues)
+  std::unique_lock<std::mutex> lock(mutex_, std::defer_lock);
+  if (!g_in_finalization.load(std::memory_order_acquire)) {
+    lock.lock();
+  }
 
   std::map<std::string, HotspotInfo> by_function;
 
@@ -102,8 +118,11 @@ HotspotTracker::get_hotspots_by_function() const {
 
 std::map<std::string, HotspotInfo>
 HotspotTracker::get_hotspots_by_file() const {
-  // Don't lock in finalize path to avoid mutex destruction issues
-  // std::lock_guard<std::mutex> lock(mutex_);
+  // Only lock if not in finalization path (avoids mutex destruction issues)
+  std::unique_lock<std::mutex> lock(mutex_, std::defer_lock);
+  if (!g_in_finalization.load(std::memory_order_acquire)) {
+    lock.lock();
+  }
 
   std::map<std::string, HotspotInfo> by_file;
 
@@ -129,8 +148,11 @@ uint64_t HotspotTracker::get_total_runtime_ns() const {
 }
 
 size_t HotspotTracker::get_location_count() const {
-  // Don't lock in finalize path to avoid mutex destruction issues
-  // std::lock_guard<std::mutex> lock(mutex_);
+  // Only lock if not in finalization path (avoids mutex destruction issues)
+  std::unique_lock<std::mutex> lock(mutex_, std::defer_lock);
+  if (!g_in_finalization.load(std::memory_order_acquire)) {
+    lock.lock();
+  }
   return hotspots_->size();
 }
 
@@ -756,10 +778,19 @@ void print_report(size_t top_n) {
 }
 
 void finalize() {
+  // Mark that we're in finalization to avoid mutex issues in const methods
+  g_in_finalization.store(true, std::memory_order_release);
+
   // Call print_report for automatic reporting at exit
   // Note: This may experience data corruption due to atexit() ordering issues
   // Users should prefer calling print_report() manually before main() returns
   print_report(g_hotspots_top_n);
+
+  // Report any recording errors that occurred
+  uint64_t errors = g_recording_errors.load();
+  if (errors > 0) {
+    std::cerr << "Note: " << errors << " hotspot recording error(s) occurred during execution\n";
+  }
 }
 
 } // namespace hotspots

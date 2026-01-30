@@ -7,7 +7,6 @@ async function loadDashboardData() {
         const response = await fetch('../examples/dashboard_data.json');
 
         if (!response.ok) {
-            console.log('No real data found, using mock data');
             return getMockData();
         }
 
@@ -15,7 +14,6 @@ async function loadDashboardData() {
 
         // Check if data is empty or missing critical fields
         if (!data.summary || data.summary.total_operations === 0) {
-            console.log('Data is empty, using mock data');
             return getMockData();
         }
 
@@ -49,7 +47,7 @@ async function loadDashboardData() {
             }))
         };
     } catch (error) {
-        console.log('Error loading data:', error);
+        // Fallback to mock data if loading fails
         return getMockData();
     }
 }

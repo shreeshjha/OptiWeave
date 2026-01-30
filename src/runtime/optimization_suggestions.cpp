@@ -7,21 +7,20 @@
 #include <cstring>
 #include <fstream>
 #include <iostream>
+#include <memory>
 
 namespace optiweave {
 namespace optimization {
 
 // Global state
 bool g_suggestions_enabled = false;
-static analysis::OptimizationAnalyzer* g_analyzer = nullptr;
+static std::unique_ptr<analysis::OptimizationAnalyzer> g_analyzer;
 
 // Use function-local static to avoid static initialization order issues
 static std::vector<analysis::LoopInfo>& get_loop_info() {
   static std::vector<analysis::LoopInfo> loop_info;
   return loop_info;
 }
-
-static size_t g_loop_info_loaded_count = 0;  // DEBUG
 
 void initialize() {
   // Check environment variable
@@ -31,17 +30,13 @@ void initialize() {
   }
 
   if (g_suggestions_enabled) {
-    g_analyzer = new analysis::OptimizationAnalyzer();
+    g_analyzer = std::make_unique<analysis::OptimizationAnalyzer>();
 
     // Load loop information from serialized file
     std::string loop_info_file = serialization::get_loop_info_path();
     auto& loop_info = get_loop_info();
-    if (serialization::deserialize_loop_info(loop_info_file, loop_info)) {
-      g_loop_info_loaded_count = loop_info.size();  // DEBUG
-      std::cerr << "Loaded loop information: " << loop_info.size() << " loops from "
-                << loop_info_file << " (loop_info addr: " << &loop_info << ")\n";
-    } else {
-      std::cerr << "Failed to load loop information from " << loop_info_file << "\n";
+    if (!serialization::deserialize_loop_info(loop_info_file, loop_info)) {
+      // Loop info loading is optional - analysis will still work with hotspot data
     }
 
     std::atexit(finalize);
@@ -117,13 +112,12 @@ void finalize() {
   }
 
   // Cleanup
-  delete g_analyzer;
-  g_analyzer = nullptr;
+  g_analyzer.reset();
 }
 
 analysis::OptimizationAnalyzer& get_analyzer() {
   if (!g_analyzer) {
-    g_analyzer = new analysis::OptimizationAnalyzer();
+    g_analyzer = std::make_unique<analysis::OptimizationAnalyzer>();
   }
   return *g_analyzer;
 }

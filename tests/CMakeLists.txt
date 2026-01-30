@@ -1,7 +1,7 @@
 # OptiWeave Test Suite
 
 # Find GTest
-find_package(GTest REQUIRED)
+find_package(GTest)
 enable_testing()
 
 if(NOT GTest_FOUND)
@@ -9,8 +9,8 @@ if(NOT GTest_FOUND)
     include(FetchContent)
     FetchContent_Declare(
         googletest
-        URL https://github.com/google/googletest/archive/03597a01ee50d33092f97b05ab7be1d1027d0efc.zip
-        URL_HASH SHA256=ad7fdba11ea011c1d925b3289cf4af2c66a352e18d4c7264392fead75e919363
+        GIT_REPOSITORY https://github.com/google/googletest.git
+        GIT_TAG        v1.14.0
     )
     
     # For Windows: Prevent overriding the parent project's compiler/linker settings
@@ -20,6 +20,7 @@ endif()
 
 # Include directories
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../include)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../templates)
 
 # Helper function to add tests
 function(add_optiweave_test test_name)

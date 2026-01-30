@@ -8,7 +8,16 @@ set -e  # Exit on any error
 # Configuration
 BUILD_DIR="${BUILD_DIR:-build}"
 TEST_PATTERN="${TEST_PATTERN:-*}"
-PARALLEL_JOBS="${PARALLEL_JOBS:-$(nproc)}"
+# Detect number of processors
+if command -v nproc &> /dev/null; then
+    DEFAULT_JOBS=$(nproc)
+elif command -v sysctl &> /dev/null; then
+    DEFAULT_JOBS=$(sysctl -n hw.ncpu)
+else
+    DEFAULT_JOBS=4
+fi
+
+PARALLEL_JOBS="${PARALLEL_JOBS:-$DEFAULT_JOBS}"
 ENABLE_COVERAGE="${ENABLE_COVERAGE:-false}"
 ENABLE_VALGRIND="${ENABLE_VALGRIND:-false}"
 ENABLE_SANITIZERS="${ENABLE_SANITIZERS:-false}"

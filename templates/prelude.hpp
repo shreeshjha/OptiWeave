@@ -280,6 +280,247 @@ template <typename LHS, typename RHS> struct __primop_div {
   }
 };
 
+template <typename LHS, typename RHS> struct __primop_rem {
+  constexpr auto operator()(const LHS &lhs, const RHS &rhs) const
+      -> decltype(lhs % rhs) {
+#ifdef OPTIWEAVE_ENABLE_STATS
+    statistics::increment_modulo();
+#endif
+
+    if (g_config.log_arithmetic_ops) {
+      __optiweave_log_operation("rem", typeid(LHS).name(), typeid(RHS).name(),
+                                __FILE__, __LINE__);
+    }
+
+#ifdef OPTIWEAVE_DEBUG
+    if constexpr (std::is_arithmetic_v<RHS>) {
+      if (rhs == RHS{}) {
+        std::cerr << "OptiWeave: Modulo by zero at " << __FILE__ << ":"
+                  << __LINE__ << std::endl;
+      }
+    }
+#endif
+
+    return lhs % rhs;
+  }
+};
+
+/**
+ * @brief Comparison operation instrumentation templates
+ */
+template <typename LHS, typename RHS> struct __primop_eq {
+  constexpr auto operator()(const LHS &lhs, const RHS &rhs) const
+      -> decltype(lhs == rhs) {
+#ifdef OPTIWEAVE_ENABLE_STATS
+    statistics::increment_equal();
+#endif
+
+    if (g_config.log_arithmetic_ops) {
+      __optiweave_log_operation("eq", typeid(LHS).name(), typeid(RHS).name(),
+                                __FILE__, __LINE__);
+    }
+
+    return lhs == rhs;
+  }
+};
+
+template <typename LHS, typename RHS> struct __primop_ne {
+  constexpr auto operator()(const LHS &lhs, const RHS &rhs) const
+      -> decltype(lhs != rhs) {
+#ifdef OPTIWEAVE_ENABLE_STATS
+    statistics::increment_not_equal();
+#endif
+
+    if (g_config.log_arithmetic_ops) {
+      __optiweave_log_operation("ne", typeid(LHS).name(), typeid(RHS).name(),
+                                __FILE__, __LINE__);
+    }
+
+    return lhs != rhs;
+  }
+};
+
+template <typename LHS, typename RHS> struct __primop_lt {
+  constexpr auto operator()(const LHS &lhs, const RHS &rhs) const
+      -> decltype(lhs < rhs) {
+#ifdef OPTIWEAVE_ENABLE_STATS
+    statistics::increment_less_than();
+#endif
+
+    if (g_config.log_arithmetic_ops) {
+      __optiweave_log_operation("lt", typeid(LHS).name(), typeid(RHS).name(),
+                                __FILE__, __LINE__);
+    }
+
+    return lhs < rhs;
+  }
+};
+
+template <typename LHS, typename RHS> struct __primop_gt {
+  constexpr auto operator()(const LHS &lhs, const RHS &rhs) const
+      -> decltype(lhs > rhs) {
+#ifdef OPTIWEAVE_ENABLE_STATS
+    statistics::increment_greater_than();
+#endif
+
+    if (g_config.log_arithmetic_ops) {
+      __optiweave_log_operation("gt", typeid(LHS).name(), typeid(RHS).name(),
+                                __FILE__, __LINE__);
+    }
+
+    return lhs > rhs;
+  }
+};
+
+template <typename LHS, typename RHS> struct __primop_le {
+  constexpr auto operator()(const LHS &lhs, const RHS &rhs) const
+      -> decltype(lhs <= rhs) {
+#ifdef OPTIWEAVE_ENABLE_STATS
+    statistics::increment_less_equal();
+#endif
+
+    if (g_config.log_arithmetic_ops) {
+      __optiweave_log_operation("le", typeid(LHS).name(), typeid(RHS).name(),
+                                __FILE__, __LINE__);
+    }
+
+    return lhs <= rhs;
+  }
+};
+
+template <typename LHS, typename RHS> struct __primop_ge {
+  constexpr auto operator()(const LHS &lhs, const RHS &rhs) const
+      -> decltype(lhs >= rhs) {
+#ifdef OPTIWEAVE_ENABLE_STATS
+    statistics::increment_greater_equal();
+#endif
+
+    if (g_config.log_arithmetic_ops) {
+      __optiweave_log_operation("ge", typeid(LHS).name(), typeid(RHS).name(),
+                                __FILE__, __LINE__);
+    }
+
+    return lhs >= rhs;
+  }
+};
+
+/**
+ * @brief Assignment operation instrumentation templates
+ */
+template <typename LHS, typename RHS> struct __primop_assign {
+  constexpr auto operator()(LHS &lhs, const RHS &rhs) const
+      -> decltype(lhs = rhs) {
+#ifdef OPTIWEAVE_ENABLE_STATS
+    statistics::increment_assignment();
+#endif
+
+    if (g_config.log_arithmetic_ops) {
+      __optiweave_log_operation("assign", typeid(LHS).name(), typeid(RHS).name(),
+                                __FILE__, __LINE__);
+    }
+
+    return lhs = rhs;
+  }
+};
+
+template <typename LHS, typename RHS> struct __primop_add_assign {
+  constexpr auto operator()(LHS &lhs, const RHS &rhs) const
+      -> decltype(lhs += rhs) {
+#ifdef OPTIWEAVE_ENABLE_STATS
+    statistics::increment_add_assign();
+#endif
+
+    if (g_config.log_arithmetic_ops) {
+      __optiweave_log_operation("add_assign", typeid(LHS).name(), typeid(RHS).name(),
+                                __FILE__, __LINE__);
+    }
+
+    return lhs += rhs;
+  }
+};
+
+template <typename LHS, typename RHS> struct __primop_sub_assign {
+  constexpr auto operator()(LHS &lhs, const RHS &rhs) const
+      -> decltype(lhs -= rhs) {
+#ifdef OPTIWEAVE_ENABLE_STATS
+    statistics::increment_sub_assign();
+#endif
+
+    if (g_config.log_arithmetic_ops) {
+      __optiweave_log_operation("sub_assign", typeid(LHS).name(), typeid(RHS).name(),
+                                __FILE__, __LINE__);
+    }
+
+    return lhs -= rhs;
+  }
+};
+
+template <typename LHS, typename RHS> struct __primop_mul_assign {
+  constexpr auto operator()(LHS &lhs, const RHS &rhs) const
+      -> decltype(lhs *= rhs) {
+#ifdef OPTIWEAVE_ENABLE_STATS
+    statistics::increment_mul_assign();
+#endif
+
+    if (g_config.log_arithmetic_ops) {
+      __optiweave_log_operation("mul_assign", typeid(LHS).name(), typeid(RHS).name(),
+                                __FILE__, __LINE__);
+    }
+
+    return lhs *= rhs;
+  }
+};
+
+template <typename LHS, typename RHS> struct __primop_div_assign {
+  constexpr auto operator()(LHS &lhs, const RHS &rhs) const
+      -> decltype(lhs /= rhs) {
+#ifdef OPTIWEAVE_ENABLE_STATS
+    statistics::increment_div_assign();
+#endif
+
+    if (g_config.log_arithmetic_ops) {
+      __optiweave_log_operation("div_assign", typeid(LHS).name(), typeid(RHS).name(),
+                                __FILE__, __LINE__);
+    }
+
+#ifdef OPTIWEAVE_DEBUG
+    if constexpr (std::is_arithmetic_v<RHS>) {
+      if (rhs == RHS{}) {
+        std::cerr << "OptiWeave: Division by zero in /= at " << __FILE__ << ":"
+                  << __LINE__ << std::endl;
+      }
+    }
+#endif
+
+    return lhs /= rhs;
+  }
+};
+
+template <typename LHS, typename RHS> struct __primop_mod_assign {
+  constexpr auto operator()(LHS &lhs, const RHS &rhs) const
+      -> decltype(lhs %= rhs) {
+#ifdef OPTIWEAVE_ENABLE_STATS
+    statistics::increment_mod_assign();
+#endif
+
+    if (g_config.log_arithmetic_ops) {
+      __optiweave_log_operation("mod_assign", typeid(LHS).name(), typeid(RHS).name(),
+                                __FILE__, __LINE__);
+    }
+
+#ifdef OPTIWEAVE_DEBUG
+    if constexpr (std::is_arithmetic_v<RHS>) {
+      if (rhs == RHS{}) {
+        std::cerr << "OptiWeave: Modulo by zero in %= at " << __FILE__ << ":"
+                  << __LINE__ << std::endl;
+      }
+    }
+#endif
+
+    return lhs %= rhs;
+  }
+};
+
 /**
  * @brief Template for handling potentially overloaded arithmetic operators
  */
@@ -299,6 +540,258 @@ struct __maybe_primop_add {
 
 template <typename LHS, typename RHS>
 struct __maybe_primop_add<LHS, RHS, false> : __primop_add<LHS, RHS> {};
+
+/**
+ * @brief SFINAE-aware subtraction template
+ */
+template <typename LHS, typename RHS, bool HasOverload>
+struct __maybe_primop_sub {
+  constexpr auto operator()(const LHS &lhs, const RHS &rhs) const
+      -> decltype(lhs - rhs) {
+    if (g_config.log_arithmetic_ops) {
+      __optiweave_log_operation("overloaded_sub", typeid(LHS).name(),
+                                typeid(RHS).name(), __FILE__, __LINE__);
+    }
+    return lhs - rhs;
+  }
+};
+
+template <typename LHS, typename RHS>
+struct __maybe_primop_sub<LHS, RHS, false> : __primop_sub<LHS, RHS> {};
+
+/**
+ * @brief SFINAE-aware multiplication template
+ */
+template <typename LHS, typename RHS, bool HasOverload>
+struct __maybe_primop_mul {
+  constexpr auto operator()(const LHS &lhs, const RHS &rhs) const
+      -> decltype(lhs * rhs) {
+    if (g_config.log_arithmetic_ops) {
+      __optiweave_log_operation("overloaded_mul", typeid(LHS).name(),
+                                typeid(RHS).name(), __FILE__, __LINE__);
+    }
+    return lhs * rhs;
+  }
+};
+
+template <typename LHS, typename RHS>
+struct __maybe_primop_mul<LHS, RHS, false> : __primop_mul<LHS, RHS> {};
+
+/**
+ * @brief SFINAE-aware division template
+ */
+template <typename LHS, typename RHS, bool HasOverload>
+struct __maybe_primop_div {
+  constexpr auto operator()(const LHS &lhs, const RHS &rhs) const
+      -> decltype(lhs / rhs) {
+    if (g_config.log_arithmetic_ops) {
+      __optiweave_log_operation("overloaded_div", typeid(LHS).name(),
+                                typeid(RHS).name(), __FILE__, __LINE__);
+    }
+    return lhs / rhs;
+  }
+};
+
+template <typename LHS, typename RHS>
+struct __maybe_primop_div<LHS, RHS, false> : __primop_div<LHS, RHS> {};
+
+/**
+ * @brief SFINAE-aware modulo/remainder template
+ */
+template <typename LHS, typename RHS, bool HasOverload>
+struct __maybe_primop_rem {
+  constexpr auto operator()(const LHS &lhs, const RHS &rhs) const
+      -> decltype(lhs % rhs) {
+    if (g_config.log_arithmetic_ops) {
+      __optiweave_log_operation("overloaded_rem", typeid(LHS).name(),
+                                typeid(RHS).name(), __FILE__, __LINE__);
+    }
+    return lhs % rhs;
+  }
+};
+
+template <typename LHS, typename RHS>
+struct __maybe_primop_rem<LHS, RHS, false> : __primop_rem<LHS, RHS> {};
+
+/**
+ * @brief SFINAE-aware comparison templates
+ */
+template <typename LHS, typename RHS, bool HasOverload>
+struct __maybe_primop_eq {
+  constexpr auto operator()(const LHS &lhs, const RHS &rhs) const
+      -> decltype(lhs == rhs) {
+    if (g_config.log_arithmetic_ops) {
+      __optiweave_log_operation("overloaded_eq", typeid(LHS).name(),
+                                typeid(RHS).name(), __FILE__, __LINE__);
+    }
+    return lhs == rhs;
+  }
+};
+
+template <typename LHS, typename RHS>
+struct __maybe_primop_eq<LHS, RHS, false> : __primop_eq<LHS, RHS> {};
+
+template <typename LHS, typename RHS, bool HasOverload>
+struct __maybe_primop_ne {
+  constexpr auto operator()(const LHS &lhs, const RHS &rhs) const
+      -> decltype(lhs != rhs) {
+    if (g_config.log_arithmetic_ops) {
+      __optiweave_log_operation("overloaded_ne", typeid(LHS).name(),
+                                typeid(RHS).name(), __FILE__, __LINE__);
+    }
+    return lhs != rhs;
+  }
+};
+
+template <typename LHS, typename RHS>
+struct __maybe_primop_ne<LHS, RHS, false> : __primop_ne<LHS, RHS> {};
+
+template <typename LHS, typename RHS, bool HasOverload>
+struct __maybe_primop_lt {
+  constexpr auto operator()(const LHS &lhs, const RHS &rhs) const
+      -> decltype(lhs < rhs) {
+    if (g_config.log_arithmetic_ops) {
+      __optiweave_log_operation("overloaded_lt", typeid(LHS).name(),
+                                typeid(RHS).name(), __FILE__, __LINE__);
+    }
+    return lhs < rhs;
+  }
+};
+
+template <typename LHS, typename RHS>
+struct __maybe_primop_lt<LHS, RHS, false> : __primop_lt<LHS, RHS> {};
+
+template <typename LHS, typename RHS, bool HasOverload>
+struct __maybe_primop_gt {
+  constexpr auto operator()(const LHS &lhs, const RHS &rhs) const
+      -> decltype(lhs > rhs) {
+    if (g_config.log_arithmetic_ops) {
+      __optiweave_log_operation("overloaded_gt", typeid(LHS).name(),
+                                typeid(RHS).name(), __FILE__, __LINE__);
+    }
+    return lhs > rhs;
+  }
+};
+
+template <typename LHS, typename RHS>
+struct __maybe_primop_gt<LHS, RHS, false> : __primop_gt<LHS, RHS> {};
+
+template <typename LHS, typename RHS, bool HasOverload>
+struct __maybe_primop_le {
+  constexpr auto operator()(const LHS &lhs, const RHS &rhs) const
+      -> decltype(lhs <= rhs) {
+    if (g_config.log_arithmetic_ops) {
+      __optiweave_log_operation("overloaded_le", typeid(LHS).name(),
+                                typeid(RHS).name(), __FILE__, __LINE__);
+    }
+    return lhs <= rhs;
+  }
+};
+
+template <typename LHS, typename RHS>
+struct __maybe_primop_le<LHS, RHS, false> : __primop_le<LHS, RHS> {};
+
+template <typename LHS, typename RHS, bool HasOverload>
+struct __maybe_primop_ge {
+  constexpr auto operator()(const LHS &lhs, const RHS &rhs) const
+      -> decltype(lhs >= rhs) {
+    if (g_config.log_arithmetic_ops) {
+      __optiweave_log_operation("overloaded_ge", typeid(LHS).name(),
+                                typeid(RHS).name(), __FILE__, __LINE__);
+    }
+    return lhs >= rhs;
+  }
+};
+
+template <typename LHS, typename RHS>
+struct __maybe_primop_ge<LHS, RHS, false> : __primop_ge<LHS, RHS> {};
+
+/**
+ * @brief SFINAE-aware assignment templates
+ */
+template <typename LHS, typename RHS, bool HasOverload>
+struct __maybe_primop_assign {
+  auto operator()(LHS &lhs, RHS &&rhs) const -> decltype(lhs = std::forward<RHS>(rhs)) {
+    if (g_config.log_arithmetic_ops) {
+      __optiweave_log_operation("overloaded_assign", typeid(LHS).name(),
+                                typeid(RHS).name(), __FILE__, __LINE__);
+    }
+    return lhs = std::forward<RHS>(rhs);
+  }
+};
+
+template <typename LHS, typename RHS>
+struct __maybe_primop_assign<LHS, RHS, false> : __primop_assign<LHS, RHS> {};
+
+template <typename LHS, typename RHS, bool HasOverload>
+struct __maybe_primop_add_assign {
+  auto operator()(LHS &lhs, RHS &&rhs) const -> decltype(lhs += std::forward<RHS>(rhs)) {
+    if (g_config.log_arithmetic_ops) {
+      __optiweave_log_operation("overloaded_add_assign", typeid(LHS).name(),
+                                typeid(RHS).name(), __FILE__, __LINE__);
+    }
+    return lhs += std::forward<RHS>(rhs);
+  }
+};
+
+template <typename LHS, typename RHS>
+struct __maybe_primop_add_assign<LHS, RHS, false> : __primop_add_assign<LHS, RHS> {};
+
+template <typename LHS, typename RHS, bool HasOverload>
+struct __maybe_primop_sub_assign {
+  auto operator()(LHS &lhs, RHS &&rhs) const -> decltype(lhs -= std::forward<RHS>(rhs)) {
+    if (g_config.log_arithmetic_ops) {
+      __optiweave_log_operation("overloaded_sub_assign", typeid(LHS).name(),
+                                typeid(RHS).name(), __FILE__, __LINE__);
+    }
+    return lhs -= std::forward<RHS>(rhs);
+  }
+};
+
+template <typename LHS, typename RHS>
+struct __maybe_primop_sub_assign<LHS, RHS, false> : __primop_sub_assign<LHS, RHS> {};
+
+template <typename LHS, typename RHS, bool HasOverload>
+struct __maybe_primop_mul_assign {
+  auto operator()(LHS &lhs, RHS &&rhs) const -> decltype(lhs *= std::forward<RHS>(rhs)) {
+    if (g_config.log_arithmetic_ops) {
+      __optiweave_log_operation("overloaded_mul_assign", typeid(LHS).name(),
+                                typeid(RHS).name(), __FILE__, __LINE__);
+    }
+    return lhs *= std::forward<RHS>(rhs);
+  }
+};
+
+template <typename LHS, typename RHS>
+struct __maybe_primop_mul_assign<LHS, RHS, false> : __primop_mul_assign<LHS, RHS> {};
+
+template <typename LHS, typename RHS, bool HasOverload>
+struct __maybe_primop_div_assign {
+  auto operator()(LHS &lhs, RHS &&rhs) const -> decltype(lhs /= std::forward<RHS>(rhs)) {
+    if (g_config.log_arithmetic_ops) {
+      __optiweave_log_operation("overloaded_div_assign", typeid(LHS).name(),
+                                typeid(RHS).name(), __FILE__, __LINE__);
+    }
+    return lhs /= std::forward<RHS>(rhs);
+  }
+};
+
+template <typename LHS, typename RHS>
+struct __maybe_primop_div_assign<LHS, RHS, false> : __primop_div_assign<LHS, RHS> {};
+
+template <typename LHS, typename RHS, bool HasOverload>
+struct __maybe_primop_mod_assign {
+  auto operator()(LHS &lhs, RHS &&rhs) const -> decltype(lhs %= std::forward<RHS>(rhs)) {
+    if (g_config.log_arithmetic_ops) {
+      __optiweave_log_operation("overloaded_mod_assign", typeid(LHS).name(),
+                                typeid(RHS).name(), __FILE__, __LINE__);
+    }
+    return lhs %= std::forward<RHS>(rhs);
+  }
+};
+
+template <typename LHS, typename RHS>
+struct __maybe_primop_mod_assign<LHS, RHS, false> : __primop_mod_assign<LHS, RHS> {};
 
 // Similar patterns for other arithmetic operations...
 
@@ -417,6 +910,73 @@ inline auto ow_mul(LHS&& lhs, RHS&& rhs) -> decltype(auto) {
 template <typename LHS, typename RHS>
 inline auto ow_div(LHS&& lhs, RHS&& rhs) -> decltype(auto) {
   return __primop_div<std::decay_t<LHS>, std::decay_t<RHS>>()(std::forward<LHS>(lhs), std::forward<RHS>(rhs));
+}
+
+template <typename LHS, typename RHS>
+inline auto ow_rem(LHS&& lhs, RHS&& rhs) -> decltype(auto) {
+  return __primop_rem<std::decay_t<LHS>, std::decay_t<RHS>>()(std::forward<LHS>(lhs), std::forward<RHS>(rhs));
+}
+
+// Comparison operation helpers
+template <typename LHS, typename RHS>
+inline auto ow_eq(LHS&& lhs, RHS&& rhs) -> decltype(auto) {
+  return __primop_eq<std::decay_t<LHS>, std::decay_t<RHS>>()(std::forward<LHS>(lhs), std::forward<RHS>(rhs));
+}
+
+template <typename LHS, typename RHS>
+inline auto ow_ne(LHS&& lhs, RHS&& rhs) -> decltype(auto) {
+  return __primop_ne<std::decay_t<LHS>, std::decay_t<RHS>>()(std::forward<LHS>(lhs), std::forward<RHS>(rhs));
+}
+
+template <typename LHS, typename RHS>
+inline auto ow_lt(LHS&& lhs, RHS&& rhs) -> decltype(auto) {
+  return __primop_lt<std::decay_t<LHS>, std::decay_t<RHS>>()(std::forward<LHS>(lhs), std::forward<RHS>(rhs));
+}
+
+template <typename LHS, typename RHS>
+inline auto ow_gt(LHS&& lhs, RHS&& rhs) -> decltype(auto) {
+  return __primop_gt<std::decay_t<LHS>, std::decay_t<RHS>>()(std::forward<LHS>(lhs), std::forward<RHS>(rhs));
+}
+
+template <typename LHS, typename RHS>
+inline auto ow_le(LHS&& lhs, RHS&& rhs) -> decltype(auto) {
+  return __primop_le<std::decay_t<LHS>, std::decay_t<RHS>>()(std::forward<LHS>(lhs), std::forward<RHS>(rhs));
+}
+
+template <typename LHS, typename RHS>
+inline auto ow_ge(LHS&& lhs, RHS&& rhs) -> decltype(auto) {
+  return __primop_ge<std::decay_t<LHS>, std::decay_t<RHS>>()(std::forward<LHS>(lhs), std::forward<RHS>(rhs));
+}
+
+// Assignment operation helpers
+template <typename LHS, typename RHS>
+inline auto ow_assign(LHS& lhs, RHS&& rhs) -> decltype(auto) {
+  return __primop_assign<std::decay_t<LHS>, std::decay_t<RHS>>()(lhs, std::forward<RHS>(rhs));
+}
+
+template <typename LHS, typename RHS>
+inline auto ow_add_assign(LHS& lhs, RHS&& rhs) -> decltype(auto) {
+  return __primop_add_assign<std::decay_t<LHS>, std::decay_t<RHS>>()(lhs, std::forward<RHS>(rhs));
+}
+
+template <typename LHS, typename RHS>
+inline auto ow_sub_assign(LHS& lhs, RHS&& rhs) -> decltype(auto) {
+  return __primop_sub_assign<std::decay_t<LHS>, std::decay_t<RHS>>()(lhs, std::forward<RHS>(rhs));
+}
+
+template <typename LHS, typename RHS>
+inline auto ow_mul_assign(LHS& lhs, RHS&& rhs) -> decltype(auto) {
+  return __primop_mul_assign<std::decay_t<LHS>, std::decay_t<RHS>>()(lhs, std::forward<RHS>(rhs));
+}
+
+template <typename LHS, typename RHS>
+inline auto ow_div_assign(LHS& lhs, RHS&& rhs) -> decltype(auto) {
+  return __primop_div_assign<std::decay_t<LHS>, std::decay_t<RHS>>()(lhs, std::forward<RHS>(rhs));
+}
+
+template <typename LHS, typename RHS>
+inline auto ow_mod_assign(LHS& lhs, RHS&& rhs) -> decltype(auto) {
+  return __primop_mod_assign<std::decay_t<LHS>, std::decay_t<RHS>>()(lhs, std::forward<RHS>(rhs));
 }
 
 } // namespace optiweave

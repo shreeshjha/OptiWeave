@@ -8,11 +8,14 @@ A source-to-source instrumentation framework built on LLVM/Clang for **selective
 
 ## What is OptiWeave?
 
-OptiWeave is a **flexible instrumentation framework** that can selectively instrument any C/C++ operators at the AST level. Currently **focused on array subscript instrumentation**, the framework is designed to support instrumenting arithmetic operators, assignments, comparisons, and more based on your profiling needs.
+OptiWeave is a **flexible instrumentation framework** that can selectively instrument any C/C++ operators at the AST level. The framework supports instrumenting array subscripts, arithmetic operators, assignments, comparisons, and more based on your profiling needs.
 
 **Current Implementation:**
 - **Array subscript instrumentation**: Production-ready with 8-17% overhead
-- **Arithmetic/assignment/comparison operators**: Infrastructure ready, awaiting implementation
+- **Arithmetic operators**: Fully implemented (+, -, *, /, %)
+- **Assignment operators**: Fully implemented (=, +=, -=, *=, /=, %=)
+- **Comparison operators**: Fully implemented (<, >, <=, >=, ==, !=)
+- **Template-aware instrumentation**: SFINAE-based wrappers for template contexts
 - **Extensible prelude system**: Add custom instrumentation wrappers as needed
 
 **Key Features:**
@@ -21,6 +24,7 @@ OptiWeave is a **flexible instrumentation framework** that can selectively instr
 - **C and C++ support**: Automatic language detection and appropriate runtime selection
 - **Source location tracking**: Know exactly where operations occur in your code
 - **Static analysis integration**: Optional overflow detection, complexity analysis, call graphs
+- **Template support**: SFINAE-aware templates handle types with operator overloads correctly
 
 **Primary Use Case (Array Profiling):**
 - Understanding array access patterns in legacy code
@@ -252,12 +256,12 @@ OPTIWEAVE_HOTSPOTS=1 OPTIWEAVE_HOTSPOTS_JSON=hotspots.json \
 ## CLI Reference
 
 ### Transformation Options
-- `--array-subscripts` - **[IMPLEMENTED]** Transform array subscript operations
-- `--arithmetic-ops` - **[TODO]** Transform arithmetic operators (+, -, *, /, %)
-- `--assignment-ops` - **[TODO]** Transform assignments (=, +=, -=, etc.)
-- `--comparison-ops` - **[TODO]** Transform comparisons (<, >, ==, !=, etc.)
+- `--array-subscripts` - Transform array subscript operations
+- `--arithmetic-ops` - Transform arithmetic operators (+, -, *, /, %)
+- `--assignment-ops` - Transform assignments (=, +=, -=, etc.)
+- `--comparison-ops` - Transform comparisons (<, >, ==, !=, etc.)
 
-*Note: Only `--array-subscripts` is fully implemented. Other operators have infrastructure ready but need instrumentation wrappers.*
+*All operator transformations are fully implemented with SFINAE-aware templates for template contexts.*
 
 ### Runtime Features
 - `--enable-stats` - Enable operation statistics
@@ -379,24 +383,34 @@ See [web/README.md](web/README.md) for details.
 
 ## Project Status
 
-**Phase 1: Core Instrumentation (100% Complete)** ✅
+**Phase 1: Core Instrumentation (100% Complete)**
 - AST transformation and runtime library
 - Thread-safe operation counters
 - Source location tracking
 - Statistics, timing, and hotspot detection
 
-**Phase 2: Code Understanding (100% Complete)** ✅
-- Pattern detectors (division-in-loop, O(n²)/O(n³), memory access, vectorization)
+**Phase 2: Operator Instrumentation (100% Complete)**
+- Array subscript instrumentation
+- Arithmetic operators (+, -, *, /, %)
+- Assignment operators (=, +=, -=, *=, /=, %=)
+- Comparison operators (<, >, <=, >=, ==, !=)
+- SFINAE-aware templates for template contexts (handles operator overloads)
+- Operator overload detection (`hasOperatorOverload()`)
+
+**Phase 3: Code Understanding (100% Complete)**
+- Pattern detectors (division-in-loop, O(n^2)/O(n^3), memory access, vectorization)
 - Complexity analysis and call graphs
 - Dependency tracking and circular dependency detection
 - Data flow analysis
+- HTML report generation for optimization suggestions
 
-**Phase 3: Advanced Analysis (44% Complete)**
-- ✅ Memory profiling
-- ✅ Cache profiling (Linux)
-- ✅ Integer overflow detection
-- ✅ Floating-point precision warnings
-- 🔄 Additional pattern detectors (repeated computation, branch prediction)
+**Phase 4: Advanced Analysis (100% Complete)**
+- Memory profiling
+- Cache profiling (Linux)
+- Integer overflow detection
+- Floating-point precision warnings
+- Repeated computation detection
+- Branch misprediction detection
 
 ## Contributing
 
