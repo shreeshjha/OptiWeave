@@ -266,6 +266,13 @@ prelude_temp_*
 *.optiweave.backup
 transformation_cache/
 
+# Temporary test files in root
+simple_test.c
+simple_test_instrumented
+test_*.c
+!tests/**/*.c
+!tests/**/*.cpp
+
 # Keep important root markdown files
 !README.md
 !CHANGELOG.md
@@ -280,7 +287,10 @@ TODO.md
 new_todo.md
 Thesis_Plan.md
 FEATURE_PLAN.md
+FEATURE_OVERVIEW.md
+THESIS_PROPOSAL.md
 examples/README_HOTSPOTS.md
+examples/template_validation/TEMPLATE_VALIDATION_RESULTS.md
 web/README.md
 
 # OptiWeave runtime artifacts
@@ -303,12 +313,15 @@ examples/**/test
 examples/**/profile_*
 examples/**/*_fresh*
 examples/**/*_baseline*
-examples/**/*_instrumented*
+examples/**/instrumented/
+examples/**/instrumented_*/
 examples/**/cJSON.c
 examples/**/cJSON_*.c
 examples/**/cJSON_*.h
 examples/**/transform.log
 examples/**/optiweave_runtime.c
+examples/**/*.txt
+examples/**/*.sh
 
 # Keep the main C runtime template
 !templates/optiweave/optiweave_runtime.c
