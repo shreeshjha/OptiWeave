@@ -1,3 +1,4 @@
+#include <optiweave/prelude_c.h>
 /**
  * UC1: Performance Hotspot Detection Use Case
  * 
@@ -25,9 +26,9 @@ void matmul_naive(double* A, double* B, double* C, int n) {
             for (int k = 0; k < n; k++) {
                 // This access pattern is cache-unfriendly for B
                 // B[k][j] strides by 'n' elements (column access)
-                sum += A[i * n + k] * B[k * n + j];
+                sum += __ow_subscript_impl(A, i * n + k, "/root/testing/OptiWeave/evaluation/use_cases/uc1_performance_hotspots/matmul_naive.c", 28, __FUNCTION__) * __ow_subscript_impl(B, k * n + j, "/root/testing/OptiWeave/evaluation/use_cases/uc1_performance_hotspots/matmul_naive.c", 28, __FUNCTION__);
             }
-            C[i * n + j] = sum;
+            (__optiweave_record_subscript("/root/testing/OptiWeave/evaluation/use_cases/uc1_performance_hotspots/matmul_naive.c", 30, __FUNCTION__), C[i * n + j] = sum);
         }
     }
 }
@@ -35,7 +36,7 @@ void matmul_naive(double* A, double* B, double* C, int n) {
 // Initialize matrix with random values
 void init_matrix(double* M, int n) {
     for (int i = 0; i < n * n; i++) {
-        M[i] = (double)rand() / RAND_MAX;
+        (__optiweave_record_subscript("/root/testing/OptiWeave/evaluation/use_cases/uc1_performance_hotspots/matmul_naive.c", 38, __FUNCTION__), M[i] = (double)rand() / RAND_MAX);
     }
 }
 
@@ -78,26 +79,26 @@ BenchmarkResult run_benchmark(void (*matmul_func)(double*, double*, double*, int
         double start = get_time_sec();
         matmul_func(A, B, C, n);
         double end = get_time_sec();
-        times[i] = end - start;
+        (__optiweave_record_subscript("/root/testing/OptiWeave/evaluation/use_cases/uc1_performance_hotspots/matmul_naive.c", 81, __FUNCTION__), times[i] = end - start);
     }
     
     // Calculate statistics
     BenchmarkResult result = {0};
-    result.min = times[0];
-    result.max = times[0];
+    result.min = __ow_subscript_impl(times, 0, "/root/testing/OptiWeave/evaluation/use_cases/uc1_performance_hotspots/matmul_naive.c", 86, __FUNCTION__);
+    result.max = __ow_subscript_impl(times, 0, "/root/testing/OptiWeave/evaluation/use_cases/uc1_performance_hotspots/matmul_naive.c", 87, __FUNCTION__);
     
     double sum = 0.0;
     for (int i = 0; i < measured_runs; i++) {
-        sum += times[i];
-        if (times[i] < result.min) result.min = times[i];
-        if (times[i] > result.max) result.max = times[i];
+        sum += __ow_subscript_impl(times, i, "/root/testing/OptiWeave/evaluation/use_cases/uc1_performance_hotspots/matmul_naive.c", 91, __FUNCTION__);
+        if (__ow_subscript_impl(times, i, "/root/testing/OptiWeave/evaluation/use_cases/uc1_performance_hotspots/matmul_naive.c", 92, __FUNCTION__) < result.min) result.min = __ow_subscript_impl(times, i, "/root/testing/OptiWeave/evaluation/use_cases/uc1_performance_hotspots/matmul_naive.c", 92, __FUNCTION__);
+        if (__ow_subscript_impl(times, i, "/root/testing/OptiWeave/evaluation/use_cases/uc1_performance_hotspots/matmul_naive.c", 93, __FUNCTION__) > result.max) result.max = __ow_subscript_impl(times, i, "/root/testing/OptiWeave/evaluation/use_cases/uc1_performance_hotspots/matmul_naive.c", 93, __FUNCTION__);
     }
     result.mean = sum / measured_runs;
     
     // Standard deviation
     double variance_sum = 0.0;
     for (int i = 0; i < measured_runs; i++) {
-        double diff = times[i] - result.mean;
+        double diff = __ow_subscript_impl(times, i, "/root/testing/OptiWeave/evaluation/use_cases/uc1_performance_hotspots/matmul_naive.c", 100, __FUNCTION__) - result.mean;
         variance_sum += diff * diff;
     }
     result.stddev = sqrt(variance_sum / (measured_runs - 1));
@@ -117,8 +118,8 @@ int main(int argc, char** argv) {
     int warmup = 3;
     int runs = 30;
     
-    if (argc > 1) n = atoi(argv[1]);
-    if (argc > 2) runs = atoi(argv[2]);
+    if (argc > 1) n = atoi(__ow_subscript_impl(argv, 1, "/root/testing/OptiWeave/evaluation/use_cases/uc1_performance_hotspots/matmul_naive.c", 120, __FUNCTION__));
+    if (argc > 2) runs = atoi(__ow_subscript_impl(argv, 2, "/root/testing/OptiWeave/evaluation/use_cases/uc1_performance_hotspots/matmul_naive.c", 121, __FUNCTION__));
     
     printf("=== UC1: Performance Hotspot Detection ===\n");
     printf("Matrix size: %d x %d\n", n, n);

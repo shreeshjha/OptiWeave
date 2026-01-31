@@ -1,3 +1,4 @@
+#include <optiweave/prelude_c.h>
 /**
  * UC3: Bug Detection Use Case - Integer Overflow
  * 
@@ -35,9 +36,9 @@ int g_result_count = 0;
 
 void record_result(const char* name, const char* desc, bool overflow, 
                    bool optiweave, bool static_analysis) {
-    g_results[g_result_count++] = (TestResult){
+    (__optiweave_record_subscript("/root/testing/OptiWeave/evaluation/use_cases/uc3_bug_detection/overflow_detection.c", 38, __FUNCTION__), (__optiweave_record_subscript("/root/testing/OptiWeave/evaluation/use_cases/uc3_bug_detection/overflow_detection.c", 39, __FUNCTION__), g_results[g_result_count++] = (TestResult){
         name, desc, overflow, optiweave, static_analysis
-    };
+    }););
 }
 
 // ==============================================================
@@ -100,7 +101,7 @@ int* test_array_index_overflow(int width, int height) {
     for (int i = 0; i < height; i++) {
         for (int j = 0; j < width; j++) {
             int idx = i * width + j;  // OptiWeave instruments this
-            array[idx] = i + j;
+            (__optiweave_record_subscript("/root/testing/OptiWeave/evaluation/use_cases/uc3_bug_detection/overflow_detection.c", 103, __FUNCTION__), (__optiweave_record_subscript("/root/testing/OptiWeave/evaluation/use_cases/uc3_bug_detection/overflow_detection.c", 104, __FUNCTION__), array[idx] = i + j););
         }
     }
     
@@ -152,7 +153,7 @@ uint32_t test_checksum_overflow(const uint8_t* data, size_t len) {
     for (size_t i = 0; i < len; i++) {
         // This can overflow - usually intentional for checksums,
         // but OptiWeave can flag it for review
-        sum += data[i];  // OptiWeave instruments this
+        sum += __ow_subscript_impl(data, i, "/root/testing/OptiWeave/evaluation/use_cases/uc3_bug_detection/overflow_detection.c", 155, __FUNCTION__);  // OptiWeave instruments this
         sum += (sum << 10);
         sum ^= (sum >> 6);
     }
@@ -181,7 +182,7 @@ bool test_string_length_overflow(const char* str, int max_len) {
     bool overflow_risk = false;
     
     // Unsafe length calculation
-    while (str[len] != '\0' && len < max_len) {
+    while (__ow_subscript_impl(str, len, "/root/testing/OptiWeave/evaluation/use_cases/uc3_bug_detection/overflow_detection.c", 184, __FUNCTION__) != '\0' && len < max_len) {
         len++;  // OptiWeave instruments this
     }
     
@@ -190,7 +191,7 @@ bool test_string_length_overflow(const char* str, int max_len) {
     if (!copy) return false;
     
     for (int i = 0; i < len; i++) {
-        copy[i] = str[i];  // OptiWeave tracks subscripts
+        (__optiweave_record_subscript("/root/testing/OptiWeave/evaluation/use_cases/uc3_bug_detection/overflow_detection.c", 193, __FUNCTION__), (__optiweave_record_subscript("/root/testing/OptiWeave/evaluation/use_cases/uc3_bug_detection/overflow_detection.c", 194, __FUNCTION__), copy[i] = str[i]););  // OptiWeave tracks subscripts
     }
     // Missing: copy[len] = '\0';  -- buffer overflow if anyone calls strlen(copy)
     

@@ -1,0 +1,85 @@
+╔══════════════════════════════════════════════════════════════╗
+║        OptiWeave Code Complexity Analysis                   ║
+╚══════════════════════════════════════════════════════════════╝
+
+Project Statistics:
+  Total Functions: 7
+  Total Lines: 118
+  Total SLOC: 118
+  Complex Functions (CC > 20): 0
+  Very Complex Functions (CC > 50): 0
+
+Average Metrics:
+  Cyclomatic Complexity: 2.57
+  Cognitive Complexity: 3.29
+  Maintainability Index: 100.00
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Most Complex Functions (by Cyclomatic Complexity)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+┌────┬─────────────────────────────┬─────────┬─────────┬──────────┬────────────┐
+│ #  │ Function                    │ CC      │ CogC    │ MI       │ Risk       │
+├────┼─────────────────────────────┼─────────┼─────────┼──────────┼────────────┤
+│  1 │ deeply_nested               │       5 │      10 │    100.0 │ Low        │
+│ 2  │ classify_number             │       4 │       6 │    100.0 │ Low        │
+│ 3  │ nested_search               │       4 │       6 │    100.0 │ Low        │
+│ 4  │ process_data                │       2 │       1 │    100.0 │ Low        │
+│ 5  │ add_numbers                 │       1 │       0 │    100.0 │ Low        │
+│ 6  │ main                        │       1 │       0 │    100.0 │ Low        │
+│ 7  │ vulnerable_function         │       1 │       0 │    100.0 │ Low        │
+└────┴─────────────────────────────┴─────────┴─────────┴──────────┴────────────┘
+
+Legend:
+  CC   = Cyclomatic Complexity (decision points)
+  CogC = Cognitive Complexity (understandability)
+  MI   = Maintainability Index (0-100, higher is better)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Least Maintainable Functions
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Function: add_numbers
+  Location: /root/testing/OptiWeave/evaluation/instrumentation_use_cases/analysis_demo.c:13
+  Maintainability Index: 100.0 (Highly Maintainable)
+  Cyclomatic Complexity: 1 (Simple)
+  Lines of Code: 3
+
+Function: classify_number
+  Location: /root/testing/OptiWeave/evaluation/instrumentation_use_cases/analysis_demo.c:20
+  Maintainability Index: 100.0 (Highly Maintainable)
+  Cyclomatic Complexity: 4 (Simple)
+  Lines of Code: 11
+
+Function: deeply_nested
+  Location: /root/testing/OptiWeave/evaluation/instrumentation_use_cases/analysis_demo.c:107
+  Maintainability Index: 100.0 (Highly Maintainable)
+  Cyclomatic Complexity: 5 (Simple)
+  Lines of Code: 19
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Hardest to Understand Functions (by Cognitive Complexity)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Function: deeply_nested
+  Cognitive Complexity: 10 (Easy)
+  Max Nesting Depth: 4
+  Decision Points: 4
+
+Function: classify_number
+  Cognitive Complexity: 6 (Easy)
+  Max Nesting Depth: 3
+  Decision Points: 3
+
+Function: nested_search
+  Cognitive Complexity: 6 (Easy)
+  Max Nesting Depth: 3
+  Decision Points: 3
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Summary & Recommendations
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Good code structure!
+   → No circular dependencies detected
+   → No extremely complex functions

@@ -1,0 +1,133 @@
+=== Integer Overflow Detection Report ===
+
+Total issues found: 25
+
+Critical: 19
+Warning: 6
+Info: 0
+
+[critical] signed_addition_overflow
+  Location: /root/testing/OptiWeave/evaluation/instrumentation_use_cases/analysis_demo.c:14:12 (in add_numbers)
+  Description: Potential signed integer overflow in addition
+  Suggestion: Use safer arithmetic (e.g., check before addition, use wider type, or use unsigned)
+
+[critical] signed_negation_overflow
+  Location: /root/testing/OptiWeave/evaluation/instrumentation_use_cases/analysis_demo.c:22:16 (in classify_number)
+  Description: Negation of signed integer may cause overflow (e.g., -INT_MIN)
+  Suggestion: Check if value is INT_MIN before negating, or use unsigned type
+
+[critical] signed_negation_overflow
+  Location: /root/testing/OptiWeave/evaluation/instrumentation_use_cases/analysis_demo.c:39:30 (in process_data)
+  Description: Negation of signed integer may cause overflow (e.g., -INT_MIN)
+  Suggestion: Check if value is INT_MIN before negating, or use unsigned type
+
+[critical] signed_negation_overflow
+  Location: /root/testing/OptiWeave/evaluation/instrumentation_use_cases/analysis_demo.c:40:26 (in process_data)
+  Description: Negation of signed integer may cause overflow (e.g., -INT_MIN)
+  Suggestion: Check if value is INT_MIN before negating, or use unsigned type
+
+[warning] loop_counter_overflow
+  Location: /root/testing/OptiWeave/evaluation/instrumentation_use_cases/analysis_demo.c:44:13 (in process_data)
+  Description: Loop counter may overflow causing infinite loop
+  Suggestion: Ensure loop bounds don't cause counter overflow, use wider type, or check explicitly
+
+[critical] signed_addition_overflow
+  Location: /root/testing/OptiWeave/evaluation/instrumentation_use_cases/analysis_demo.c:45:17 (in process_data)
+  Description: Potential signed integer overflow in addition
+  Suggestion: Use safer arithmetic (e.g., check before addition, use wider type, or use unsigned)
+
+[warning] loop_counter_overflow
+  Location: /root/testing/OptiWeave/evaluation/instrumentation_use_cases/analysis_demo.c:50:13 (in process_data)
+  Description: Loop counter may overflow causing infinite loop
+  Suggestion: Ensure loop bounds don't cause counter overflow, use wider type, or check explicitly
+
+[critical] signed_addition_overflow
+  Location: /root/testing/OptiWeave/evaluation/instrumentation_use_cases/analysis_demo.c:51:17 (in process_data)
+  Description: Potential signed integer overflow in multiplication
+  Suggestion: Check operand magnitudes or use a wider type (e.g., int64_t)
+
+[warning] loop_counter_overflow
+  Location: /root/testing/OptiWeave/evaluation/instrumentation_use_cases/analysis_demo.c:57:13 (in process_data)
+  Description: Loop counter may overflow causing infinite loop
+  Suggestion: Ensure loop bounds don't cause counter overflow, use wider type, or check explicitly
+
+[warning] loop_counter_overflow
+  Location: /root/testing/OptiWeave/evaluation/instrumentation_use_cases/analysis_demo.c:64:13 (in process_data)
+  Description: Loop counter may overflow causing infinite loop
+  Suggestion: Ensure loop bounds don't cause counter overflow, use wider type, or check explicitly
+
+[critical] signed_negation_overflow
+  Location: /root/testing/OptiWeave/evaluation/instrumentation_use_cases/analysis_demo.c:69:20 (in process_data)
+  Description: Negation of signed integer may cause overflow (e.g., -INT_MIN)
+  Suggestion: Check if value is INT_MIN before negating, or use unsigned type
+
+[critical] signed_addition_overflow
+  Location: /root/testing/OptiWeave/evaluation/instrumentation_use_cases/analysis_demo.c:81:17 (in vulnerable_function)
+  Description: Potential signed integer overflow in multiplication
+  Suggestion: Check operand magnitudes or use a wider type (e.g., int64_t)
+
+[warning] loop_counter_overflow
+  Location: /root/testing/OptiWeave/evaluation/instrumentation_use_cases/analysis_demo.c:94:5 (in nested_search)
+  Description: Loop counter may overflow causing infinite loop
+  Suggestion: Ensure loop bounds don't cause counter overflow, use wider type, or check explicitly
+
+[warning] loop_counter_overflow
+  Location: /root/testing/OptiWeave/evaluation/instrumentation_use_cases/analysis_demo.c:95:9 (in nested_search)
+  Description: Loop counter may overflow causing infinite loop
+  Suggestion: Ensure loop bounds don't cause counter overflow, use wider type, or check explicitly
+
+[critical] signed_addition_overflow
+  Location: /root/testing/OptiWeave/evaluation/instrumentation_use_cases/analysis_demo.c:96:17 (in nested_search)
+  Description: Potential signed integer overflow in addition
+  Suggestion: Use safer arithmetic (e.g., check before addition, use wider type, or use unsigned)
+
+[critical] signed_addition_overflow
+  Location: /root/testing/OptiWeave/evaluation/instrumentation_use_cases/analysis_demo.c:97:24 (in nested_search)
+  Description: Potential signed integer overflow in addition
+  Suggestion: Use safer arithmetic (e.g., check before addition, use wider type, or use unsigned)
+
+[critical] signed_addition_overflow
+  Location: /root/testing/OptiWeave/evaluation/instrumentation_use_cases/analysis_demo.c:97:24 (in nested_search)
+  Description: Potential signed integer overflow in multiplication
+  Suggestion: Check operand magnitudes or use a wider type (e.g., int64_t)
+
+[critical] signed_negation_overflow
+  Location: /root/testing/OptiWeave/evaluation/instrumentation_use_cases/analysis_demo.c:101:12 (in nested_search)
+  Description: Negation of signed integer may cause overflow (e.g., -INT_MIN)
+  Suggestion: Check if value is INT_MIN before negating, or use unsigned type
+
+[critical] signed_addition_overflow
+  Location: /root/testing/OptiWeave/evaluation/instrumentation_use_cases/analysis_demo.c:113:30 (in deeply_nested)
+  Description: Potential signed integer overflow in addition
+  Suggestion: Use safer arithmetic (e.g., check before addition, use wider type, or use unsigned)
+
+[critical] signed_addition_overflow
+  Location: /root/testing/OptiWeave/evaluation/instrumentation_use_cases/analysis_demo.c:113:30 (in deeply_nested)
+  Description: Potential signed integer overflow in addition
+  Suggestion: Use safer arithmetic (e.g., check before addition, use wider type, or use unsigned)
+
+[critical] signed_addition_overflow
+  Location: /root/testing/OptiWeave/evaluation/instrumentation_use_cases/analysis_demo.c:113:30 (in deeply_nested)
+  Description: Potential signed integer overflow in addition
+  Suggestion: Use safer arithmetic (e.g., check before addition, use wider type, or use unsigned)
+
+[critical] signed_addition_overflow
+  Location: /root/testing/OptiWeave/evaluation/instrumentation_use_cases/analysis_demo.c:115:30 (in deeply_nested)
+  Description: Potential signed integer overflow in addition
+  Suggestion: Use safer arithmetic (e.g., check before addition, use wider type, or use unsigned)
+
+[critical] signed_addition_overflow
+  Location: /root/testing/OptiWeave/evaluation/instrumentation_use_cases/analysis_demo.c:115:30 (in deeply_nested)
+  Description: Potential signed integer overflow in addition
+  Suggestion: Use safer arithmetic (e.g., check before addition, use wider type, or use unsigned)
+
+[critical] signed_addition_overflow
+  Location: /root/testing/OptiWeave/evaluation/instrumentation_use_cases/analysis_demo.c:118:26 (in deeply_nested)
+  Description: Potential signed integer overflow in addition
+  Suggestion: Use safer arithmetic (e.g., check before addition, use wider type, or use unsigned)
+
+[critical] signed_negation_overflow
+  Location: /root/testing/OptiWeave/evaluation/instrumentation_use_cases/analysis_demo.c:138:58 (in main)
+  Description: Negation of signed integer may cause overflow (e.g., -INT_MIN)
+  Suggestion: Check if value is INT_MIN before negating, or use unsigned type
+

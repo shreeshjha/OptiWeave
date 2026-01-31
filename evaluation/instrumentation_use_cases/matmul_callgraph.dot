@@ -1,0 +1,41 @@
+digraph CallGraph {
+    rankdir=LR;
+    node [shape=box, style=rounded];
+
+    "run_benchmark" [];
+    "srand" [];
+    "printf" [];
+    "__optiweave_record_subscript" [];
+    "main" [];
+    "atoi" [];
+    "clock_gettime" [];
+    "fprintf" [];
+    "free" [];
+    "zero_matrix" [];
+    "get_time_sec" [];
+    "malloc" [];
+    "init_matrix" [];
+    "sqrt" [];
+    "memset" [];
+    "matmul_naive" [];
+
+    "run_benchmark" -> "__optiweave_record_subscript";
+    "run_benchmark" -> "atoi";
+    "run_benchmark" -> "printf";
+    "run_benchmark" -> "malloc";
+    "run_benchmark" -> "fprintf";
+    "run_benchmark" -> "srand";
+    "run_benchmark" -> "init_matrix";
+    "run_benchmark" -> "run_benchmark";
+    "run_benchmark" -> "free";
+    "__optiweave_record_subscript" -> "__optiweave_record_subscript";
+    "zero_matrix" -> "clock_gettime";
+    "get_time_sec" -> "malloc";
+    "get_time_sec" -> "zero_matrix";
+    "get_time_sec" -> "free";
+    "get_time_sec" -> "get_time_sec";
+    "get_time_sec" -> "sqrt";
+    "get_time_sec" -> "__optiweave_record_subscript";
+    "init_matrix" -> "memset";
+    "matmul_naive" -> "__optiweave_record_subscript";
+}

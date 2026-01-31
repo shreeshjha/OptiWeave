@@ -1,0 +1,20 @@
+digraph CallGraph {
+    rankdir=LR;
+    node [shape=box, style=rounded];
+
+    "vulnerable_function" [];
+    "main" [];
+    "printf" [];
+    "process_data" [];
+    "nested_search" [];
+    "deeply_nested" [];
+    "classify_number" [];
+    "add_numbers" [];
+
+    "deeply_nested" -> "printf";
+    "deeply_nested" -> "add_numbers";
+    "deeply_nested" -> "classify_number";
+    "deeply_nested" -> "deeply_nested";
+    "deeply_nested" -> "process_data";
+    "deeply_nested" -> "nested_search";
+}

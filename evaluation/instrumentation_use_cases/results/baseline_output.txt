@@ -1,0 +1,114 @@
+╔════════════════════════════════════════════════════════════════╗
+║  OptiWeave Source-to-Source Instrumentation Use Cases          ║
+║  Demonstrating the VALUE of instrumentation, not just counts   ║
+╚════════════════════════════════════════════════════════════════╝
+
+=== USE CASE 1: Performance Hotspot Detection ===
+Scenario: Image processing pipeline with blur, threshold, edge detect
+Total time: 39.9062 ms
+
+OptiWeave will show:
+  apply_blur():        ~9M array accesses (9 per pixel * 1M pixels)
+  apply_threshold():   ~1M array accesses (1 per pixel)
+  apply_edge_detect(): ~12M array accesses (12 per pixel)
+
+Insight: Optimize blur and edge_detect for biggest impact!
+
+=== USE CASE 2: Cache Optimization Analysis ===
+Scenario: Matrix traversal - row-major vs column-major
+Column-major time: 34.8706 ms
+Row-major time:    3.25448 ms
+Speedup:           10.7146x
+
+OptiWeave detects:
+  - sum_column_major: Strided access pattern (stride=2048)
+  - sum_row_major: Sequential access pattern (stride=1)
+
+Insight: Loop interchange gives 10.7146x speedup!
+
+=== USE CASE 3: Algorithm Complexity Verification ===
+Scenario: Verify O(n) vs O(n²) behavior at runtime
+
+Operation counts at different sizes:
+Size	Linear		Quadratic	Ratio
+100	100		10000		100x
+200	200		40000		200x
+400	400		160000		400x
+800	800		640000		800x
+
+OptiWeave insight:
+  - true_linear: ops = n (confirmed O(n))
+  - hidden_quadratic: ops = n² (WARNING: O(n²) detected!)
+
+Action: Refactor hidden_quadratic to use hash set for O(n)
+
+=== USE CASE 4: Bug Detection & Prevention ===
+Scenario: Detect integer overflows before they crash
+
+OptiWeave static analysis detects:
+  [CRITICAL] vulnerable_add:        Signed addition overflow possible
+  [CRITICAL] vulnerable_multiply:   Signed multiplication overflow possible
+  [WARNING]  array_index_overflow:  Index calculation may overflow
+  [WARNING]  array_index_overflow:  Negative array index possible
+
+Example attack:
+  user_input = 536870912 (0x20000000)
+  index = 536870912 * 4 = -2147483648 (overflow!)
+  arr[-2147483648] = CRASH or arbitrary memory read
+
+OptiWeave found this BEFORE any code was run!
+
+=== USE CASE 5: Optimization Impact Measurement ===
+Scenario: Measure exact improvement from code change
+
+Before optimization:
+  Time: 31.0377 ms
+  Array accesses: 50005000 (OptiWeave measured)
+
+After optimization:
+  Time: 0.008148 ms
+  Array accesses: 10000 (OptiWeave measured)
+
+Improvement:
+  Speedup: 3809.24x
+  Operation reduction: 99.98%
+
+OptiWeave quantifies the impact precisely!
+
+=== USE CASE 6: Legacy Code Understanding ===
+Scenario: Understanding unfamiliar codebase
+
+OptiWeave provides:
+  1. Call Graph: Which functions call which
+  2. Hot Functions: Where time is spent
+  3. Operation Breakdown: What operations dominate
+  4. Dead Code: Functions never called
+  5. Complexity: Which functions are too complex
+
+Example output for legacy codebase:
+  ┌──────────────────────────────────────────────┐
+  │ Function Analysis Report                      │
+  ├──────────────────────────────────────────────┤
+  │ parse_input()     - 45% of time, 2M arr ops  │
+  │ process_data()    - 35% of time, 500K ops    │
+  │ format_output()   - 15% of time, 100K ops    │
+  │ legacy_debug()    - DEAD CODE (never called) │
+  │ validate_v2()     - Cyclomatic complexity 47 │
+  └──────────────────────────────────────────────┘
+
+Insight: Focus on parse_input() for optimization!
+
+╔════════════════════════════════════════════════════════════════╗
+║                          SUMMARY                               ║
+╚════════════════════════════════════════════════════════════════╝
+
+Source-to-source instrumentation enables:
+  1. Finding performance hotspots with exact operation counts
+  2. Detecting cache-unfriendly access patterns
+  3. Verifying algorithm complexity at runtime
+  4. Finding bugs BEFORE they cause crashes
+  5. Quantifying optimization improvements precisely
+  6. Understanding legacy code behavior
+
+This is what makes OptiWeave unique - not just counting,
+but providing actionable insights for real problems.
