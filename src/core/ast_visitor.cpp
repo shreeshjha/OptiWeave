@@ -505,32 +505,21 @@ bool ModernASTVisitor::transformAssignmentWithArraySubscript(clang::ArraySubscri
   auto& SM = context_.getSourceManager();
   unsigned line = SM.getExpansionLineNumber(assignment->getBeginLoc());
 
-  // SIMPLER FIX: The issue is that we're replacing just the expression, but the
-  // semicolon is part of the statement. Clang's Rewriter doesn't include the semicolon
-  // in the expression range.
+  // FIX: Use block wrapper instead of comma operator to avoid semicolon issues.
+  // The comma operator doesn't work well with statement-level assignments because
+  // the semicolon becomes part of the expression, causing syntax errors.
   //
-  // Solution: Add semicolon INSIDE our wrapper, then remove the trailing semicolon
-  // from the original code by extending the replacement range.
+  // Solution: Wrap in a block: { record(); assignment; }
+  // This works correctly whether the assignment is a statement or expression.
 
-  // Get the location just after the assignment expression (where the semicolon should be)
-  auto end_loc = assignment->getEndLoc();
-  auto next_loc = clang::Lexer::findLocationAfterToken(
-      end_loc, clang::tok::semi, SM, context_.getLangOpts(), false);
+  // Just replace the assignment expression itself (don't touch the semicolon)
+  clang::SourceRange replace_range = assignment->getSourceRange();
 
-  clang::SourceRange replace_range;
-  if (next_loc.isValid()) {
-    // Found the semicolon - include it in the replacement range
-    replace_range = clang::SourceRange(assignment->getBeginLoc(), next_loc.getLocWithOffset(-1));
-  } else {
-    // No semicolon found (maybe it's in a different context) - just replace the expression
-    replace_range = assignment->getSourceRange();
-  }
-
-  // Generate instrumented code WITH the semicolon
+  // Generate instrumented code as a block
   std::ostringstream instrumented;
-  instrumented << "(__optiweave_record_subscript("
+  instrumented << "({ __optiweave_record_subscript("
                << getSourceLocationLiterals(subscript_expr->getExprLoc())
-               << "), " << assignment_text << ");";  // Add semicolon here
+               << "); " << assignment_text << "; })";  // GNU statement expression
 
   // Replace with instrumented version
   if (rewriter_.ReplaceText(replace_range, instrumented.str())) {

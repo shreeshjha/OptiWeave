@@ -31,6 +31,58 @@ def calculate_confidence_interval(data, confidence=0.95):
     ci = std_err * stats.t.ppf((1 + confidence) / 2., n - 1)
     return (mean - ci, mean + ci)
 
+def calculate_cohens_d(group1, group2):
+    """
+    Calculate Cohen's d effect size for two groups.
+    Uses pooled standard deviation.
+    
+    Interpretation:
+    - |d| < 0.2: negligible
+    - 0.2 <= |d| < 0.5: small
+    - 0.5 <= |d| < 0.8: medium
+    - |d| >= 0.8: large
+    """
+    n1, n2 = len(group1), len(group2)
+    if n1 < 2 or n2 < 2:
+        return np.nan
+    
+    var1, var2 = group1.var(), group2.var()
+    # Pooled standard deviation
+    pooled_std = np.sqrt(((n1 - 1) * var1 + (n2 - 1) * var2) / (n1 + n2 - 2))
+    
+    if pooled_std == 0:
+        return np.nan
+    
+    d = (group1.mean() - group2.mean()) / pooled_std
+    return d
+
+def interpret_cohens_d(d):
+    """Interpret Cohen's d effect size"""
+    if pd.isna(d):
+        return "N/A"
+    abs_d = abs(d)
+    if abs_d < 0.2:
+        return "negligible"
+    elif abs_d < 0.5:
+        return "small"
+    elif abs_d < 0.8:
+        return "medium"
+    else:
+        return "large"
+
+def bonferroni_correction(p_values, alpha=0.05):
+    """
+    Apply Bonferroni correction for multiple comparisons.
+    Returns corrected alpha threshold and adjusted p-values.
+    """
+    n_tests = len(p_values)
+    if n_tests == 0:
+        return alpha, []
+    
+    corrected_alpha = alpha / n_tests
+    adjusted_p_values = [min(p * n_tests, 1.0) for p in p_values]
+    return corrected_alpha, adjusted_p_values
+
 def analyze_overhead(csv_path, output_dir):
     """Comprehensive overhead analysis with statistical tests"""
 
@@ -85,6 +137,10 @@ def analyze_overhead(csv_path, output_dir):
             else:
                 t_stat, p_value = stats.ttest_ind(optiweave, baseline)
 
+            # Calculate Cohen's d effect size
+            cohens_d = calculate_cohens_d(optiweave.values, baseline.values)
+            effect_size_interp = interpret_cohens_d(cohens_d)
+
             significant = "Yes" if p_value < 0.05 else "No"
         else:
             optiweave_mean = np.nan
@@ -93,6 +149,8 @@ def analyze_overhead(csv_path, output_dir):
             overhead = np.nan
             t_stat = np.nan
             p_value = np.nan
+            cohens_d = np.nan
+            effect_size_interp = "N/A"
             significant = "N/A"
 
         # gprof stats
@@ -119,6 +177,8 @@ def analyze_overhead(csv_path, output_dir):
             'gprof_overhead_pct': gprof_overhead,
             't_statistic': t_stat,
             'p_value': p_value,
+            'cohens_d': cohens_d,
+            'effect_size': effect_size_interp,
             'significant': significant
         })
 
@@ -224,6 +284,71 @@ def analyze_overhead(csv_path, output_dir):
     print()
 
     # ========================================================================
+    # 4b. BONFERRONI CORRECTION FOR MULTIPLE COMPARISONS
+    # ========================================================================
+    print("-" * 80)
+    print("4b. BONFERRONI CORRECTION (Multiple Comparisons)")
+    print("-" * 80)
+    print()
+
+    # Get all p-values for Bonferroni correction
+    raw_p_values = summary_df['p_value'].dropna().tolist()
+    n_tests = len(raw_p_values)
+    corrected_alpha, adjusted_p_values = bonferroni_correction(raw_p_values, alpha=0.05)
+
+    print(f"Number of comparisons: {n_tests}")
+    print(f"Original α: 0.05")
+    print(f"Bonferroni-corrected α: {corrected_alpha:.5f}")
+    print()
+
+    # Apply Bonferroni correction to determine significance
+    summary_df['p_value_adjusted'] = summary_df['p_value'].apply(
+        lambda p: min(p * n_tests, 1.0) if pd.notna(p) else np.nan
+    )
+    summary_df['significant_bonferroni'] = summary_df['p_value_adjusted'].apply(
+        lambda p: 'Yes' if pd.notna(p) and p < 0.05 else ('No' if pd.notna(p) else 'N/A')
+    )
+
+    bonf_sig_count = (summary_df['significant_bonferroni'] == 'Yes').sum()
+    bonf_not_sig_count = (summary_df['significant_bonferroni'] == 'No').sum()
+
+    print(f"Significance after Bonferroni correction:")
+    print(f"  Significant:     {bonf_sig_count:>3d} benchmarks")
+    print(f"  Not significant: {bonf_not_sig_count:>3d} benchmarks")
+    print()
+
+    if bonf_sig_count > 0:
+        print("Benchmarks significant after Bonferroni correction:")
+        bonf_sig_benchmarks = summary_df[summary_df['significant_bonferroni'] == 'Yes'][
+            ['benchmark', 'optiweave_overhead_pct', 'p_value', 'p_value_adjusted']
+        ].sort_values('optiweave_overhead_pct', ascending=False)
+        print(bonf_sig_benchmarks.to_string(index=False))
+    else:
+        print("No benchmarks remain significant after Bonferroni correction.")
+    print()
+
+    # ========================================================================
+    # 4c. EFFECT SIZE ANALYSIS (Cohen's d)
+    # ========================================================================
+    print("-" * 80)
+    print("4c. EFFECT SIZE ANALYSIS (Cohen's d)")
+    print("-" * 80)
+    print()
+
+    effect_size_counts = summary_df['effect_size'].value_counts()
+    print("Effect Size Distribution:")
+    for size, count in effect_size_counts.items():
+        pct = (count / len(summary_df)) * 100
+        print(f"  {size:15s}: {count:>3d} benchmarks ({pct:>5.1f}%)")
+    print()
+
+    print("Effect sizes by benchmark:")
+    effect_df = summary_df[['benchmark', 'optiweave_overhead_pct', 'cohens_d', 'effect_size']].dropna()
+    effect_df = effect_df.sort_values('cohens_d', key=abs, ascending=False)
+    print(effect_df.to_string(index=False))
+    print()
+
+    # ========================================================================
     # 5. SAVE OUTPUTS
     # ========================================================================
     print("=" * 80)
@@ -323,7 +448,17 @@ def analyze_overhead(csv_path, output_dir):
                 'q75': float(valid_gprof.quantile(0.75))
             }
         },
-        'category_distribution': category_counts.to_dict()
+        'category_distribution': category_counts.to_dict(),
+        'statistical_rigor': {
+            'bonferroni': {
+                'n_tests': n_tests,
+                'corrected_alpha': corrected_alpha,
+                'significant_after_correction': bonf_sig_count
+            },
+            'effect_sizes': effect_size_counts.to_dict(),
+            'significant_uncorrected': significant_count,
+            'significant_bonferroni': bonf_sig_count
+        }
     }
 
     with open(json_file, 'w') as f:
@@ -352,6 +487,9 @@ def analyze_overhead(csv_path, output_dir):
     print(f"   between OptiWeave and gprof (p={p_value:.4f})")
     print()
     print(f"5. {significant_count} benchmarks show statistically significant overhead (α=0.05)")
+    print(f"   After Bonferroni correction: {bonf_sig_count} benchmarks (corrected α={corrected_alpha:.5f})")
+    print()
+    print(f"6. Effect sizes (Cohen's d): {effect_size_counts.to_dict()}")
     print()
     print("These results demonstrate that AST-level instrumentation provides")
     print("competitive overhead compared to traditional profiling tools like gprof,")

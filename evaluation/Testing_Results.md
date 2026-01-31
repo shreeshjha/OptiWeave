@@ -4,10 +4,21 @@ This document presents actual benchmark results comparing OptiWeave with other p
 
 ---
 
+## Related Documents
+
+| Document | Description |
+|----------|-------------|
+| [RESEARCH_QUESTIONS.md](RESEARCH_QUESTIONS.md) | Formal RQ1-RQ4 with hypotheses, methodology, and statistical results |
+| [THREATS_TO_VALIDITY.md](THREATS_TO_VALIDITY.md) | Internal, external, construct, and conclusion validity threats |
+| [SANITIZER_COMPARISON.md](SANITIZER_COMPARISON.md) | Comparison with AddressSanitizer and UBSan |
+| [EVALUATION_RESULTS.md](EVALUATION_RESULTS.md) | Detailed evaluation data and analysis |
+
+---
+
 ## Table of Contents
 
 1. [Executive Summary](#executive-summary)
-2. [Instrumentation Use Cases](#instrumentation-use-cases) **(NEW)**
+2. [Instrumentation Use Cases](#instrumentation-use-cases)
 3. [Overhead Benchmark Results](#overhead-benchmark-results)
 4. [Feature Comparison Matrix](#feature-comparison-matrix)
 5. [Unique OptiWeave Capabilities](#unique-optiweave-capabilities)
@@ -622,6 +633,13 @@ Need most detail?               → Valgrind (but 11x slower)
 - **OptiWeave** tells you: "This function has 300M array accesses, 220M additions, and the hottest line is main.cpp:42"
 
 For **operator-level analysis, bug detection, and hybrid static+dynamic profiling**, OptiWeave is the only option.
+
+### Further Reading
+
+For complete evaluation details, see:
+- **[RESEARCH_QUESTIONS.md](RESEARCH_QUESTIONS.md)** - Formal research questions with statistical analysis
+- **[THREATS_TO_VALIDITY.md](THREATS_TO_VALIDITY.md)** - Validity threats and mitigations  
+- **[SANITIZER_COMPARISON.md](SANITIZER_COMPARISON.md)** - Detailed comparison with compiler sanitizers
 
 ---
 
