@@ -26,20 +26,65 @@ option(BUILD_DOCUMENTATION "Enable building documentation"   OFF)
 # --------------------------------------------------------------------------
 # Locate LLVM & Clang via their CMake package configurations
 # --------------------------------------------------------------------------
+
+# Platform-specific LLVM paths
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    # Linux: Check for LLVM 17 installation (required version)
+    set(LLVM_SEARCH_PATHS
+        /usr/lib/llvm-17/lib/cmake/llvm
+        /usr/local/lib/cmake/llvm
+    )
+    set(CLANG_SEARCH_PATHS
+        /usr/lib/llvm-17/lib/cmake/clang
+        /usr/local/lib/cmake/clang
+    )
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+    # macOS: Homebrew LLVM installations
+    set(LLVM_SEARCH_PATHS
+        /opt/homebrew/opt/llvm@17/lib/cmake/llvm
+        /opt/homebrew/opt/llvm/lib/cmake/llvm
+        /usr/local/opt/llvm@17/lib/cmake/llvm
+        /usr/local/opt/llvm/lib/cmake/llvm
+    )
+    set(CLANG_SEARCH_PATHS
+        /opt/homebrew/opt/llvm@17/lib/cmake/clang
+        /opt/homebrew/opt/llvm/lib/cmake/clang
+        /usr/local/opt/llvm@17/lib/cmake/clang
+        /usr/local/opt/llvm/lib/cmake/clang
+    )
+else()
+    message(WARNING "Unknown platform: ${CMAKE_SYSTEM_NAME}. Using default LLVM search paths.")
+    set(LLVM_SEARCH_PATHS "")
+    set(CLANG_SEARCH_PATHS "")
+endif()
+
 find_package(LLVM CONFIG REQUIRED
-    PATHS /opt/homebrew/opt/llvm@17/lib/cmake/llvm
-          /opt/homebrew/opt/llvm/lib/cmake/llvm
+    PATHS ${LLVM_SEARCH_PATHS}
     NO_DEFAULT_PATH
-)                                                                                      # :contentReference[oaicite:0]{index=0}
+)
 
 find_package(Clang CONFIG REQUIRED
-    PATHS /opt/homebrew/opt/llvm@17/lib/cmake/clang
-          /opt/homebrew/opt/llvm/lib/cmake/clang
+    PATHS ${CLANG_SEARCH_PATHS}
     NO_DEFAULT_PATH
 )
 
 message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
 message(STATUS "Found Clang ${CLANG_PACKAGE_VERSION}")
+
+# --------------------------------------------------------------------------
+# Platform-specific compiler flags
+# --------------------------------------------------------------------------
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    # On Linux with Clang + GCC's libstdc++, we need to point to the GCC toolchain
+    # This resolves header/library lookup issues
+    if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+        # Find GCC installation for libstdc++ headers
+        if(EXISTS "/usr/lib/gcc/x86_64-linux-gnu")
+            message(STATUS "Linux detected: Adding GCC toolchain flag for Clang")
+            add_compile_options("--gcc-toolchain=/usr")
+        endif()
+    endif()
+endif()
 
 # Pull in include directories for both LLVM and Clang
 include_directories(${LLVM_INCLUDE_DIRS})
@@ -78,12 +123,18 @@ target_include_directories(optiweave_core PUBLIC
     $<INSTALL_INTERFACE:include>
 )
 
+# Determine LLVM linking mode - on Linux with shared LLVM, use the shared library
+# to avoid duplicate symbol registration issues
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND TARGET LLVM)
+    set(LLVM_LIBS LLVM)
+else()
+    set(LLVM_LIBS LLVMSupport LLVMCore)
+endif()
+
 target_link_libraries(optiweave_core
     PRIVATE
-      # LLVM components (unnamespaced)
-      LLVMSupport     # llvm::errs(), llvm::outs(), llvm::sys::fs, etc.
-      LLVMCore        # core LLVM libraries
-      #LLVMOption      # llvm::cl::Option machinery
+      # LLVM libraries (platform-dependent linking)
+      ${LLVM_LIBS}
 
       # Clang libraries (unnamespaced)
       clangTooling    # ClangTool, CommonOptionsParser
@@ -91,14 +142,7 @@ target_link_libraries(optiweave_core
       clangAST        # ASTContext, Decl, Stmt, RecursiveASTVisitor
       clangFrontend   # FrontendAction, ASTConsumer
       clangRewrite    # Rewriter, DeltaTree
-      #clangSerialization
-      #clangDriver
-      #clangParse
-      #clangSema
-      #clangAnalysis
-      #clangEdit
-      #clangLex
-)                                                                                      # :contentReference[oaicite:1]{index=1}
+)
 
 # --------------------------------------------------------------------------
 # Build the runtime library

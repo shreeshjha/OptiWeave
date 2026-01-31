@@ -448,7 +448,6 @@ public:
       llvm::StringRef search_path,
       llvm::StringRef relative_path,
       const clang::Module* imported,
-      bool module_imported,
       clang::SrcMgr::CharacteristicKind file_type) override;
 
 private:

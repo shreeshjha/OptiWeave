@@ -1,0 +1,33 @@
+=== Data Flow Analysis Report ===
+
+Variables Analyzed: 31
+  Used: 19
+  Unused: 4
+  Possibly Uninitialized: 0
+
+Refactoring Opportunities: 4
+
+[unknown location]
+  Type: Unused Variable
+  Description: Variable 'has_add' is declared but never used
+  Suggestion: Remove unused variable 'has_add'
+  Function: 
+
+[unknown location]
+  Type: Unused Variable
+  Description: Variable 'has_div' is declared but never used
+  Suggestion: Remove unused variable 'has_div'
+  Function: 
+
+[unknown location]
+  Type: Unused Variable
+  Description: Variable 'has_mul' is declared but never used
+  Suggestion: Remove unused variable 'has_mul'
+  Function: 
+
+[unknown location]
+  Type: Unused Variable
+  Description: Variable 'has_sub' is declared but never used
+  Suggestion: Remove unused variable 'has_sub'
+  Function: 
+
