@@ -1,0 +1,769 @@
+[1/16] Processing file /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/random_seed.c.
+error: invalid argument '-std=c++20' not allowed with 'C'
+In file included from /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/random_seed.c:1:
+/Users/shreesh/Dev/Github/OptiWeave/build/../templates/optiweave/prelude.hpp:6:10: fatal error: 'chrono' file not found
+    6 | #include <chrono>
+      |          ^~~~~~~~
+=== Transformation Complete ===
+Transformation Statistics:
+  Array subscripts transformed: 0
+  Arithmetic operators transformed: 0
+  Template instantiations skipped: 0
+  Errors encountered: 0
+1 error generated.
+Error while processing /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/random_seed.c.
+[2/16] Processing file /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_pointer.c.
+error: invalid argument '-std=c++20' not allowed with 'C'
+In file included from /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_pointer.c:1:
+/Users/shreesh/Dev/Github/OptiWeave/build/../templates/optiweave/prelude.hpp:6:10: fatal error: 'chrono' file not found
+    6 | #include <chrono>
+      |          ^~~~~~~~
+Error: Failed to apply array subscript transformation
+Error: Failed to apply array subscript transformation
+Error: Failed to apply array subscript transformation
+Error: Failed to apply array subscript transformation
+Loop information serialized: 2 loops -> /Users/shreesh/Dev/Github/OptiWeave/evaluation/scripts/../../build/.optiweave_loop_info.bin
+=== Transformation Complete ===
+Transformation Statistics:
+  Array subscripts transformed: 0
+  Arithmetic operators transformed: 0
+  Template instantiations skipped: 0
+  Errors encountered: 4
+1 error generated.
+Error while processing /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_pointer.c.
+[3/16] Processing file /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_visit.c.
+error: invalid argument '-std=c++20' not allowed with 'C'
+In file included from /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_visit.c:1:
+/Users/shreesh/Dev/Github/OptiWeave/build/../templates/optiweave/prelude.hpp:6:10: fatal error: 'chrono' file not found
+    6 | #include <chrono>
+      |          ^~~~~~~~
+Loop information serialized: 2 loops -> /Users/shreesh/Dev/Github/OptiWeave/evaluation/scripts/../../build/.optiweave_loop_info.bin
+=== Transformation Complete ===
+Transformation Statistics:
+  Array subscripts transformed: 0
+  Arithmetic operators transformed: 0
+  Template instantiations skipped: 0
+  Errors encountered: 0
+1 error generated.
+Error while processing /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_visit.c.
+[4/16] Processing file /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/strerror_override.c.
+error: invalid argument '-std=c++20' not allowed with 'C'
+In file included from /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/strerror_override.c:1:
+/Users/shreesh/Dev/Github/OptiWeave/build/../templates/optiweave/prelude.hpp:6:10: fatal error: 'chrono' file not found
+    6 | #include <chrono>
+      |          ^~~~~~~~
+Loop information serialized: 4 loops -> /Users/shreesh/Dev/Github/OptiWeave/evaluation/scripts/../../build/.optiweave_loop_info.bin
+=== Transformation Complete ===
+Transformation Statistics:
+  Array subscripts transformed: 0
+  Arithmetic operators transformed: 0
+  Template instantiations skipped: 0
+  Errors encountered: 0
+1 error generated.
+Error while processing /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/strerror_override.c.
+[5/16] Processing file /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_c_version.c.
+error: invalid argument '-std=c++20' not allowed with 'C'
+In file included from /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_c_version.c:1:
+/Users/shreesh/Dev/Github/OptiWeave/build/../templates/optiweave/prelude.hpp:6:10: fatal error: 'chrono' file not found
+    6 | #include <chrono>
+      |          ^~~~~~~~
+=== Transformation Complete ===
+Transformation Statistics:
+  Array subscripts transformed: 0
+  Arithmetic operators transformed: 0
+  Template instantiations skipped: 0
+  Errors encountered: 0
+1 error generated.
+Error while processing /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_c_version.c.
+[6/16] Processing file /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_object_iterator.c.
+error: invalid argument '-std=c++20' not allowed with 'C'
+In file included from /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_object_iterator.c:1:
+/Users/shreesh/Dev/Github/OptiWeave/build/../templates/optiweave/prelude.hpp:6:10: fatal error: 'chrono' file not found
+    6 | #include <chrono>
+      |          ^~~~~~~~
+=== Transformation Complete ===
+Transformation Statistics:
+  Array subscripts transformed: 0
+  Arithmetic operators transformed: 0
+  Template instantiations skipped: 0
+  Errors encountered: 0
+1 error generated.
+Error while processing /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_object_iterator.c.
+[7/16] Processing file /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/linkhash.c.
+error: invalid argument '-std=c++20' not allowed with 'C'
+In file included from /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/linkhash.c:1:
+/Users/shreesh/Dev/Github/OptiWeave/build/../templates/optiweave/prelude.hpp:6:10: fatal error: 'chrono' file not found
+    6 | #include <chrono>
+      |          ^~~~~~~~
+Loop information serialized: 10 loops -> /Users/shreesh/Dev/Github/OptiWeave/evaluation/scripts/../../build/.optiweave_loop_info.bin
+=== Transformation Complete ===
+Transformation Statistics:
+  Array subscripts transformed: 0
+  Arithmetic operators transformed: 0
+  Template instantiations skipped: 0
+  Errors encountered: 0
+1 error generated.
+Error while processing /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/linkhash.c.
+[8/16] Processing file /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_tokener.c.
+error: invalid argument '-std=c++20' not allowed with 'C'
+In file included from /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_tokener.c:1:
+/Users/shreesh/Dev/Github/OptiWeave/build/../templates/optiweave/prelude.hpp:6:10: fatal error: 'chrono' file not found
+    6 | #include <chrono>
+      |          ^~~~~~~~
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Error: Failed to apply array subscript transformation
+Loop information serialized: 44 loops -> /Users/shreesh/Dev/Github/OptiWeave/evaluation/scripts/../../build/.optiweave_loop_info.bin
+=== Transformation Complete ===
+Transformation Statistics:
+  Array subscripts transformed: 0
+  Arithmetic operators transformed: 0
+  Template instantiations skipped: 0
+  Errors encountered: 131
+1 error generated.
+Error while processing /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_tokener.c.
+[9/16] Processing file /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/arraylist.c.
+error: invalid argument '-std=c++20' not allowed with 'C'
+In file included from /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/arraylist.c:1:
+/Users/shreesh/Dev/Github/OptiWeave/build/../templates/optiweave/prelude.hpp:6:10: fatal error: 'chrono' file not found
+    6 | #include <chrono>
+      |          ^~~~~~~~
+Loop information serialized: 2 loops -> /Users/shreesh/Dev/Github/OptiWeave/evaluation/scripts/../../build/.optiweave_loop_info.bin
+=== Transformation Complete ===
+Transformation Statistics:
+  Array subscripts transformed: 0
+  Arithmetic operators transformed: 0
+  Template instantiations skipped: 0
+  Errors encountered: 0
+1 error generated.
+Error while processing /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/arraylist.c.
+[10/16] Processing file /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_object.c.
+error: invalid argument '-std=c++20' not allowed with 'C'
+In file included from /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_object.c:1:
+/Users/shreesh/Dev/Github/OptiWeave/build/../templates/optiweave/prelude.hpp:6:10: fatal error: 'chrono' file not found
+    6 | #include <chrono>
+      |          ^~~~~~~~
+Warning: Could not get source text for range
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Error: Failed to apply array subscript transformation
+Error: Failed to apply array subscript transformation
+Error: Failed to apply array subscript transformation
+Error: Failed to apply array subscript transformation
+Loop information serialized: 10 loops -> /Users/shreesh/Dev/Github/OptiWeave/evaluation/scripts/../../build/.optiweave_loop_info.bin
+=== Transformation Complete ===
+Transformation Statistics:
+  Array subscripts transformed: 0
+  Arithmetic operators transformed: 0
+  Template instantiations skipped: 0
+  Errors encountered: 5
+1 error generated.
+Error while processing /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_object.c.
+[11/16] Processing file /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/libjson.c.
+error: invalid argument '-std=c++20' not allowed with 'C'
+In file included from /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/libjson.c:1:
+/Users/shreesh/Dev/Github/OptiWeave/build/../templates/optiweave/prelude.hpp:6:10: fatal error: 'chrono' file not found
+    6 | #include <chrono>
+      |          ^~~~~~~~
+=== Transformation Complete ===
+Transformation Statistics:
+  Array subscripts transformed: 0
+  Arithmetic operators transformed: 0
+  Template instantiations skipped: 0
+  Errors encountered: 0
+1 error generated.
+Error while processing /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/libjson.c.
+[12/16] Processing file /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/debug.c.
+error: invalid argument '-std=c++20' not allowed with 'C'
+In file included from /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/debug.c:1:
+/Users/shreesh/Dev/Github/OptiWeave/build/../templates/optiweave/prelude.hpp:6:10: fatal error: 'chrono' file not found
+    6 | #include <chrono>
+      |          ^~~~~~~~
+=== Transformation Complete ===
+Transformation Statistics:
+  Array subscripts transformed: 0
+  Arithmetic operators transformed: 0
+  Template instantiations skipped: 0
+  Errors encountered: 0
+1 error generated.
+Error while processing /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/debug.c.
+[13/16] Processing file /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/printbuf.c.
+error: invalid argument '-std=c++20' not allowed with 'C'
+In file included from /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/printbuf.c:1:
+/Users/shreesh/Dev/Github/OptiWeave/build/../templates/optiweave/prelude.hpp:6:10: fatal error: 'chrono' file not found
+    6 | #include <chrono>
+      |          ^~~~~~~~
+=== Transformation Complete ===
+Transformation Statistics:
+  Array subscripts transformed: 0
+  Arithmetic operators transformed: 0
+  Template instantiations skipped: 0
+  Errors encountered: 0
+1 error generated.
+Error while processing /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/printbuf.c.
+[14/16] Processing file /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/apps/json_parse.c.
+error: invalid argument '-std=c++20' not allowed with 'C'
+In file included from /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/apps/json_parse.c:1:
+/Users/shreesh/Dev/Github/OptiWeave/build/../templates/optiweave/prelude.hpp:6:10: fatal error: 'chrono' file not found
+    6 | #include <chrono>
+      |          ^~~~~~~~
+Loop information serialized: 3 loops -> /Users/shreesh/Dev/Github/OptiWeave/evaluation/scripts/../../build/.optiweave_loop_info.bin
+=== Transformation Complete ===
+Transformation Statistics:
+  Array subscripts transformed: 0
+  Arithmetic operators transformed: 0
+  Template instantiations skipped: 0
+  Errors encountered: 0
+1 error generated.
+Error while processing /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/apps/json_parse.c.
+[15/16] Processing file /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_util.c.
+error: invalid argument '-std=c++20' not allowed with 'C'
+In file included from /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_util.c:1:
+/Users/shreesh/Dev/Github/OptiWeave/build/../templates/optiweave/prelude.hpp:6:10: fatal error: 'chrono' file not found
+    6 | #include <chrono>
+      |          ^~~~~~~~
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Warning: Could not get source text for range
+Warning: Could not extract source text for array subscript
+Loop information serialized: 3 loops -> /Users/shreesh/Dev/Github/OptiWeave/evaluation/scripts/../../build/.optiweave_loop_info.bin
+=== Transformation Complete ===
+Transformation Statistics:
+  Array subscripts transformed: 0
+  Arithmetic operators transformed: 0
+  Template instantiations skipped: 0
+  Errors encountered: 2
+1 error generated.
+Error while processing /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_util.c.
+[16/16] Processing file /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_patch.c.
+error: invalid argument '-std=c++20' not allowed with 'C'
+In file included from /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_patch.c:1:
+/Users/shreesh/Dev/Github/OptiWeave/build/../templates/optiweave/prelude.hpp:6:10: fatal error: 'chrono' file not found
+    6 | #include <chrono>
+      |          ^~~~~~~~
+Loop information serialized: 19 loops -> /Users/shreesh/Dev/Github/OptiWeave/evaluation/scripts/../../build/.optiweave_loop_info.bin
+=== Transformation Complete ===
+Transformation Statistics:
+  Array subscripts transformed: 0
+  Arithmetic operators transformed: 0
+  Template instantiations skipped: 0
+  Errors encountered: 0
+1 error generated.
+Error while processing /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_patch.c.
+[1/16] Processing file /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/random_seed.c.
+error: invalid argument '-std=c++20' not allowed with 'C'
+In file included from /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/random_seed.c:1:
+/Users/shreesh/Dev/Github/OptiWeave/build/../templates/optiweave/prelude.hpp:6:10: fatal error: 'chrono' file not found
+    6 | #include <chrono>
+      |          ^~~~~~~~
+1 error generated.
+Error while processing /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/random_seed.c.
+[2/16] Processing file /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_pointer.c.
+error: invalid argument '-std=c++20' not allowed with 'C'
+In file included from /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_pointer.c:1:
+/Users/shreesh/Dev/Github/OptiWeave/build/../templates/optiweave/prelude.hpp:6:10: fatal error: 'chrono' file not found
+    6 | #include <chrono>
+      |          ^~~~~~~~
+1 error generated.
+Error while processing /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_pointer.c.
+[3/16] Processing file /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_visit.c.
+error: invalid argument '-std=c++20' not allowed with 'C'
+In file included from /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_visit.c:1:
+/Users/shreesh/Dev/Github/OptiWeave/build/../templates/optiweave/prelude.hpp:6:10: fatal error: 'chrono' file not found
+    6 | #include <chrono>
+      |          ^~~~~~~~
+1 error generated.
+Error while processing /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_visit.c.
+[4/16] Processing file /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/strerror_override.c.
+error: invalid argument '-std=c++20' not allowed with 'C'
+In file included from /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/strerror_override.c:1:
+/Users/shreesh/Dev/Github/OptiWeave/build/../templates/optiweave/prelude.hpp:6:10: fatal error: 'chrono' file not found
+    6 | #include <chrono>
+      |          ^~~~~~~~
+1 error generated.
+Error while processing /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/strerror_override.c.
+[5/16] Processing file /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_c_version.c.
+error: invalid argument '-std=c++20' not allowed with 'C'
+In file included from /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_c_version.c:1:
+/Users/shreesh/Dev/Github/OptiWeave/build/../templates/optiweave/prelude.hpp:6:10: fatal error: 'chrono' file not found
+    6 | #include <chrono>
+      |          ^~~~~~~~
+1 error generated.
+Error while processing /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_c_version.c.
+[6/16] Processing file /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_object_iterator.c.
+error: invalid argument '-std=c++20' not allowed with 'C'
+In file included from /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_object_iterator.c:1:
+/Users/shreesh/Dev/Github/OptiWeave/build/../templates/optiweave/prelude.hpp:6:10: fatal error: 'chrono' file not found
+    6 | #include <chrono>
+      |          ^~~~~~~~
+1 error generated.
+Error while processing /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_object_iterator.c.
+[7/16] Processing file /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/linkhash.c.
+error: invalid argument '-std=c++20' not allowed with 'C'
+In file included from /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/linkhash.c:1:
+/Users/shreesh/Dev/Github/OptiWeave/build/../templates/optiweave/prelude.hpp:6:10: fatal error: 'chrono' file not found
+    6 | #include <chrono>
+      |          ^~~~~~~~
+1 error generated.
+Error while processing /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/linkhash.c.
+[8/16] Processing file /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_tokener.c.
+error: invalid argument '-std=c++20' not allowed with 'C'
+In file included from /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_tokener.c:1:
+/Users/shreesh/Dev/Github/OptiWeave/build/../templates/optiweave/prelude.hpp:6:10: fatal error: 'chrono' file not found
+    6 | #include <chrono>
+      |          ^~~~~~~~
+1 error generated.
+Error while processing /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_tokener.c.
+[9/16] Processing file /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/arraylist.c.
+error: invalid argument '-std=c++20' not allowed with 'C'
+In file included from /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/arraylist.c:1:
+/Users/shreesh/Dev/Github/OptiWeave/build/../templates/optiweave/prelude.hpp:6:10: fatal error: 'chrono' file not found
+    6 | #include <chrono>
+      |          ^~~~~~~~
+1 error generated.
+Error while processing /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/arraylist.c.
+[10/16] Processing file /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_object.c.
+error: invalid argument '-std=c++20' not allowed with 'C'
+In file included from /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_object.c:1:
+/Users/shreesh/Dev/Github/OptiWeave/build/../templates/optiweave/prelude.hpp:6:10: fatal error: 'chrono' file not found
+    6 | #include <chrono>
+      |          ^~~~~~~~
+1 error generated.
+Error while processing /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_object.c.
+[11/16] Processing file /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/libjson.c.
+error: invalid argument '-std=c++20' not allowed with 'C'
+In file included from /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/libjson.c:1:
+/Users/shreesh/Dev/Github/OptiWeave/build/../templates/optiweave/prelude.hpp:6:10: fatal error: 'chrono' file not found
+    6 | #include <chrono>
+      |          ^~~~~~~~
+1 error generated.
+Error while processing /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/libjson.c.
+[12/16] Processing file /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/debug.c.
+error: invalid argument '-std=c++20' not allowed with 'C'
+In file included from /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/debug.c:1:
+/Users/shreesh/Dev/Github/OptiWeave/build/../templates/optiweave/prelude.hpp:6:10: fatal error: 'chrono' file not found
+    6 | #include <chrono>
+      |          ^~~~~~~~
+1 error generated.
+Error while processing /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/debug.c.
+[13/16] Processing file /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/printbuf.c.
+error: invalid argument '-std=c++20' not allowed with 'C'
+In file included from /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/printbuf.c:1:
+/Users/shreesh/Dev/Github/OptiWeave/build/../templates/optiweave/prelude.hpp:6:10: fatal error: 'chrono' file not found
+    6 | #include <chrono>
+      |          ^~~~~~~~
+1 error generated.
+Error while processing /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/printbuf.c.
+[14/16] Processing file /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/apps/json_parse.c.
+error: invalid argument '-std=c++20' not allowed with 'C'
+In file included from /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/apps/json_parse.c:1:
+/Users/shreesh/Dev/Github/OptiWeave/build/../templates/optiweave/prelude.hpp:6:10: fatal error: 'chrono' file not found
+    6 | #include <chrono>
+      |          ^~~~~~~~
+1 error generated.
+Error while processing /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/apps/json_parse.c.
+[15/16] Processing file /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_util.c.
+error: invalid argument '-std=c++20' not allowed with 'C'
+In file included from /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_util.c:1:
+/Users/shreesh/Dev/Github/OptiWeave/build/../templates/optiweave/prelude.hpp:6:10: fatal error: 'chrono' file not found
+    6 | #include <chrono>
+      |          ^~~~~~~~
+1 error generated.
+Error while processing /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_util.c.
+[16/16] Processing file /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_patch.c.
+error: invalid argument '-std=c++20' not allowed with 'C'
+In file included from /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_patch.c:1:
+/Users/shreesh/Dev/Github/OptiWeave/build/../templates/optiweave/prelude.hpp:6:10: fatal error: 'chrono' file not found
+    6 | #include <chrono>
+      |          ^~~~~~~~
+1 error generated.
+Error while processing /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_patch.c.
+Overflow detection exported to: overflow.txt

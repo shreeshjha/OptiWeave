@@ -1,0 +1,29 @@
+benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_division.c:8:14: error: Division by zero. [zerodiv]
+    return x / divisor;  // UNDEFINED - Should detect
+             ^
+benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_division.c:7:19: note: Assignment 'divisor=0', assigned value is 0
+    int divisor = 0;
+                  ^
+benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_division.c:8:14: note: Division by zero
+    return x / divisor;  // UNDEFINED - Should detect
+             ^
+benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_division.c:6:5: style: The function 'test_division_by_zero' is never used. [unusedFunction]
+int test_division_by_zero(int x) {
+    ^
+benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_division.c:12:5: style: The function 'test_division_overflow' is never used. [unusedFunction]
+int test_division_overflow() {
+    ^
+benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_division.c:18:5: style: The function 'test_safe_division' is never used. [unusedFunction]
+int test_safe_division() {
+    ^
+benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_division.c:25:5: style: The function 'test_safe_negative_division' is never used. [unusedFunction]
+int test_safe_negative_division() {
+    ^
+benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_division.c:32:5: style: The function 'test_potential_division_issue' is never used. [unusedFunction]
+int test_potential_division_issue(int a, int b) {
+    ^
+benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_division.c:37:5: style: The function 'test_large_division' is never used. [unusedFunction]
+int test_large_division() {
+    ^
+nofile:0:0: information: Active checkers: 110/966 (use --checkers-report=<filename> to see details) [checkersReport]
+

@@ -1,0 +1,23 @@
+benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_multiplication.c:9:14: error: Signed integer overflow for expression 'x*3'. [integerOverflow]
+    return x * 3;  // OVERFLOW - Should detect
+             ^
+benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_multiplication.c:8:21: note: Assignment 'x=2147483647/2', assigned value is 1073741823
+    int x = INT_MAX / 2;
+                    ^
+benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_multiplication.c:9:14: note: Integer overflow
+    return x * 3;  // OVERFLOW - Should detect
+             ^
+benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_multiplication.c:7:5: style: The function 'test_overflow_large_mult' is never used. [unusedFunction]
+int test_overflow_large_mult() {
+    ^
+benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_multiplication.c:13:5: style: The function 'test_potential_overflow_mult' is never used. [unusedFunction]
+int test_potential_overflow_mult(int a, int b) {
+    ^
+benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_multiplication.c:18:5: style: The function 'test_safe_mult' is never used. [unusedFunction]
+int test_safe_mult() {
+    ^
+benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_multiplication.c:25:5: style: The function 'test_overflow_mult_loop' is never used. [unusedFunction]
+int test_overflow_mult_loop(int n) {
+    ^
+nofile:0:0: information: Active checkers: 110/966 (use --checkers-report=<filename> to see details) [checkersReport]
+

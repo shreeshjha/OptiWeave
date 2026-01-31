@@ -1,0 +1,112 @@
+
+╔══════════════════════════════════════════════════════════════╗
+║        OptiWeave Code Complexity Analysis                   ║
+╚══════════════════════════════════════════════════════════════╝
+
+Project Statistics:
+  Total Functions: 11
+  Total Lines: 55
+  Total SLOC: 55
+  Complex Functions (CC > 20): 0
+  Very Complex Functions (CC > 50): 0
+
+Average Metrics:
+  Cyclomatic Complexity: 1.18
+  Cognitive Complexity: 0.18
+  Maintainability Index: 100.00
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔥 Most Complex Functions (by Cyclomatic Complexity)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+┌────┬─────────────────────────────┬─────────┬─────────┬──────────┬────────────┐
+│ #  │ Function                    │ CC      │ CogC    │ MI       │ Risk       │
+├────┼─────────────────────────────┼─────────┼─────────┼──────────┼────────────┤
+│  1 │ __optiweave_record_subscrip │       2 │       1 │    100.0 │ Low        │
+│ 2  │ test_conditional_overflow   │       2 │       1 │    100.0 │ Low        │
+│ 3  │ test_array_index_overflow   │       1 │       0 │    100.0 │ Low        │
+│ 4  │ test_chained_operations     │       1 │       0 │    100.0 │ Low        │
+│ 5  │ test_complex_expression_ove │       1 │       0 │    100.0 │ Low        │
+│ 6  │ test_mixed_operations_overf │       1 │       0 │    100.0 │ Low        │
+│ 7  │ test_nested_arithmetic_over │       1 │       0 │    100.0 │ Low        │
+│ 8  │ test_pointer_arithmetic_ove │       1 │       0 │    100.0 │ Low        │
+│ 9  │ test_safe_array_index       │       1 │       0 │    100.0 │ Low        │
+│ 10 │ test_safe_chained_operation │       1 │       0 │    100.0 │ Low        │
+└────┴─────────────────────────────┴─────────┴─────────┴──────────┴────────────┘
+
+Legend:
+  CC   = Cyclomatic Complexity (decision points)
+  CogC = Cognitive Complexity (understandability)
+  MI   = Maintainability Index (0-100, higher is better)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚠️  Least Maintainable Functions
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Function: __optiweave_record_subscript
+  Location: /Users/shreesh/Dev/Github/OptiWeave/build/../templates/optiweave/prelude_c.h:47
+  Maintainability Index: 100.0 (Highly Maintainable)
+  Cyclomatic Complexity: 2 (Simple)
+  Lines of Code: 8
+
+Function: test_array_index_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_complex.c:54
+  Maintainability Index: 100.0 (Highly Maintainable)
+  Cyclomatic Complexity: 1 (Simple)
+  Lines of Code: 3
+
+Function: test_chained_operations
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_complex.c:29
+  Maintainability Index: 100.0 (Highly Maintainable)
+  Cyclomatic Complexity: 1 (Simple)
+  Lines of Code: 4
+
+Function: test_complex_expression_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_complex.c:6
+  Maintainability Index: 100.0 (Highly Maintainable)
+  Cyclomatic Complexity: 1 (Simple)
+  Lines of Code: 5
+
+Function: test_conditional_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_complex.c:48
+  Maintainability Index: 100.0 (Highly Maintainable)
+  Cyclomatic Complexity: 2 (Simple)
+  Lines of Code: 4
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🧠 Hardest to Understand Functions (by Cognitive Complexity)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Function: __optiweave_record_subscript
+  Cognitive Complexity: 1 (Very Easy)
+  Max Nesting Depth: 1
+  Decision Points: 1
+
+Function: test_conditional_overflow
+  Cognitive Complexity: 1 (Very Easy)
+  Max Nesting Depth: 0
+  Decision Points: 1
+
+Function: test_array_index_overflow
+  Cognitive Complexity: 0 (Very Easy)
+  Max Nesting Depth: 0
+  Decision Points: 0
+
+Function: test_chained_operations
+  Cognitive Complexity: 0 (Very Easy)
+  Max Nesting Depth: 0
+  Decision Points: 0
+
+Function: test_complex_expression_overflow
+  Cognitive Complexity: 0 (Very Easy)
+  Max Nesting Depth: 0
+  Decision Points: 0
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📊 Summary & Recommendations
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ Good code structure!
+   → No circular dependencies detected
+   → No extremely complex functions
+

@@ -1,0 +1,20 @@
+benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_subtraction.c:9:14: error: Signed integer underflow for expression 'x-1'. [integerOverflow]
+    return x - 1;  // UNDERFLOW - Should detect
+             ^
+benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_subtraction.c:8:13: note: Assignment 'x=-2147483647-1', assigned value is -2147483648
+    int x = INT_MIN;
+            ^
+benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_subtraction.c:9:14: note: Integer underflow
+    return x - 1;  // UNDERFLOW - Should detect
+             ^
+benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_subtraction.c:7:5: style: The function 'test_underflow_min_minus_one' is never used. [unusedFunction]
+int test_underflow_min_minus_one() {
+    ^
+benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_subtraction.c:13:5: style: The function 'test_potential_underflow' is never used. [unusedFunction]
+int test_potential_underflow(int a, int b) {
+    ^
+benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_subtraction.c:18:5: style: The function 'test_safe_subtraction' is never used. [unusedFunction]
+int test_safe_subtraction() {
+    ^
+nofile:0:0: information: Active checkers: 110/966 (use --checkers-report=<filename> to see details) [checkersReport]
+

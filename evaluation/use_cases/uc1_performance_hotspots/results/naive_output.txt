@@ -1,0 +1,17 @@
+=== UC1: Performance Hotspot Detection ===
+Matrix size: 512 x 512
+Warmup runs: 3, Measured runs: 30
+
+Running naive matrix multiplication...
+
+=== Results (Naive Implementation) ===
+Mean:   0.1668 seconds
+Stddev: 0.0225 seconds
+95% CI: [0.1584, 0.1752] seconds
+Min:    0.1474 seconds
+Max:    0.2483 seconds
+Performance: 1.61 GFLOPS
+
+=== CSV Output ===
+implementation,size,mean,stddev,ci_low,ci_high,min,max,gflops
+naive,512,0.166768,0.022542,0.158352,0.175185,0.147432,0.248301,1.61

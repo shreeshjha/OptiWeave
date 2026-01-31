@@ -1,0 +1,33 @@
+=== Integer Overflow Detection Report ===
+
+Total issues found: 5
+
+Critical: 4
+Warning: 1
+Info: 0
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/scripts/../benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_multiplication.c:9:12 (in test_overflow_large_mult)
+  Description: Potential signed integer overflow in multiplication
+  Suggestion: Check operand magnitudes or use a wider type (e.g., int64_t)
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/scripts/../benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_multiplication.c:14:12 (in test_potential_overflow_mult)
+  Description: Potential signed integer overflow in multiplication
+  Suggestion: Check operand magnitudes or use a wider type (e.g., int64_t)
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/scripts/../benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_multiplication.c:21:12 (in test_safe_mult)
+  Description: Potential signed integer overflow in multiplication
+  Suggestion: Check operand magnitudes or use a wider type (e.g., int64_t)
+
+[warning] loop_counter_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/scripts/../benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_multiplication.c:27:5 (in test_overflow_mult_loop)
+  Description: Loop counter may overflow causing infinite loop
+  Suggestion: Ensure loop bounds don't cause counter overflow, use wider type, or check explicitly
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/scripts/../benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_multiplication.c:28:9 (in test_overflow_mult_loop)
+  Description: Potential signed integer overflow in multiplication
+  Suggestion: Check operand magnitudes or use a wider type (e.g., int64_t)
+

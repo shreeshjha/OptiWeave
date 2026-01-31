@@ -1,0 +1,14 @@
+test_file,test_function,category,expected_result,severity,notes
+test_addition.c,test_clear_overflow_max_plus_one,overflow,TRUE_POSITIVE,CRITICAL,INT_MAX + 1 must overflow
+test_addition.c,test_clear_overflow_max_plus_large,overflow,TRUE_POSITIVE,CRITICAL,INT_MAX + 1000 must overflow
+test_addition.c,test_potential_overflow_unknown,overflow,TRUE_POSITIVE,WARNING,Unknown inputs may overflow
+test_addition.c,test_loop_overflow,overflow,TRUE_POSITIVE,WARNING,Loop accumulation may overflow
+test_addition.c,test_safe_small_constants,overflow,TRUE_NEGATIVE,INFO,10 + 20 is safe
+test_addition.c,test_safe_negative,overflow,TRUE_NEGATIVE,INFO,-100 + 50 is safe
+test_addition.c,test_overflow_near_boundary,overflow,TRUE_POSITIVE,CRITICAL,(INT_MAX-10) + 20 overflows
+test_addition.c,test_safe_near_boundary,overflow,TRUE_NEGATIVE,INFO,(INT_MAX-100) + 50 is safe
+test_multiplication.c,test_clear_overflow_max_times_two,overflow,TRUE_POSITIVE,CRITICAL,INT_MAX * 2 overflows
+test_multiplication.c,test_overflow_large_numbers,overflow,TRUE_POSITIVE,CRITICAL,100000 * 100000 overflows
+test_multiplication.c,test_safe_small_multiply,overflow,TRUE_NEGATIVE,INFO,10 * 20 is safe
+test_subtraction.c,test_underflow_min_minus_one,overflow,TRUE_POSITIVE,CRITICAL,INT_MIN - 1 underflows
+test_subtraction.c,test_safe_subtraction,overflow,TRUE_NEGATIVE,INFO,100 - 50 is safe

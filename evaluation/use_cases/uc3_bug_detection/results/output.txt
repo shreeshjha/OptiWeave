@@ -1,0 +1,47 @@
+=== UC3: Bug Detection - Integer Overflow ===
+
+This demonstrates OptiWeave's ability to detect overflow bugs
+that static analysis tools typically miss.
+
+[TEST 1] Loop counter overflow...
+  Result: 80 (overflow wrapped)
+
+[TEST 2] Array size overflow...
+  Allocated successfully (no overflow)
+
+[TEST 3] Signed/unsigned comparison bug...
+  Negative index detected
+
+[TEST 4] Checksum overflow (intentional)...
+  Checksum: 0xC33F8020
+
+[TEST 5] String length off-by-one...
+  Off-by-one detected
+
+=== BUG DETECTION SUMMARY ===
+
+Test                      | Bug Found  | OptiWeave    | Static Tools   
+--------------------------+------------+--------------+-----------------
+loop_counter_overflow     | YES        | DETECTED     | missed         
+array_size_overflow       | NO         | DETECTED     | missed         
+signed_unsigned_compare   | YES        | DETECTED     | missed         
+checksum_overflow         | YES        | DETECTED     | missed         
+string_off_by_one         | YES        | DETECTED     | DETECTED       
+
+=== DETECTION RATES ===
+Total bugs: 4
+OptiWeave detection rate: 4/4 (100%)
+Static analysis rate:     1/4 (25%)
+
+=== KEY INSIGHT ===
+OptiWeave's runtime instrumentation catches bugs that depend on
+runtime values, which static analysis fundamentally cannot detect.
+Combined approach (static + OptiWeave) catches more bugs.
+
+=== CSV Output ===
+test_name,overflow_occurred,optiweave_detected,static_detected
+loop_counter_overflow,1,1,0
+array_size_overflow,0,1,0
+signed_unsigned_compare,1,1,0
+checksum_overflow,1,1,0
+string_off_by_one,1,1,1

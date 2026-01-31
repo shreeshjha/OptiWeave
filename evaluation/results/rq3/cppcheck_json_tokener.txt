@@ -1,0 +1,70 @@
+Checking evaluation/benchmarks/case-studies/json-c/json_tokener.c ...
+evaluation/benchmarks/case-studies/json-c/json_tokener.c:0:0: information: Too many #ifdef configurations - cppcheck only checks 12 of 24 configurations. Use --force to check all configurations. [toomanyconfigs]
+
+^
+evaluation/benchmarks/case-studies/json-c/json_tokener.c:17:0: information: Include file: "config.h" not found. [missingInclude]
+#include "config.h"
+^
+evaluation/benchmarks/case-studies/json-c/json_inttypes.h:9:0: information: Include file: "json_config.h" not found. [missingInclude]
+#include "json_config.h"
+^
+Checking evaluation/benchmarks/case-studies/json-c/json_tokener.c: HAVE_STRDUP;_MSC_VER...
+evaluation/benchmarks/case-studies/json-c/json_tokener.c:311:1: information: Limiting ValueFlow analysis in function 'json_tokener_parse_ex' since it is too complex. Please specify --check-level=exhaustive to perform full analysis. [checkLevelNormal]
+{
+^
+evaluation/benchmarks/case-studies/json-c/json_tokener.c:0:0: information: Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches. [normalCheckLevelMaxBranches]
+
+^
+evaluation/benchmarks/case-studies/json-c/json_tokener.c:837:11: style: Redundant condition: The condition '!c' is redundant since 'c != '\\'' is sufficient. [redundantCondition]
+   if (!c || c != '\\')
+          ^
+evaluation/benchmarks/case-studies/json-c/json_tokener.c:855:11: style: Redundant condition: The condition '!c' is redundant since 'c != 'u'' is sufficient. [redundantCondition]
+   if (!c || c != 'u')
+          ^
+evaluation/benchmarks/case-studies/json-c/json_tokener.c:369:9: style: Redundant initialization for 'c'. The initialized value is overwritten before it is read. [redundantInitialization]
+ while (PEEK_CHAR(c, tok)) // Note: c might be '\0' !
+        ^
+evaluation/benchmarks/case-studies/json-c/json_tokener.c:313:9: note: c is initialized
+ char c = '\1';
+        ^
+evaluation/benchmarks/case-studies/json-c/json_tokener.c:369:9: note: c is overwritten
+ while (PEEK_CHAR(c, tok)) // Note: c might be '\0' !
+        ^
+evaluation/benchmarks/case-studies/json-c/json_tokener.c:528:3: style: Consecutive return, break, continue, goto or throw statements are unnecessary. [duplicateBreak]
+  break;
+  ^
+evaluation/benchmarks/case-studies/json-c/json_tokener.c:1106:4: style: Consecutive return, break, continue, goto or throw statements are unnecessary. [duplicateBreak]
+   break;
+   ^
+evaluation/benchmarks/case-studies/json-c/json_tokener.c:143:69: style: Parameter 'tok' can be declared as pointer to const [constParameterPointer]
+enum json_tokener_error json_tokener_get_error(struct json_tokener *tok)
+                                                                    ^
+evaluation/benchmarks/case-studies/json-c/json_tokener.c:936:11: style: Variable 'e_loc' can be declared as pointer to const [constVariablePointer]
+    char *e_loc = strchr(tok->pb->buf, 'e');
+          ^
+evaluation/benchmarks/case-studies/json-c/json_tokener.c:941:12: style: Variable 'last_saved_char' can be declared as pointer to const [constVariablePointer]
+     char *last_saved_char =
+           ^
+evaluation/benchmarks/case-studies/json-c/json_tokener.c:1363:56: style: Parameter 'tok' can be declared as pointer to const [constParameterPointer]
+size_t json_tokener_get_parse_end(struct json_tokener *tok)
+                                                       ^
+Checking evaluation/benchmarks/case-studies/json-c/json_tokener.c: HAVE_STRNCASECMP=0;_MSC_VER...
+Checking evaluation/benchmarks/case-studies/json-c/json_tokener.c: JSON_C_DLL;_MSC_VER...
+Checking evaluation/benchmarks/case-studies/json-c/json_tokener.c: _MSC_VER...
+evaluation/benchmarks/case-studies/json-c/json_tokener.c:133:13: style: The function 'json_tokener_error_desc' is never used. [unusedFunction]
+const char *json_tokener_error_desc(enum json_tokener_error jerr)
+            ^
+evaluation/benchmarks/case-studies/json-c/json_tokener.c:143:25: style: The function 'json_tokener_get_error' is never used. [unusedFunction]
+enum json_tokener_error json_tokener_get_error(struct json_tokener *tok)
+                        ^
+evaluation/benchmarks/case-studies/json-c/json_tokener.c:215:21: style: The function 'json_tokener_parse' is never used. [unusedFunction]
+struct json_object *json_tokener_parse(const char *str)
+                    ^
+evaluation/benchmarks/case-studies/json-c/json_tokener.c:1358:6: style: The function 'json_tokener_set_flags' is never used. [unusedFunction]
+void json_tokener_set_flags(struct json_tokener *tok, int flags)
+     ^
+evaluation/benchmarks/case-studies/json-c/json_tokener.c:1363:8: style: The function 'json_tokener_get_parse_end' is never used. [unusedFunction]
+size_t json_tokener_get_parse_end(struct json_tokener *tok)
+       ^
+nofile:0:0: information: Active checkers: 110/966 (use --checkers-report=<filename> to see details) [checkersReport]
+

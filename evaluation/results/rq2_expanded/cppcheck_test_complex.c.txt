@@ -1,0 +1,80 @@
+benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_complex.c:9:20: error: Signed integer overflow for expression '(x+y)*2'. [integerOverflow]
+    return (x + y) * 2;  // OVERFLOW - Should detect
+                   ^
+benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_complex.c:7:21: note: Assignment 'x=2147483647/2', assigned value is 1073741823
+    int x = INT_MAX / 2;
+                    ^
+benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_complex.c:9:20: note: Integer overflow
+    return (x + y) * 2;  // OVERFLOW - Should detect
+                   ^
+benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_complex.c:31:28: error: Signed integer overflow for expression 'x*1000*1000*1000'. [integerOverflow]
+    return x * 1000 * 1000 * 1000;  // OVERFLOW - Should detect
+                           ^
+benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_complex.c:30:13: note: Assignment 'x=1000', assigned value is 1000
+    int x = 1000;
+            ^
+benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_complex.c:31:28: note: Integer overflow
+    return x * 1000 * 1000 * 1000;  // OVERFLOW - Should detect
+                           ^
+benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_complex.c:44:14: error: Signed integer overflow for expression 'x*y'. [integerOverflow]
+    return x * y - 100;  // OVERFLOW in multiplication - Should detect
+             ^
+benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_complex.c:42:21: note: Assignment 'x=2147483647/2', assigned value is 1073741823
+    int x = INT_MAX / 2;
+                    ^
+benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_complex.c:44:14: note: Integer overflow
+    return x * y - 100;  // OVERFLOW in multiplication - Should detect
+             ^
+benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_complex.c:44:18: error: Signed integer overflow for expression 'x*y-100'. [integerOverflow]
+    return x * y - 100;  // OVERFLOW in multiplication - Should detect
+                 ^
+benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_complex.c:42:21: note: Assignment 'x=2147483647/2', assigned value is 1073741823
+    int x = INT_MAX / 2;
+                    ^
+benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_complex.c:44:18: note: Integer overflow
+    return x * y - 100;  // OVERFLOW in multiplication - Should detect
+                 ^
+benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_complex.c:50:14: error: Signed integer overflow for expression 'x+1'. [integerOverflow]
+    return x + 1;  // POTENTIAL - Depends on flag
+             ^
+benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_complex.c:49:18: note: Assignment 'x=flag?2147483647:100', assigned value is 2147483647
+    int x = flag ? INT_MAX : 100;
+                 ^
+benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_complex.c:50:14: note: Integer overflow
+    return x + 1;  // POTENTIAL - Depends on flag
+             ^
+benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_complex.c:60:9: style: Unused variable: arr [unusedVariable]
+    int arr[100];
+        ^
+benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_complex.c:6:5: style: The function 'test_complex_expression_overflow' is never used. [unusedFunction]
+int test_complex_expression_overflow() {
+    ^
+benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_complex.c:13:5: style: The function 'test_safe_complex_expression' is never used. [unusedFunction]
+int test_safe_complex_expression() {
+    ^
+benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_complex.c:20:5: style: The function 'test_nested_arithmetic_overflow' is never used. [unusedFunction]
+int test_nested_arithmetic_overflow() {
+    ^
+benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_complex.c:29:5: style: The function 'test_chained_operations' is never used. [unusedFunction]
+int test_chained_operations() {
+    ^
+benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_complex.c:35:5: style: The function 'test_safe_chained_operations' is never used. [unusedFunction]
+int test_safe_chained_operations() {
+    ^
+benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_complex.c:41:5: style: The function 'test_mixed_operations_overflow' is never used. [unusedFunction]
+int test_mixed_operations_overflow() {
+    ^
+benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_complex.c:48:5: style: The function 'test_conditional_overflow' is never used. [unusedFunction]
+int test_conditional_overflow(int flag) {
+    ^
+benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_complex.c:54:5: style: The function 'test_array_index_overflow' is never used. [unusedFunction]
+int test_array_index_overflow(int base, int offset) {
+    ^
+benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_complex.c:59:5: style: The function 'test_safe_array_index' is never used. [unusedFunction]
+int test_safe_array_index() {
+    ^
+benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_complex.c:66:6: style: The function 'test_pointer_arithmetic_overflow' is never used. [unusedFunction]
+long test_pointer_arithmetic_overflow() {
+     ^
+nofile:0:0: information: Active checkers: 110/966 (use --checkers-report=<filename> to see details) [checkersReport]
+

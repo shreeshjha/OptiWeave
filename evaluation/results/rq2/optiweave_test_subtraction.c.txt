@@ -1,0 +1,28 @@
+=== Integer Overflow Detection Report ===
+
+Total issues found: 4
+
+Critical: 4
+Warning: 0
+Info: 0
+
+[critical] signed_negation_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/scripts/../benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_subtraction.c:8:13 (in test_underflow_min_minus_one)
+  Description: Negation of signed integer may cause overflow (e.g., -INT_MIN)
+  Suggestion: Check if value is INT_MIN before negating, or use unsigned type
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/scripts/../benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_subtraction.c:9:12 (in test_underflow_min_minus_one)
+  Description: Potential signed integer overflow in subtraction
+  Suggestion: Check operand values before subtraction or use a wider integer type
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/scripts/../benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_subtraction.c:14:12 (in test_potential_underflow)
+  Description: Potential signed integer overflow in subtraction
+  Suggestion: Check operand values before subtraction or use a wider integer type
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/scripts/../benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_subtraction.c:21:12 (in test_safe_subtraction)
+  Description: Potential signed integer overflow in subtraction
+  Suggestion: Check operand values before subtraction or use a wider integer type
+

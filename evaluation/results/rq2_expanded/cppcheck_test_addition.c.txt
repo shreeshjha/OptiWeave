@@ -1,0 +1,53 @@
+benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_addition.c:9:14: error: Signed integer overflow for expression 'x+1'. [integerOverflow]
+    return x + 1;  // OVERFLOW - Should detect
+             ^
+benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_addition.c:8:13: note: Assignment 'x=2147483647', assigned value is 2147483647
+    int x = INT_MAX;
+            ^
+benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_addition.c:9:14: note: Integer overflow
+    return x + 1;  // OVERFLOW - Should detect
+             ^
+benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_addition.c:15:14: error: Signed integer overflow for expression 'x+1000'. [integerOverflow]
+    return x + 1000;  // OVERFLOW - Should detect
+             ^
+benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_addition.c:14:13: note: Assignment 'x=2147483647', assigned value is 2147483647
+    int x = INT_MAX;
+            ^
+benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_addition.c:15:14: note: Integer overflow
+    return x + 1000;  // OVERFLOW - Should detect
+             ^
+benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_addition.c:49:14: error: Signed integer overflow for expression 'x+20'. [integerOverflow]
+    return x + 20;  // OVERFLOW - Should detect
+             ^
+benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_addition.c:48:21: note: Assignment 'x=2147483647-10', assigned value is 2147483637
+    int x = INT_MAX - 10;
+                    ^
+benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_addition.c:49:14: note: Integer overflow
+    return x + 20;  // OVERFLOW - Should detect
+             ^
+benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_addition.c:7:5: style: The function 'test_clear_overflow_max_plus_one' is never used. [unusedFunction]
+int test_clear_overflow_max_plus_one() {
+    ^
+benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_addition.c:13:5: style: The function 'test_clear_overflow_max_plus_large' is never used. [unusedFunction]
+int test_clear_overflow_max_plus_large() {
+    ^
+benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_addition.c:19:5: style: The function 'test_potential_overflow_unknown' is never used. [unusedFunction]
+int test_potential_overflow_unknown(int a, int b) {
+    ^
+benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_addition.c:24:5: style: The function 'test_loop_overflow' is never used. [unusedFunction]
+int test_loop_overflow(int iterations) {
+    ^
+benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_addition.c:33:5: style: The function 'test_safe_small_constants' is never used. [unusedFunction]
+int test_safe_small_constants() {
+    ^
+benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_addition.c:40:5: style: The function 'test_safe_negative' is never used. [unusedFunction]
+int test_safe_negative() {
+    ^
+benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_addition.c:47:5: style: The function 'test_overflow_near_boundary' is never used. [unusedFunction]
+int test_overflow_near_boundary() {
+    ^
+benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_addition.c:53:5: style: The function 'test_safe_near_boundary' is never used. [unusedFunction]
+int test_safe_near_boundary() {
+    ^
+nofile:0:0: information: Active checkers: 110/966 (use --checkers-report=<filename> to see details) [checkersReport]
+

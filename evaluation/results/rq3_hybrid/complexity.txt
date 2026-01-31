@@ -1,0 +1,117 @@
+
+╔══════════════════════════════════════════════════════════════╗
+║        OptiWeave Code Complexity Analysis                   ║
+╚══════════════════════════════════════════════════════════════╝
+
+Project Statistics:
+  Total Functions: 44
+  Total Lines: 4294966603
+  Total SLOC: 4294966603
+  Complex Functions (CC > 20): 0
+  Very Complex Functions (CC > 50): 0
+
+Average Metrics:
+  Cyclomatic Complexity: 1.77
+  Cognitive Complexity: 1.02
+  Maintainability Index: 51.48
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔥 Most Complex Functions (by Cyclomatic Complexity)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+┌────┬─────────────────────────────┬─────────┬─────────┬──────────┬────────────┐
+│ #  │ Function                    │ CC      │ CogC    │ MI       │ Risk       │
+├────┼─────────────────────────────┼─────────┼─────────┼──────────┼────────────┤
+│  1 │ json_tokener_validate_utf8  │       7 │      17 │    100.0 │ Low        │
+│ 2  │ is_hex_char                 │       6 │       5 │    100.0 │ Low        │
+│ 3  │ is_ws_char                  │       4 │       3 │    100.0 │ Low        │
+│ 4  │ __optiweave_record_subscrip │       2 │       1 │    100.0 │ Low        │
+│ 5  │ __darwin_fd_clr             │       2 │       1 │      0.0 │ Low        │
+│ 6  │ __darwin_fd_isset           │       2 │       1 │      0.0 │ Low        │
+│ 7  │ __darwin_fd_set             │       2 │       1 │      0.0 │ Low        │
+│ 8  │ __inline_isfinited          │       2 │       1 │      0.0 │ Low        │
+│ 9  │ __inline_isfinitef          │       2 │       1 │      0.0 │ Low        │
+│ 10 │ __inline_isfinitel          │       2 │       1 │      0.0 │ Low        │
+└────┴─────────────────────────────┴─────────┴─────────┴──────────┴────────────┘
+
+Legend:
+  CC   = Cyclomatic Complexity (decision points)
+  CogC = Cognitive Complexity (understandability)
+  MI   = Maintainability Index (0-100, higher is better)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚠️  Least Maintainable Functions
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Function: __inline_signbitl
+  Location: /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/math.h:253
+  Maintainability Index: 0.0 (Difficult to Maintain)
+  Cyclomatic Complexity: 1 (Simple)
+  Lines of Code: 4294967175
+
+Function: __sputc
+  Location: /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_stdio.h:365
+  Maintainability Index: 0.0 (Difficult to Maintain)
+  Cyclomatic Complexity: 2 (Simple)
+  Lines of Code: 4294967288
+
+Function: __darwin_check_fd_set
+  Location: /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_types/_fd_def.h:58
+  Maintainability Index: 0.0 (Difficult to Maintain)
+  Cyclomatic Complexity: 2 (Simple)
+  Lines of Code: 4294966994
+
+Function: __darwin_fd_clr
+  Location: /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_types/_fd_def.h:98
+  Maintainability Index: 0.0 (Difficult to Maintain)
+  Cyclomatic Complexity: 2 (Simple)
+  Lines of Code: 4294967021
+
+Function: __darwin_fd_isset
+  Location: /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_types/_fd_def.h:80
+  Maintainability Index: 0.0 (Difficult to Maintain)
+  Cyclomatic Complexity: 2 (Simple)
+  Lines of Code: 4294967005
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🧠 Hardest to Understand Functions (by Cognitive Complexity)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Function: json_tokener_validate_utf8
+  Cognitive Complexity: 17 (Moderate)
+  Max Nesting Depth: 5
+  Decision Points: 6
+
+Function: is_hex_char
+  Cognitive Complexity: 5 (Very Easy)
+  Max Nesting Depth: 0
+  Decision Points: 0
+
+Function: is_ws_char
+  Cognitive Complexity: 3 (Very Easy)
+  Max Nesting Depth: 0
+  Decision Points: 0
+
+Function: __optiweave_record_subscript
+  Cognitive Complexity: 1 (Very Easy)
+  Max Nesting Depth: 1
+  Decision Points: 1
+
+Function: __darwin_fd_clr
+  Cognitive Complexity: 1 (Very Easy)
+  Max Nesting Depth: 1
+  Decision Points: 1
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📊 Summary & Recommendations
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📉 Low average maintainability index (51.5)
+   → Focus on reducing complexity
+   → Improve code documentation
+   → Break down large functions
+
+✅ Good code structure!
+   → No circular dependencies detected
+   → No extremely complex functions
+

@@ -1,0 +1,26 @@
+benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_casting.c:6:5: style: The function 'test_cast_overflow_long_to_int' is never used. [unusedFunction]
+int test_cast_overflow_long_to_int() {
+    ^
+benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_casting.c:12:5: style: The function 'test_safe_cast' is never used. [unusedFunction]
+int test_safe_cast() {
+    ^
+benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_casting.c:18:5: style: The function 'test_unsigned_to_signed_overflow' is never used. [unusedFunction]
+int test_unsigned_to_signed_overflow() {
+    ^
+benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_casting.c:24:5: style: The function 'test_safe_unsigned_to_signed' is never used. [unusedFunction]
+int test_safe_unsigned_to_signed() {
+    ^
+benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_casting.c:30:5: style: The function 'test_char_to_int' is never used. [unusedFunction]
+int test_char_to_int() {
+    ^
+benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_casting.c:36:7: style: The function 'test_int_to_short_overflow' is never used. [unusedFunction]
+short test_int_to_short_overflow() {
+      ^
+benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_casting.c:42:7: style: The function 'test_safe_int_to_short' is never used. [unusedFunction]
+short test_safe_int_to_short() {
+      ^
+benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_casting.c:48:5: style: The function 'test_arithmetic_then_cast' is never used. [unusedFunction]
+int test_arithmetic_then_cast() {
+    ^
+nofile:0:0: information: Active checkers: 110/966 (use --checkers-report=<filename> to see details) [checkersReport]
+

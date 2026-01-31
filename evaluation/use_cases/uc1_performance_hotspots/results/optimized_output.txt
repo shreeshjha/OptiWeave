@@ -1,0 +1,23 @@
+=== UC1: Optimized Matrix Multiplication ===
+Matrix size: 512 x 512, Block size: 32
+Warmup runs: 3, Measured runs: 30
+
+Running loop interchange optimization...
+Running cache blocking optimization...
+
+=== Results ===
+
+Loop Interchange (i-k-j order):
+  Mean:   0.0197 seconds (13.61 GFLOPS)
+  Stddev: 0.0004 seconds
+  95% CI: [0.0196, 0.0199] seconds
+
+Cache Blocking (32x32 blocks):
+  Mean:   0.0280 seconds (9.58 GFLOPS)
+  Stddev: 0.0005 seconds
+  95% CI: [0.0278, 0.0282] seconds
+
+=== CSV Output ===
+implementation,size,mean,stddev,ci_low,ci_high,min,max,gflops
+loop_interchange,512,0.019730,0.000373,0.019590,0.019869,0.019256,0.021181,13.61
+blocked,512,0.028034,0.000520,0.027840,0.028228,0.027410,0.029351,9.58

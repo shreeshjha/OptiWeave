@@ -1,0 +1,58 @@
+=== Integer Overflow Detection Report ===
+
+Total issues found: 10
+
+Critical: 9
+Warning: 1
+Info: 0
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_addition.c:9:12 (in test_clear_overflow_max_plus_one)
+  Description: Potential signed integer overflow in addition
+  Suggestion: Use safer arithmetic (e.g., check before addition, use wider type, or use unsigned)
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_addition.c:15:12 (in test_clear_overflow_max_plus_large)
+  Description: Potential signed integer overflow in addition
+  Suggestion: Use safer arithmetic (e.g., check before addition, use wider type, or use unsigned)
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_addition.c:20:12 (in test_potential_overflow_unknown)
+  Description: Potential signed integer overflow in addition
+  Suggestion: Use safer arithmetic (e.g., check before addition, use wider type, or use unsigned)
+
+[warning] loop_counter_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_addition.c:26:5 (in test_loop_overflow)
+  Description: Loop counter may overflow causing infinite loop
+  Suggestion: Ensure loop bounds don't cause counter overflow, use wider type, or check explicitly
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_addition.c:27:9 (in test_loop_overflow)
+  Description: Potential signed integer overflow in addition
+  Suggestion: Use safer arithmetic (e.g., check before addition, use wider type, or use unsigned)
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_addition.c:36:12 (in test_safe_small_constants)
+  Description: Potential signed integer overflow in addition
+  Suggestion: Use safer arithmetic (e.g., check before addition, use wider type, or use unsigned)
+
+[critical] signed_negation_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_addition.c:41:13 (in test_safe_negative)
+  Description: Negation of signed integer may cause overflow (e.g., -INT_MIN)
+  Suggestion: Check if value is INT_MIN before negating, or use unsigned type
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_addition.c:43:12 (in test_safe_negative)
+  Description: Potential signed integer overflow in addition
+  Suggestion: Use safer arithmetic (e.g., check before addition, use wider type, or use unsigned)
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_addition.c:49:12 (in test_overflow_near_boundary)
+  Description: Potential signed integer overflow in addition
+  Suggestion: Use safer arithmetic (e.g., check before addition, use wider type, or use unsigned)
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_addition.c:55:12 (in test_safe_near_boundary)
+  Description: Potential signed integer overflow in addition
+  Suggestion: Use safer arithmetic (e.g., check before addition, use wider type, or use unsigned)
+

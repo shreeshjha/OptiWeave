@@ -1,0 +1,103 @@
+=== Integer Overflow Detection Report ===
+
+Total issues found: 19
+
+Critical: 17
+Warning: 2
+Info: 0
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_complex.c:9:12 (in test_complex_expression_overflow)
+  Description: Potential signed integer overflow in multiplication
+  Suggestion: Check operand magnitudes or use a wider type (e.g., int64_t)
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_complex.c:9:13 (in test_complex_expression_overflow)
+  Description: Potential signed integer overflow in addition
+  Suggestion: Use safer arithmetic (e.g., check before addition, use wider type, or use unsigned)
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_complex.c:16:12 (in test_safe_complex_expression)
+  Description: Potential signed integer overflow in multiplication
+  Suggestion: Check operand magnitudes or use a wider type (e.g., int64_t)
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_complex.c:16:13 (in test_safe_complex_expression)
+  Description: Potential signed integer overflow in addition
+  Suggestion: Use safer arithmetic (e.g., check before addition, use wider type, or use unsigned)
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_complex.c:25:12 (in test_nested_arithmetic_overflow)
+  Description: Potential signed integer overflow in addition
+  Suggestion: Use safer arithmetic (e.g., check before addition, use wider type, or use unsigned)
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_complex.c:25:13 (in test_nested_arithmetic_overflow)
+  Description: Potential signed integer overflow in addition
+  Suggestion: Use safer arithmetic (e.g., check before addition, use wider type, or use unsigned)
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_complex.c:25:23 (in test_nested_arithmetic_overflow)
+  Description: Potential signed integer overflow in addition
+  Suggestion: Use safer arithmetic (e.g., check before addition, use wider type, or use unsigned)
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_complex.c:31:12 (in test_chained_operations)
+  Description: Potential signed integer overflow in multiplication
+  Suggestion: Check operand magnitudes or use a wider type (e.g., int64_t)
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_complex.c:31:12 (in test_chained_operations)
+  Description: Potential signed integer overflow in multiplication
+  Suggestion: Check operand magnitudes or use a wider type (e.g., int64_t)
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_complex.c:31:12 (in test_chained_operations)
+  Description: Potential signed integer overflow in multiplication
+  Suggestion: Check operand magnitudes or use a wider type (e.g., int64_t)
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_complex.c:37:12 (in test_safe_chained_operations)
+  Description: Potential signed integer overflow in addition
+  Suggestion: Use safer arithmetic (e.g., check before addition, use wider type, or use unsigned)
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_complex.c:37:12 (in test_safe_chained_operations)
+  Description: Potential signed integer overflow in addition
+  Suggestion: Use safer arithmetic (e.g., check before addition, use wider type, or use unsigned)
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_complex.c:37:12 (in test_safe_chained_operations)
+  Description: Potential signed integer overflow in addition
+  Suggestion: Use safer arithmetic (e.g., check before addition, use wider type, or use unsigned)
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_complex.c:44:12 (in test_mixed_operations_overflow)
+  Description: Potential signed integer overflow in subtraction
+  Suggestion: Check operand values before subtraction or use a wider integer type
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_complex.c:44:12 (in test_mixed_operations_overflow)
+  Description: Potential signed integer overflow in multiplication
+  Suggestion: Check operand magnitudes or use a wider type (e.g., int64_t)
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_complex.c:50:12 (in test_conditional_overflow)
+  Description: Potential signed integer overflow in addition
+  Suggestion: Use safer arithmetic (e.g., check before addition, use wider type, or use unsigned)
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_complex.c:55:12 (in test_array_index_overflow)
+  Description: Narrowing conversion from unsigned long to int may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_complex.c:62:12 (in test_safe_array_index)
+  Description: Narrowing conversion from unsigned long to int may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_complex.c:69:12 (in test_pointer_arithmetic_overflow)
+  Description: Potential signed integer overflow in addition
+  Suggestion: Use safer arithmetic (e.g., check before addition, use wider type, or use unsigned)
+

@@ -1,0 +1,66 @@
+[1/3] Processing file /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_addition.c.
+error: invalid argument '-std=c++20' not allowed with 'C'
+/Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_addition.c:3:10: fatal error: 'stdio.h' file not found
+    3 | #include <stdio.h>
+      |          ^~~~~~~~~
+Loop information serialized: 1 loops -> /Users/shreesh/Dev/Github/OptiWeave/build/.optiweave_loop_info.bin
+=== Transformation Complete ===
+Transformation Statistics:
+  Array subscripts transformed: 0
+  Arithmetic operators transformed: 0
+  Template instantiations skipped: 0
+  Errors encountered: 0
+1 error generated.
+Error while processing /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_addition.c.
+[2/3] Processing file /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_multiplication.c.
+error: invalid argument '-std=c++20' not allowed with 'C'
+/Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_multiplication.c:3:10: fatal error: 'stdio.h' file not found
+    3 | #include <stdio.h>
+      |          ^~~~~~~~~
+Loop information serialized: 1 loops -> /Users/shreesh/Dev/Github/OptiWeave/build/.optiweave_loop_info.bin
+=== Transformation Complete ===
+Transformation Statistics:
+  Array subscripts transformed: 0
+  Arithmetic operators transformed: 0
+  Template instantiations skipped: 0
+  Errors encountered: 0
+1 error generated.
+Error while processing /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_multiplication.c.
+[3/3] Processing file /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_subtraction.c.
+error: invalid argument '-std=c++20' not allowed with 'C'
+/Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_subtraction.c:3:10: fatal error: 'stdio.h' file not found
+    3 | #include <stdio.h>
+      |          ^~~~~~~~~
+=== Transformation Complete ===
+Transformation Statistics:
+  Array subscripts transformed: 0
+  Arithmetic operators transformed: 0
+  Template instantiations skipped: 0
+  Errors encountered: 0
+1 error generated.
+Error while processing /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_subtraction.c.
+[1/3] Processing file /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_addition.c.
+error: invalid argument '-std=c++20' not allowed with 'C'
+In file included from /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_addition.c:1:
+/Users/shreesh/Dev/Github/OptiWeave/build/../templates/optiweave/prelude.hpp:6:10: fatal error: 'chrono' file not found
+    6 | #include <chrono>
+      |          ^~~~~~~~
+1 error generated.
+Error while processing /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_addition.c.
+[2/3] Processing file /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_multiplication.c.
+error: invalid argument '-std=c++20' not allowed with 'C'
+In file included from /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_multiplication.c:1:
+/Users/shreesh/Dev/Github/OptiWeave/build/../templates/optiweave/prelude.hpp:6:10: fatal error: 'chrono' file not found
+    6 | #include <chrono>
+      |          ^~~~~~~~
+1 error generated.
+Error while processing /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_multiplication.c.
+[3/3] Processing file /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_subtraction.c.
+error: invalid argument '-std=c++20' not allowed with 'C'
+In file included from /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_subtraction.c:1:
+/Users/shreesh/Dev/Github/OptiWeave/build/../templates/optiweave/prelude.hpp:6:10: fatal error: 'chrono' file not found
+    6 | #include <chrono>
+      |          ^~~~~~~~
+1 error generated.
+Error while processing /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_subtraction.c.
+Overflow detection exported to: overflow.txt

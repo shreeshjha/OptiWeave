@@ -1,0 +1,5 @@
+Function,Overflow_Count
+json_tokener_parse_ex,82
+json_tokener_error_desc,2
+json_tokener_reset,2
+json_tokener_parse_verbose,2

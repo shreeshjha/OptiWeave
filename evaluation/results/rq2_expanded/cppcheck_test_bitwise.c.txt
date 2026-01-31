@@ -1,0 +1,41 @@
+benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_bitwise.c:25:14: error: Shifting by a negative value is undefined behaviour [shiftNegative]
+    return x << -1;  // UNDEFINED - Should detect
+             ^
+benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_bitwise.c:31:14: error: Shifting 32-bit value by 32 bits is undefined behaviour [shiftTooManyBits]
+    return x << 32;  // UNDEFINED - Should detect (shift >= width)
+             ^
+benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_bitwise.c:31:14: error: Signed integer overflow for expression 'x<<32'. [integerOverflow]
+    return x << 32;  // UNDEFINED - Should detect (shift >= width)
+             ^
+benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_bitwise.c:30:13: note: Assignment 'x=5', assigned value is 5
+    int x = 5;
+            ^
+benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_bitwise.c:31:14: note: Integer overflow
+    return x << 32;  // UNDEFINED - Should detect (shift >= width)
+             ^
+benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_bitwise.c:6:5: style: The function 'test_left_shift_overflow' is never used. [unusedFunction]
+int test_left_shift_overflow() {
+    ^
+benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_bitwise.c:12:5: style: The function 'test_safe_left_shift' is never used. [unusedFunction]
+int test_safe_left_shift() {
+    ^
+benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_bitwise.c:18:5: style: The function 'test_right_shift' is never used. [unusedFunction]
+int test_right_shift() {
+    ^
+benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_bitwise.c:24:5: style: The function 'test_shift_by_negative' is never used. [unusedFunction]
+int test_shift_by_negative(int x) {
+    ^
+benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_bitwise.c:29:5: style: The function 'test_shift_beyond_width' is never used. [unusedFunction]
+int test_shift_beyond_width() {
+    ^
+benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_bitwise.c:35:5: style: The function 'test_safe_shift_constant' is never used. [unusedFunction]
+int test_safe_shift_constant() {
+    ^
+benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_bitwise.c:41:5: style: The function 'test_compound_shift_overflow' is never used. [unusedFunction]
+int test_compound_shift_overflow() {
+    ^
+benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_bitwise.c:47:5: style: The function 'test_bitwise_or' is never used. [unusedFunction]
+int test_bitwise_or() {
+    ^
+nofile:0:0: information: Active checkers: 110/966 (use --checkers-report=<filename> to see details) [checkersReport]
+

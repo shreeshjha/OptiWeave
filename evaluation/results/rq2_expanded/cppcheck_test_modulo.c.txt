@@ -1,0 +1,23 @@
+benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_modulo.c:7:14: error: Division by zero. [zerodiv]
+    return x % 0;  // UNDEFINED - Should detect
+             ^
+benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_modulo.c:6:5: style: The function 'test_modulo_by_zero' is never used. [unusedFunction]
+int test_modulo_by_zero(int x) {
+    ^
+benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_modulo.c:11:5: style: The function 'test_modulo_overflow' is never used. [unusedFunction]
+int test_modulo_overflow() {
+    ^
+benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_modulo.c:17:5: style: The function 'test_safe_modulo' is never used. [unusedFunction]
+int test_safe_modulo() {
+    ^
+benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_modulo.c:24:5: style: The function 'test_negative_modulo' is never used. [unusedFunction]
+int test_negative_modulo() {
+    ^
+benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_modulo.c:31:5: style: The function 'test_large_modulo' is never used. [unusedFunction]
+int test_large_modulo() {
+    ^
+benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_modulo.c:38:5: style: The function 'test_unknown_modulo' is never used. [unusedFunction]
+int test_unknown_modulo(int a, int b) {
+    ^
+nofile:0:0: information: Active checkers: 110/966 (use --checkers-report=<filename> to see details) [checkersReport]
+

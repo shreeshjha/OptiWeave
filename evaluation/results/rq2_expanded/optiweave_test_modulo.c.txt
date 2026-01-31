@@ -1,0 +1,23 @@
+=== Integer Overflow Detection Report ===
+
+Total issues found: 3
+
+Critical: 3
+Warning: 0
+Info: 0
+
+[critical] signed_negation_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_modulo.c:12:13 (in test_modulo_overflow)
+  Description: Negation of signed integer may cause overflow (e.g., -INT_MIN)
+  Suggestion: Check if value is INT_MIN before negating, or use unsigned type
+
+[critical] signed_negation_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_modulo.c:13:16 (in test_modulo_overflow)
+  Description: Negation of signed integer may cause overflow (e.g., -INT_MIN)
+  Suggestion: Check if value is INT_MIN before negating, or use unsigned type
+
+[critical] signed_negation_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_modulo.c:25:13 (in test_negative_modulo)
+  Description: Negation of signed integer may cause overflow (e.g., -INT_MIN)
+  Suggestion: Check if value is INT_MIN before negating, or use unsigned type
+

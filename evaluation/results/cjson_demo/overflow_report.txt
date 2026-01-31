@@ -1,0 +1,858 @@
+=== Integer Overflow Detection Report ===
+
+Total issues found: 170
+
+Critical: 74
+Warning: 96
+Info: 0
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/build/../templates/optiweave/prelude_c.h:51:7 (in __optiweave_record_subscript)
+  Description: Narrowing conversion from int to _Bool may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:102:10 (in cJSON_GetStringValue)
+  Description: Narrowing conversion from cJSON_bool to _Bool may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:112:10 (in cJSON_GetNumberValue)
+  Description: Narrowing conversion from cJSON_bool to _Bool may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:154:12 (in case_insensitive_strcmp)
+  Description: Potential signed integer overflow in subtraction
+  Suggestion: Check operand values before subtraction or use a wider integer type
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:260:14 (in cJSON_Delete)
+  Description: Narrowing conversion from int to _Bool may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:264:14 (in cJSON_Delete)
+  Description: Narrowing conversion from int to _Bool may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:269:14 (in cJSON_Delete)
+  Description: Narrowing conversion from int to _Bool may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:367:9 (in parse_number)
+  Description: Narrowing conversion from cJSON_bool to _Bool may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[critical] signed_negation_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:394:32 (in parse_number)
+  Description: Negation of signed integer may cause overflow (e.g., -INT_MIN)
+  Suggestion: Check if value is INT_MIN before negating, or use unsigned type
+
+[critical] signed_negation_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:396:26 (in parse_number)
+  Description: Negation of signed integer may cause overflow (e.g., -INT_MIN)
+  Suggestion: Check if value is INT_MIN before negating, or use unsigned type
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:403:18 (in parse_number)
+  Description: Potential undefined behavior: left shift of signed integer
+  Suggestion: Use unsigned integers for bit manipulation, or ensure shift amount is valid
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:405:38 (in parse_number)
+  Description: Potential signed integer overflow in subtraction
+  Suggestion: Check operand values before subtraction or use a wider integer type
+
+[critical] signed_negation_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:418:32 (in cJSON_SetNumberHelper)
+  Description: Negation of signed integer may cause overflow (e.g., -INT_MIN)
+  Suggestion: Check if value is INT_MIN before negating, or use unsigned type
+
+[critical] signed_negation_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:420:28 (in cJSON_SetNumberHelper)
+  Description: Negation of signed integer may cause overflow (e.g., -INT_MIN)
+  Suggestion: Check if value is INT_MIN before negating, or use unsigned type
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:437:30 (in cJSON_SetValuestring)
+  Description: Narrowing conversion from int to _Bool may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:437:46 (in cJSON_SetValuestring)
+  Description: Potential undefined behavior: left shift of signed integer
+  Suggestion: Use unsigned integers for bit manipulation, or ensure shift amount is valid
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:437:63 (in cJSON_SetValuestring)
+  Description: Narrowing conversion from int to _Bool may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:514:9 (in ensure)
+  Description: Narrowing conversion from cJSON_bool to _Bool may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:622:67 (in print_number)
+  Description: Narrowing conversion from cJSON_bool to _Bool may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:630:40 (in print_number)
+  Description: Narrowing conversion from unsigned long to int may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[warning] unsigned_wraparound
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:630:41 (in print_number)
+  Description: Unsigned integer subtraction may wrap around
+  Suggestion: Ensure LHS >= RHS before subtraction, or use signed integers if negative results are expected
+
+[warning] unsigned_wraparound
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:672:18 (in parse_hex4)
+  Description: Unsigned integer subtraction may wrap around
+  Suggestion: Ensure LHS >= RHS before subtraction, or use signed integers if negative results are expected
+
+[warning] unsigned_wraparound
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:676:18 (in parse_hex4)
+  Description: Unsigned integer subtraction may wrap around
+  Suggestion: Ensure LHS >= RHS before subtraction, or use signed integers if negative results are expected
+
+[warning] unsigned_wraparound
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:680:18 (in parse_hex4)
+  Description: Unsigned integer subtraction may wrap around
+  Suggestion: Ensure LHS >= RHS before subtraction, or use signed integers if negative results are expected
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:704:33 (in utf16_literal_to_utf8)
+  Description: Narrowing conversion from int to unsigned char may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:705:35 (in utf16_literal_to_utf8)
+  Description: Narrowing conversion from int to unsigned char may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:706:37 (in utf16_literal_to_utf8)
+  Description: Narrowing conversion from int to unsigned char may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:707:37 (in utf16_literal_to_utf8)
+  Description: Narrowing conversion from int to unsigned char may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:709:10 (in utf16_literal_to_utf8)
+  Description: Potential signed integer overflow in subtraction
+  Suggestion: Check operand values before subtraction or use a wider integer type
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:729:27 (in utf16_literal_to_utf8)
+  Description: Narrowing conversion from int to unsigned char may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:731:14 (in utf16_literal_to_utf8)
+  Description: Potential signed integer overflow in subtraction
+  Suggestion: Check operand values before subtraction or use a wider integer type
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:758:27 (in utf16_literal_to_utf8)
+  Description: Narrowing conversion from int to unsigned char may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:768:23 (in utf16_literal_to_utf8)
+  Description: Narrowing conversion from int to unsigned char may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:773:23 (in utf16_literal_to_utf8)
+  Description: Narrowing conversion from int to unsigned char may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:774:27 (in utf16_literal_to_utf8)
+  Description: Narrowing conversion from int to unsigned char may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:779:23 (in utf16_literal_to_utf8)
+  Description: Narrowing conversion from int to unsigned char may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:780:27 (in utf16_literal_to_utf8)
+  Description: Narrowing conversion from int to unsigned char may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:785:23 (in utf16_literal_to_utf8)
+  Description: Narrowing conversion from int to unsigned char may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:786:27 (in utf16_literal_to_utf8)
+  Description: Narrowing conversion from int to unsigned char may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[warning] loop_counter_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:795:5 (in utf16_literal_to_utf8)
+  Description: Loop counter may overflow causing infinite loop
+  Suggestion: Ensure loop bounds don't cause counter overflow, use wider type, or check explicitly
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:795:41 (in utf16_literal_to_utf8)
+  Description: Narrowing conversion from int to unsigned char may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:795:42 (in utf16_literal_to_utf8)
+  Description: Potential signed integer overflow in subtraction
+  Suggestion: Check operand values before subtraction or use a wider integer type
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:798:187 (in utf16_literal_to_utf8)
+  Description: Narrowing conversion from unsigned long to unsigned char may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:804:175 (in utf16_literal_to_utf8)
+  Description: Narrowing conversion from unsigned long to unsigned char may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:808:175 (in utf16_literal_to_utf8)
+  Description: Narrowing conversion from unsigned long to unsigned char may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:816:12 (in utf16_literal_to_utf8)
+  Description: Narrowing conversion from int to unsigned char may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:837:26 (in parse_string)
+  Description: Potential signed integer overflow in subtraction
+  Suggestion: Check operand values before subtraction or use a wider integer type
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:842:30 (in parse_string)
+  Description: Potential signed integer overflow in subtraction
+  Suggestion: Check operand values before subtraction or use a wider integer type
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:852:23 (in parse_string)
+  Description: Potential signed integer overflow in subtraction
+  Suggestion: Check operand values before subtraction or use a wider integer type
+
+[warning] unsigned_wraparound
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:858:29 (in parse_string)
+  Description: Unsigned integer subtraction may wrap around
+  Suggestion: Ensure LHS >= RHS before subtraction, or use signed integers if negative results are expected
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:858:39 (in parse_string)
+  Description: Potential signed integer overflow in subtraction
+  Suggestion: Check operand values before subtraction or use a wider integer type
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:877:45 (in parse_string)
+  Description: Narrowing conversion from int to unsigned char may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:878:18 (in parse_string)
+  Description: Potential signed integer overflow in subtraction
+  Suggestion: Check operand values before subtraction or use a wider integer type
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:926:18 (in parse_string)
+  Description: Potential undefined behavior: left shift of signed integer
+  Suggestion: Use unsigned integers for bit manipulation, or ensure shift amount is valid
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:929:38 (in parse_string)
+  Description: Potential signed integer overflow in subtraction
+  Suggestion: Check operand values before subtraction or use a wider integer type
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:943:41 (in parse_string)
+  Description: Potential signed integer overflow in subtraction
+  Suggestion: Check operand values before subtraction or use a wider integer type
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:978:33 (in print_string_ptr)
+  Description: Narrowing conversion from unsigned char to _Bool may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:1001:30 (in print_string_ptr)
+  Description: Potential signed integer overflow in subtraction
+  Suggestion: Check operand values before subtraction or use a wider integer type
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:1168:10 (in cJSON_ParseWithLengthOpts)
+  Description: Narrowing conversion from cJSON_bool to _Bool may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:1175:9 (in cJSON_ParseWithLengthOpts)
+  Description: Narrowing conversion from cJSON_bool to _Bool may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[warning] unsigned_wraparound
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:1208:36 (in cJSON_ParseWithLengthOpts)
+  Description: Unsigned integer subtraction may wrap around
+  Suggestion: Ensure LHS >= RHS before subtraction, or use signed integers if negative results are expected
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:1254:10 (in print)
+  Description: Narrowing conversion from cJSON_bool to _Bool may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:1334:10 (in cJSON_PrintBuffered)
+  Description: Narrowing conversion from cJSON_bool to _Bool may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:1375:22 (in parse_value)
+  Description: Potential undefined behavior: left shift of signed integer
+  Suggestion: Use unsigned integers for bit manipulation, or ensure shift amount is valid
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:1382:22 (in parse_value)
+  Description: Potential undefined behavior: left shift of signed integer
+  Suggestion: Use unsigned integers for bit manipulation, or ensure shift amount is valid
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:1389:22 (in parse_value)
+  Description: Potential undefined behavior: left shift of signed integer
+  Suggestion: Use unsigned integers for bit manipulation, or ensure shift amount is valid
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:1430:14 (in print_value)
+  Description: Potential undefined behavior: left shift of signed integer
+  Suggestion: Use unsigned integers for bit manipulation, or ensure shift amount is valid
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:1439:14 (in print_value)
+  Description: Potential undefined behavior: left shift of signed integer
+  Suggestion: Use unsigned integers for bit manipulation, or ensure shift amount is valid
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:1448:14 (in print_value)
+  Description: Potential undefined behavior: left shift of signed integer
+  Suggestion: Use unsigned integers for bit manipulation, or ensure shift amount is valid
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:1457:14 (in print_value)
+  Description: Potential undefined behavior: left shift of signed integer
+  Suggestion: Use unsigned integers for bit manipulation, or ensure shift amount is valid
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:1460:14 (in print_value)
+  Description: Potential undefined behavior: left shift of signed integer
+  Suggestion: Use unsigned integers for bit manipulation, or ensure shift amount is valid
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:1478:14 (in print_value)
+  Description: Potential undefined behavior: left shift of signed integer
+  Suggestion: Use unsigned integers for bit manipulation, or ensure shift amount is valid
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:1481:14 (in print_value)
+  Description: Potential undefined behavior: left shift of signed integer
+  Suggestion: Use unsigned integers for bit manipulation, or ensure shift amount is valid
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:1484:14 (in print_value)
+  Description: Potential undefined behavior: left shift of signed integer
+  Suggestion: Use unsigned integers for bit manipulation, or ensure shift amount is valid
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:1554:14 (in parse_array)
+  Description: Narrowing conversion from cJSON_bool to _Bool may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:1574:18 (in parse_array)
+  Description: Potential undefined behavior: left shift of signed integer
+  Suggestion: Use unsigned integers for bit manipulation, or ensure shift amount is valid
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:1616:14 (in print_array)
+  Description: Narrowing conversion from cJSON_bool to _Bool may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:1623:32 (in print_array)
+  Description: Narrowing conversion from cJSON_bool to _Bool may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:1630:16 (in print_array)
+  Description: Narrowing conversion from cJSON_bool to _Bool may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:1717:14 (in parse_object)
+  Description: Narrowing conversion from cJSON_bool to _Bool may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:1735:14 (in parse_object)
+  Description: Narrowing conversion from cJSON_bool to _Bool may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:1755:18 (in parse_object)
+  Description: Potential undefined behavior: left shift of signed integer
+  Suggestion: Use unsigned integers for bit manipulation, or ensure shift amount is valid
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:1783:24 (in print_object)
+  Description: Narrowing conversion from cJSON_bool to _Bool may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:1792:9 (in print_object)
+  Description: Narrowing conversion from cJSON_bool to _Bool may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:1800:13 (in print_object)
+  Description: Narrowing conversion from cJSON_bool to _Bool may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:1816:14 (in print_object)
+  Description: Narrowing conversion from cJSON_bool to _Bool may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:1822:28 (in print_object)
+  Description: Narrowing conversion from cJSON_bool to _Bool may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:1829:13 (in print_object)
+  Description: Narrowing conversion from cJSON_bool to _Bool may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:1836:14 (in print_object)
+  Description: Narrowing conversion from cJSON_bool to _Bool may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:1843:28 (in print_object)
+  Description: Narrowing conversion from cJSON_bool to _Bool may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:1854:13 (in print_object)
+  Description: Narrowing conversion from cJSON_bool to _Bool may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:1864:44 (in print_object)
+  Description: Narrowing conversion from cJSON_bool to _Bool may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:1869:9 (in print_object)
+  Description: Narrowing conversion from cJSON_bool to _Bool may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[warning] unsigned_wraparound
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:1872:26 (in print_object)
+  Description: Unsigned integer subtraction may wrap around
+  Suggestion: Ensure LHS >= RHS before subtraction, or use signed integers if negative results are expected
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:1905:17 (in cJSON_GetArraySize)
+  Description: Narrowing conversion from size_t to int may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:1947:9 (in get_object_item)
+  Description: Narrowing conversion from cJSON_bool to _Bool may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:2078:9 (in add_item_to_object)
+  Description: Narrowing conversion from cJSON_bool to _Bool may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:2094:10 (in add_item_to_object)
+  Description: Narrowing conversion from int to _Bool may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:2139:9 (in cJSON_AddNullToObject)
+  Description: Narrowing conversion from cJSON_bool to _Bool may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:2151:9 (in cJSON_AddTrueToObject)
+  Description: Narrowing conversion from cJSON_bool to _Bool may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:2163:9 (in cJSON_AddFalseToObject)
+  Description: Narrowing conversion from cJSON_bool to _Bool may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:2175:9 (in cJSON_AddBoolToObject)
+  Description: Narrowing conversion from cJSON_bool to _Bool may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:2187:9 (in cJSON_AddNumberToObject)
+  Description: Narrowing conversion from cJSON_bool to _Bool may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:2199:9 (in cJSON_AddStringToObject)
+  Description: Narrowing conversion from cJSON_bool to _Bool may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:2211:9 (in cJSON_AddRawToObject)
+  Description: Narrowing conversion from cJSON_bool to _Bool may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:2223:9 (in cJSON_AddObjectToObject)
+  Description: Narrowing conversion from cJSON_bool to _Bool may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:2235:9 (in cJSON_AddArrayToObject)
+  Description: Narrowing conversion from cJSON_bool to _Bool may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:2421:10 (in replace_item_in_object)
+  Description: Narrowing conversion from int to _Bool may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:2452:22 (in cJSON_CreateNull)
+  Description: Potential undefined behavior: left shift of signed integer
+  Suggestion: Use unsigned integers for bit manipulation, or ensure shift amount is valid
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:2463:22 (in cJSON_CreateTrue)
+  Description: Potential undefined behavior: left shift of signed integer
+  Suggestion: Use unsigned integers for bit manipulation, or ensure shift amount is valid
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:2474:22 (in cJSON_CreateFalse)
+  Description: Potential undefined behavior: left shift of signed integer
+  Suggestion: Use unsigned integers for bit manipulation, or ensure shift amount is valid
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:2485:22 (in cJSON_CreateBool)
+  Description: Narrowing conversion from cJSON_bool to _Bool may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:2485:32 (in cJSON_CreateBool)
+  Description: Potential undefined behavior: left shift of signed integer
+  Suggestion: Use unsigned integers for bit manipulation, or ensure shift amount is valid
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:2485:45 (in cJSON_CreateBool)
+  Description: Potential undefined behavior: left shift of signed integer
+  Suggestion: Use unsigned integers for bit manipulation, or ensure shift amount is valid
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:2496:22 (in cJSON_CreateNumber)
+  Description: Potential undefined behavior: left shift of signed integer
+  Suggestion: Use unsigned integers for bit manipulation, or ensure shift amount is valid
+
+[critical] signed_negation_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:2504:33 (in cJSON_CreateNumber)
+  Description: Negation of signed integer may cause overflow (e.g., -INT_MIN)
+  Suggestion: Check if value is INT_MIN before negating, or use unsigned type
+
+[critical] signed_negation_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:2506:30 (in cJSON_CreateNumber)
+  Description: Negation of signed integer may cause overflow (e.g., -INT_MIN)
+  Suggestion: Check if value is INT_MIN before negating, or use unsigned type
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:2522:22 (in cJSON_CreateString)
+  Description: Potential undefined behavior: left shift of signed integer
+  Suggestion: Use unsigned integers for bit manipulation, or ensure shift amount is valid
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:2539:22 (in cJSON_CreateStringReference)
+  Description: Potential undefined behavior: left shift of signed integer
+  Suggestion: Use unsigned integers for bit manipulation, or ensure shift amount is valid
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:2550:22 (in cJSON_CreateObjectReference)
+  Description: Potential undefined behavior: left shift of signed integer
+  Suggestion: Use unsigned integers for bit manipulation, or ensure shift amount is valid
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:2560:22 (in cJSON_CreateArrayReference)
+  Description: Potential undefined behavior: left shift of signed integer
+  Suggestion: Use unsigned integers for bit manipulation, or ensure shift amount is valid
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:2572:22 (in cJSON_CreateRaw)
+  Description: Potential undefined behavior: left shift of signed integer
+  Suggestion: Use unsigned integers for bit manipulation, or ensure shift amount is valid
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:2589:20 (in cJSON_CreateArray)
+  Description: Potential undefined behavior: left shift of signed integer
+  Suggestion: Use unsigned integers for bit manipulation, or ensure shift amount is valid
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:2600:22 (in cJSON_CreateObject)
+  Description: Potential undefined behavior: left shift of signed integer
+  Suggestion: Use unsigned integers for bit manipulation, or ensure shift amount is valid
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:2629:13 (in cJSON_CreateIntArray)
+  Description: Narrowing conversion from size_t to _Bool may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:2669:13 (in cJSON_CreateFloatArray)
+  Description: Narrowing conversion from size_t to _Bool may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:2709:13 (in cJSON_CreateDoubleArray)
+  Description: Narrowing conversion from size_t to _Bool may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:2749:13 (in cJSON_CreateStringArray)
+  Description: Narrowing conversion from size_t to _Bool may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:2807:27 (in cJSON_Duplicate_rec)
+  Description: Narrowing conversion from int to _Bool may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:2814:10 (in cJSON_Duplicate_rec)
+  Description: Narrowing conversion from cJSON_bool to _Bool may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[warning] unsigned_wraparound
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:2863:15 (in skip_oneline_comment)
+  Description: Unsigned integer subtraction may wrap around
+  Suggestion: Ensure LHS >= RHS before subtraction, or use signed integers if negative results are expected
+
+[warning] unsigned_wraparound
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:2868:23 (in skip_oneline_comment)
+  Description: Unsigned integer subtraction may wrap around
+  Suggestion: Ensure LHS >= RHS before subtraction, or use signed integers if negative results are expected
+
+[warning] unsigned_wraparound
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:2876:15 (in skip_multiline_comment)
+  Description: Unsigned integer subtraction may wrap around
+  Suggestion: Ensure LHS >= RHS before subtraction, or use signed integers if negative results are expected
+
+[warning] unsigned_wraparound
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:2882:23 (in skip_multiline_comment)
+  Description: Unsigned integer subtraction may wrap around
+  Suggestion: Ensure LHS >= RHS before subtraction, or use signed integers if negative results are expected
+
+[warning] unsigned_wraparound
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:2890:15 (in minify_string)
+  Description: Unsigned integer subtraction may wrap around
+  Suggestion: Ensure LHS >= RHS before subtraction, or use signed integers if negative results are expected
+
+[warning] unsigned_wraparound
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:2891:16 (in minify_string)
+  Description: Unsigned integer subtraction may wrap around
+  Suggestion: Ensure LHS >= RHS before subtraction, or use signed integers if negative results are expected
+
+[warning] unsigned_wraparound
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:2899:23 (in minify_string)
+  Description: Unsigned integer subtraction may wrap around
+  Suggestion: Ensure LHS >= RHS before subtraction, or use signed integers if negative results are expected
+
+[warning] unsigned_wraparound
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:2900:24 (in minify_string)
+  Description: Unsigned integer subtraction may wrap around
+  Suggestion: Ensure LHS >= RHS before subtraction, or use signed integers if negative results are expected
+
+[warning] unsigned_wraparound
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:2904:23 (in minify_string)
+  Description: Unsigned integer subtraction may wrap around
+  Suggestion: Ensure LHS >= RHS before subtraction, or use signed integers if negative results are expected
+
+[warning] unsigned_wraparound
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:2905:24 (in minify_string)
+  Description: Unsigned integer subtraction may wrap around
+  Suggestion: Ensure LHS >= RHS before subtraction, or use signed integers if negative results are expected
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:2975:35 (in cJSON_IsFalse)
+  Description: Potential undefined behavior: left shift of signed integer
+  Suggestion: Use unsigned integers for bit manipulation, or ensure shift amount is valid
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:2985:35 (in cJSON_IsTrue)
+  Description: Potential undefined behavior: left shift of signed integer
+  Suggestion: Use unsigned integers for bit manipulation, or ensure shift amount is valid
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:2996:27 (in cJSON_IsBool)
+  Description: Potential undefined behavior: left shift of signed integer
+  Suggestion: Use unsigned integers for bit manipulation, or ensure shift amount is valid
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:2996:40 (in cJSON_IsBool)
+  Description: Potential undefined behavior: left shift of signed integer
+  Suggestion: Use unsigned integers for bit manipulation, or ensure shift amount is valid
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:3005:35 (in cJSON_IsNull)
+  Description: Potential undefined behavior: left shift of signed integer
+  Suggestion: Use unsigned integers for bit manipulation, or ensure shift amount is valid
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:3015:35 (in cJSON_IsNumber)
+  Description: Potential undefined behavior: left shift of signed integer
+  Suggestion: Use unsigned integers for bit manipulation, or ensure shift amount is valid
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:3025:35 (in cJSON_IsString)
+  Description: Potential undefined behavior: left shift of signed integer
+  Suggestion: Use unsigned integers for bit manipulation, or ensure shift amount is valid
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:3035:35 (in cJSON_IsArray)
+  Description: Potential undefined behavior: left shift of signed integer
+  Suggestion: Use unsigned integers for bit manipulation, or ensure shift amount is valid
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:3045:35 (in cJSON_IsObject)
+  Description: Potential undefined behavior: left shift of signed integer
+  Suggestion: Use unsigned integers for bit manipulation, or ensure shift amount is valid
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:3055:35 (in cJSON_IsRaw)
+  Description: Potential undefined behavior: left shift of signed integer
+  Suggestion: Use unsigned integers for bit manipulation, or ensure shift amount is valid
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:3068:14 (in cJSON_Compare)
+  Description: Potential undefined behavior: left shift of signed integer
+  Suggestion: Use unsigned integers for bit manipulation, or ensure shift amount is valid
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:3069:14 (in cJSON_Compare)
+  Description: Potential undefined behavior: left shift of signed integer
+  Suggestion: Use unsigned integers for bit manipulation, or ensure shift amount is valid
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:3070:14 (in cJSON_Compare)
+  Description: Potential undefined behavior: left shift of signed integer
+  Suggestion: Use unsigned integers for bit manipulation, or ensure shift amount is valid
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:3071:14 (in cJSON_Compare)
+  Description: Potential undefined behavior: left shift of signed integer
+  Suggestion: Use unsigned integers for bit manipulation, or ensure shift amount is valid
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:3072:14 (in cJSON_Compare)
+  Description: Potential undefined behavior: left shift of signed integer
+  Suggestion: Use unsigned integers for bit manipulation, or ensure shift amount is valid
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:3073:14 (in cJSON_Compare)
+  Description: Potential undefined behavior: left shift of signed integer
+  Suggestion: Use unsigned integers for bit manipulation, or ensure shift amount is valid
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:3074:14 (in cJSON_Compare)
+  Description: Potential undefined behavior: left shift of signed integer
+  Suggestion: Use unsigned integers for bit manipulation, or ensure shift amount is valid
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:3075:14 (in cJSON_Compare)
+  Description: Potential undefined behavior: left shift of signed integer
+  Suggestion: Use unsigned integers for bit manipulation, or ensure shift amount is valid
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:3091:14 (in cJSON_Compare)
+  Description: Potential undefined behavior: left shift of signed integer
+  Suggestion: Use unsigned integers for bit manipulation, or ensure shift amount is valid
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:3092:14 (in cJSON_Compare)
+  Description: Potential undefined behavior: left shift of signed integer
+  Suggestion: Use unsigned integers for bit manipulation, or ensure shift amount is valid
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:3093:14 (in cJSON_Compare)
+  Description: Potential undefined behavior: left shift of signed integer
+  Suggestion: Use unsigned integers for bit manipulation, or ensure shift amount is valid
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:3096:14 (in cJSON_Compare)
+  Description: Potential undefined behavior: left shift of signed integer
+  Suggestion: Use unsigned integers for bit manipulation, or ensure shift amount is valid
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:3097:17 (in cJSON_Compare)
+  Description: Narrowing conversion from cJSON_bool to _Bool may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:3103:14 (in cJSON_Compare)
+  Description: Potential undefined behavior: left shift of signed integer
+  Suggestion: Use unsigned integers for bit manipulation, or ensure shift amount is valid
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:3104:14 (in cJSON_Compare)
+  Description: Potential undefined behavior: left shift of signed integer
+  Suggestion: Use unsigned integers for bit manipulation, or ensure shift amount is valid
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:3116:14 (in cJSON_Compare)
+  Description: Potential undefined behavior: left shift of signed integer
+  Suggestion: Use unsigned integers for bit manipulation, or ensure shift amount is valid
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:3123:22 (in cJSON_Compare)
+  Description: Narrowing conversion from cJSON_bool to _Bool may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:3140:14 (in cJSON_Compare)
+  Description: Potential undefined behavior: left shift of signed integer
+  Suggestion: Use unsigned integers for bit manipulation, or ensure shift amount is valid
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:3153:22 (in cJSON_Compare)
+  Description: Narrowing conversion from cJSON_bool to _Bool may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/cJSON/cJSON.c:3169:22 (in cJSON_Compare)
+  Description: Narrowing conversion from cJSON_bool to _Bool may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+

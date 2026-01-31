@@ -1,0 +1,53 @@
+=== Integer Overflow Detection Report ===
+
+Total issues found: 9
+
+Critical: 1
+Warning: 8
+Info: 0
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_casting.c:8:12 (in test_cast_overflow_long_to_int)
+  Description: Narrowing conversion from long to int may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_casting.c:14:12 (in test_safe_cast)
+  Description: Narrowing conversion from long to int may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_casting.c:31:14 (in test_char_to_int)
+  Description: Narrowing conversion from int to char may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_casting.c:38:12 (in test_int_to_short_overflow)
+  Description: Narrowing conversion from int to short may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_casting.c:44:12 (in test_safe_int_to_short)
+  Description: Narrowing conversion from int to short may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_casting.c:49:15 (in test_arithmetic_then_cast)
+  Description: Narrowing conversion from int to short may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_casting.c:50:15 (in test_arithmetic_then_cast)
+  Description: Narrowing conversion from int to short may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_casting.c:51:15 (in test_arithmetic_then_cast)
+  Description: Potential signed integer overflow in addition
+  Suggestion: Use safer arithmetic (e.g., check before addition, use wider type, or use unsigned)
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_casting.c:52:12 (in test_arithmetic_then_cast)
+  Description: Narrowing conversion from int to short may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+

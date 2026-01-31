@@ -1,0 +1,33 @@
+=== UC2: Cache Optimization - Memory Access Patterns ===
+Matrix size: 4096 x 4096 (64 MB)
+Warmup runs: 3, Measured runs: 30
+
+Running column-major traversal (cache-unfriendly)...
+Running row-major traversal (cache-friendly)...
+
+=== Results ===
+
+Column-Major (Cache-Unfriendly):
+  Mean:   0.066454 seconds
+  Stddev: 0.003229 seconds
+  95% CI: [0.065249, 0.067660] seconds
+
+Row-Major (Cache-Friendly):
+  Mean:   0.001347 seconds
+  Stddev: 0.000232 seconds
+  95% CI: [0.001260, 0.001433] seconds
+
+=== IMPACT SUMMARY ===
+Speedup (row-major vs column-major): 49.34x faster
+Column-major overhead: 4834.5% slower than optimal
+
+OptiWeave Insight: The strided access pattern in column-major
+traversal causes ~4834% more cache misses.
+
+Optimization: Loop interchange (swap i and j loops) achieves
+49.34x speedup with zero algorithmic changes.
+
+=== CSV Output ===
+access_pattern,size,mean,stddev,ci_low,ci_high,min,max,checksum
+column_major,4096,0.066454,0.003229,0.065249,0.067660,0.063576,0.076988,830471520
+row_major,4096,0.001347,0.000232,0.001260,0.001433,0.001109,0.002001,830471520

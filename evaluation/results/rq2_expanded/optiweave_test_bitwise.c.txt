@@ -1,0 +1,48 @@
+=== Integer Overflow Detection Report ===
+
+Total issues found: 8
+
+Critical: 8
+Warning: 0
+Info: 0
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_bitwise.c:8:12 (in test_left_shift_overflow)
+  Description: Potential undefined behavior: left shift of signed integer
+  Suggestion: Use unsigned integers for bit manipulation, or ensure shift amount is valid
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_bitwise.c:14:12 (in test_safe_left_shift)
+  Description: Potential undefined behavior: left shift of signed integer
+  Suggestion: Use unsigned integers for bit manipulation, or ensure shift amount is valid
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_bitwise.c:25:12 (in test_shift_by_negative)
+  Description: Potential undefined behavior: left shift of signed integer
+  Suggestion: Use unsigned integers for bit manipulation, or ensure shift amount is valid
+
+[critical] signed_negation_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_bitwise.c:25:17 (in test_shift_by_negative)
+  Description: Negation of signed integer may cause overflow (e.g., -INT_MIN)
+  Suggestion: Check if value is INT_MIN before negating, or use unsigned type
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_bitwise.c:31:12 (in test_shift_beyond_width)
+  Description: Potential undefined behavior: left shift of signed integer
+  Suggestion: Use unsigned integers for bit manipulation, or ensure shift amount is valid
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_bitwise.c:37:12 (in test_safe_shift_constant)
+  Description: Potential undefined behavior: left shift of signed integer
+  Suggestion: Use unsigned integers for bit manipulation, or ensure shift amount is valid
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_bitwise.c:42:13 (in test_compound_shift_overflow)
+  Description: Potential undefined behavior: left shift of signed integer
+  Suggestion: Use unsigned integers for bit manipulation, or ensure shift amount is valid
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_bitwise.c:43:12 (in test_compound_shift_overflow)
+  Description: Potential undefined behavior: left shift of signed integer
+  Suggestion: Use unsigned integers for bit manipulation, or ensure shift amount is valid
+

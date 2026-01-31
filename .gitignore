@@ -298,8 +298,19 @@ web/README.md
 *.optiweave_*
 *_optiweave.*
 
-# Evaluation and thesis materials (keep local only)
-evaluation/
+# Evaluation directory - track scripts and results, ignore third-party/build
+evaluation/benchmarks/
+evaluation/venv/
+evaluation/build/
+evaluation/.cache/
+evaluation/**/*.o
+evaluation/**/*.so
+evaluation/**/*.dylib
+evaluation/**/compile_commands.json
+evaluation/logs/
+evaluation/test_run.log
+
+# Test suite (generated tests)
 test_suite/
 overflow.txt
 Thesis_Proposal*.txt

@@ -1,0 +1,32 @@
+/Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_multiplication.cpp:1:0: information: Include file: <optiweave/prelude.hpp> not found. Please note: Cppcheck does not need standard library headers to get proper results. [missingIncludeSystem]
+#include <optiweave/prelude.hpp>
+^
+/Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_multiplication.cpp:3:0: information: Include file: <limits.h> not found. Please note: Cppcheck does not need standard library headers to get proper results. [missingIncludeSystem]
+#include <limits.h>
+^
+/Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_multiplication.cpp:4:0: information: Include file: <stdio.h> not found. Please note: Cppcheck does not need standard library headers to get proper results. [missingIncludeSystem]
+#include <stdio.h>
+^
+/Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_multiplication.cpp:9:14: error: Signed integer overflow for expression 'x*3'. [integerOverflow]
+    return x * 3;  // OVERFLOW - Should detect
+             ^
+/Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_multiplication.cpp:8:21: note: Assignment 'x=2147483647/2', assigned value is 1073741823
+    int x = INT_MAX / 2;
+                    ^
+/Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_multiplication.cpp:9:14: note: Integer overflow
+    return x * 3;  // OVERFLOW - Should detect
+             ^
+/Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_multiplication.cpp:7:5: style: The function 'test_overflow_large_mult' is never used. [unusedFunction]
+int test_overflow_large_mult() {
+    ^
+/Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_multiplication.cpp:13:5: style: The function 'test_potential_overflow_mult' is never used. [unusedFunction]
+int test_potential_overflow_mult(int a, int b) {
+    ^
+/Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_multiplication.cpp:18:5: style: The function 'test_safe_mult' is never used. [unusedFunction]
+int test_safe_mult() {
+    ^
+/Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/juliet/juliet_subset/CWE190_Integer_Overflow/test_multiplication.cpp:25:5: style: The function 'test_overflow_mult_loop' is never used. [unusedFunction]
+int test_overflow_mult_loop(int n) {
+    ^
+nofile:0:0: information: Active checkers: 181/966 (use --checkers-report=<filename> to see details) [checkersReport]
+

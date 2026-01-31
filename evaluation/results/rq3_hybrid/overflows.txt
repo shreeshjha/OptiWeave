@@ -1,0 +1,293 @@
+=== Integer Overflow Detection Report ===
+
+Total issues found: 57
+
+Critical: 30
+Warning: 27
+Info: 0
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_tokener.c:91:38 (in <unknown>)
+  Description: Narrowing conversion from unsigned long to int may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[warning] unsigned_wraparound
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_tokener.c:91:38 (in <unknown>)
+  Description: Unsigned integer subtraction may wrap around
+  Suggestion: Ensure LHS >= RHS before subtraction, or use signed integers if negative results are expected
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_tokener.c:95:46 (in <unknown>)
+  Description: Narrowing conversion from unsigned long to unsigned int may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[warning] unsigned_wraparound
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_tokener.c:95:46 (in <unknown>)
+  Description: Unsigned integer subtraction may wrap around
+  Suggestion: Ensure LHS >= RHS before subtraction, or use signed integers if negative results are expected
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_tokener.c:97:37 (in <unknown>)
+  Description: Narrowing conversion from unsigned long to int may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[warning] unsigned_wraparound
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_tokener.c:97:37 (in <unknown>)
+  Description: Unsigned integer subtraction may wrap around
+  Suggestion: Ensure LHS >= RHS before subtraction, or use signed integers if negative results are expected
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_tokener.c:99:38 (in <unknown>)
+  Description: Narrowing conversion from unsigned long to int may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[warning] unsigned_wraparound
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_tokener.c:99:38 (in <unknown>)
+  Description: Unsigned integer subtraction may wrap around
+  Suggestion: Ensure LHS >= RHS before subtraction, or use signed integers if negative results are expected
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_tokener.c:101:39 (in <unknown>)
+  Description: Narrowing conversion from unsigned long to int may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[warning] unsigned_wraparound
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_tokener.c:101:39 (in <unknown>)
+  Description: Unsigned integer subtraction may wrap around
+  Suggestion: Ensure LHS >= RHS before subtraction, or use signed integers if negative results are expected
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_tokener.c:137:18 (in json_tokener_error_desc)
+  Description: Narrowing conversion from unsigned long to int may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_tokener.c:152:50 (in <unknown>)
+  Description: Narrowing conversion from int to unsigned char may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_tokener.c:152:56 (in <unknown>)
+  Description: Narrowing conversion from int to unsigned char may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_tokener.c:152:62 (in <unknown>)
+  Description: Narrowing conversion from int to unsigned char may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[warning] loop_counter_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_tokener.c:209:2 (in json_tokener_reset)
+  Description: Loop counter may overflow causing infinite loop
+  Suggestion: Ensure loop bounds don't cause counter overflow, use wider type, or check explicitly
+
+[critical] signed_negation_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_tokener.c:231:40 (in json_tokener_parse_verbose)
+  Description: Negation of signed integer may cause overflow (e.g., -INT_MIN)
+  Suggestion: Check if value is INT_MIN before negating, or use unsigned type
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_tokener.c:313:11 (in json_tokener_parse_ex)
+  Description: Narrowing conversion from int to char may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[critical] signed_negation_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_tokener.c:333:13 (in json_tokener_parse_ex)
+  Description: Negation of signed integer may cause overflow (e.g., -INT_MIN)
+  Suggestion: Check if value is INT_MIN before negating, or use unsigned type
+
+[critical] signed_negation_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_tokener.c:333:28 (in json_tokener_parse_ex)
+  Description: Negation of signed integer may cause overflow (e.g., -INT_MIN)
+  Suggestion: Check if value is INT_MIN before negating, or use unsigned type
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_tokener.c:534:11 (in json_tokener_parse_ex)
+  Description: Potential signed integer overflow in addition
+  Suggestion: Use safer arithmetic (e.g., check before addition, use wider type, or use unsigned)
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_tokener.c:534:11 (in json_tokener_parse_ex)
+  Description: Potential signed integer overflow in addition
+  Suggestion: Use safer arithmetic (e.g., check before addition, use wider type, or use unsigned)
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_tokener.c:535:15 (in json_tokener_parse_ex)
+  Description: Potential signed integer overflow in addition
+  Suggestion: Use safer arithmetic (e.g., check before addition, use wider type, or use unsigned)
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_tokener.c:535:15 (in json_tokener_parse_ex)
+  Description: Potential signed integer overflow in addition
+  Suggestion: Use safer arithmetic (e.g., check before addition, use wider type, or use unsigned)
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_tokener.c:599:6 (in json_tokener_parse_ex)
+  Description: Narrowing conversion from long to int may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_tokener.c:599:6 (in json_tokener_parse_ex)
+  Description: Potential signed integer overflow in subtraction
+  Suggestion: Check operand values before subtraction or use a wider integer type
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_tokener.c:604:4 (in json_tokener_parse_ex)
+  Description: Narrowing conversion from long to int may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_tokener.c:604:4 (in json_tokener_parse_ex)
+  Description: Potential signed integer overflow in subtraction
+  Suggestion: Check operand values before subtraction or use a wider integer type
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_tokener.c:617:6 (in json_tokener_parse_ex)
+  Description: Narrowing conversion from long to int may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_tokener.c:617:6 (in json_tokener_parse_ex)
+  Description: Potential signed integer overflow in subtraction
+  Suggestion: Check operand values before subtraction or use a wider integer type
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_tokener.c:622:4 (in json_tokener_parse_ex)
+  Description: Narrowing conversion from long to int may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_tokener.c:622:4 (in json_tokener_parse_ex)
+  Description: Potential signed integer overflow in subtraction
+  Suggestion: Check operand values before subtraction or use a wider integer type
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_tokener.c:649:6 (in json_tokener_parse_ex)
+  Description: Narrowing conversion from long to int may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_tokener.c:649:6 (in json_tokener_parse_ex)
+  Description: Potential signed integer overflow in subtraction
+  Suggestion: Check operand values before subtraction or use a wider integer type
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_tokener.c:664:6 (in json_tokener_parse_ex)
+  Description: Narrowing conversion from long to int may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_tokener.c:664:6 (in json_tokener_parse_ex)
+  Description: Potential signed integer overflow in subtraction
+  Suggestion: Check operand values before subtraction or use a wider integer type
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_tokener.c:672:6 (in json_tokener_parse_ex)
+  Description: Narrowing conversion from long to int may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_tokener.c:672:6 (in json_tokener_parse_ex)
+  Description: Potential signed integer overflow in subtraction
+  Suggestion: Check operand values before subtraction or use a wider integer type
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_tokener.c:728:24 (in json_tokener_parse_ex)
+  Description: Potential signed integer overflow in subtraction
+  Suggestion: Check operand values before subtraction or use a wider integer type
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_tokener.c:728:24 (in json_tokener_parse_ex)
+  Description: Potential signed integer overflow in addition
+  Suggestion: Use safer arithmetic (e.g., check before addition, use wider type, or use unsigned)
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_tokener.c:728:43 (in json_tokener_parse_ex)
+  Description: Potential signed integer overflow in multiplication
+  Suggestion: Check operand magnitudes or use a wider type (e.g., int64_t)
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_tokener.c:728:44 (in json_tokener_parse_ex)
+  Description: Potential signed integer overflow in subtraction
+  Suggestion: Check operand values before subtraction or use a wider integer type
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_tokener.c:878:12 (in json_tokener_parse_ex)
+  Description: Potential signed integer overflow in addition
+  Suggestion: Use safer arithmetic (e.g., check before addition, use wider type, or use unsigned)
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_tokener.c:878:12 (in json_tokener_parse_ex)
+  Description: Potential signed integer overflow in addition
+  Suggestion: Use safer arithmetic (e.g., check before addition, use wider type, or use unsigned)
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_tokener.c:879:12 (in json_tokener_parse_ex)
+  Description: Potential signed integer overflow in addition
+  Suggestion: Use safer arithmetic (e.g., check before addition, use wider type, or use unsigned)
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_tokener.c:879:12 (in json_tokener_parse_ex)
+  Description: Potential signed integer overflow in addition
+  Suggestion: Use safer arithmetic (e.g., check before addition, use wider type, or use unsigned)
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_tokener.c:942:24 (in json_tokener_parse_ex)
+  Description: Potential signed integer overflow in subtraction
+  Suggestion: Check operand values before subtraction or use a wider integer type
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_tokener.c:1022:23 (in json_tokener_parse_ex)
+  Description: Potential signed integer overflow in subtraction
+  Suggestion: Check operand values before subtraction or use a wider integer type
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_tokener.c:1028:6 (in json_tokener_parse_ex)
+  Description: Potential signed integer overflow in subtraction
+  Suggestion: Check operand values before subtraction or use a wider integer type
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_tokener.c:1126:23 (in json_tokener_parse_ex)
+  Description: Potential signed integer overflow in subtraction
+  Suggestion: Check operand values before subtraction or use a wider integer type
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_tokener.c:1203:6 (in json_tokener_parse_ex)
+  Description: Narrowing conversion from long to int may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_tokener.c:1203:6 (in json_tokener_parse_ex)
+  Description: Potential signed integer overflow in subtraction
+  Suggestion: Check operand values before subtraction or use a wider integer type
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_tokener.c:1217:6 (in json_tokener_parse_ex)
+  Description: Narrowing conversion from long to int may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_tokener.c:1217:6 (in json_tokener_parse_ex)
+  Description: Potential signed integer overflow in subtraction
+  Suggestion: Check operand values before subtraction or use a wider integer type
+
+[warning] narrowing_conversion
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_tokener.c:1225:6 (in json_tokener_parse_ex)
+  Description: Narrowing conversion from long to int may lose data
+  Suggestion: Check value range before conversion or use explicit bounds checking
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_tokener.c:1225:6 (in json_tokener_parse_ex)
+  Description: Potential signed integer overflow in subtraction
+  Suggestion: Check operand values before subtraction or use a wider integer type
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_tokener.c:1247:22 (in json_tokener_parse_ex)
+  Description: Potential signed integer overflow in subtraction
+  Suggestion: Check operand values before subtraction or use a wider integer type
+
+[warning] loop_counter_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/evaluation/benchmarks/case-studies/json-c/json_tokener.c:1322:3 (in json_tokener_parse_ex)
+  Description: Loop counter may overflow causing infinite loop
+  Suggestion: Ensure loop bounds don't cause counter overflow, use wider type, or check explicitly
+
