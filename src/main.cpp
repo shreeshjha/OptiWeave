@@ -1270,10 +1270,18 @@ int main(int argc, const char **argv) {
     std::string output_file = DataFlowOutput;
 
     // We need a source manager for export - create a minimal one
+    // LLVM 21+ changed DiagnosticOptions to non-refcounted
+#if LLVM_VERSION_MAJOR >= 21
+    clang::DiagnosticOptions diag_opts;
+    clang::TextDiagnosticPrinter *diag_printer = new clang::TextDiagnosticPrinter(llvm::errs(), diag_opts);
+    llvm::IntrusiveRefCntPtr<clang::DiagnosticIDs> diag_id(new clang::DiagnosticIDs());
+    clang::DiagnosticsEngine diags(diag_id, diag_opts, diag_printer);
+#else
     llvm::IntrusiveRefCntPtr<clang::DiagnosticOptions> diag_opts(new clang::DiagnosticOptions());
     clang::TextDiagnosticPrinter *diag_printer = new clang::TextDiagnosticPrinter(llvm::errs(), diag_opts.get());
     llvm::IntrusiveRefCntPtr<clang::DiagnosticIDs> diag_id(new clang::DiagnosticIDs());
     clang::DiagnosticsEngine diags(diag_id, diag_opts, diag_printer);
+#endif
 
     clang::FileSystemOptions file_system_opts;
     clang::FileManager file_mgr(file_system_opts);

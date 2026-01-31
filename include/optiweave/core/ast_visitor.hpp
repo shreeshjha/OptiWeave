@@ -438,6 +438,21 @@ public:
       clang::SourceManager& source_manager)
       : dep_graph_(dep_graph), source_manager_(source_manager) {}
 
+  // LLVM 21+ added ModuleImported parameter to InclusionDirective
+#if LLVM_VERSION_MAJOR >= 21
+  void InclusionDirective(
+      clang::SourceLocation hash_loc,
+      const clang::Token& include_tok,
+      llvm::StringRef file_name,
+      bool is_angled,
+      clang::CharSourceRange filename_range,
+      clang::OptionalFileEntryRef file,
+      llvm::StringRef search_path,
+      llvm::StringRef relative_path,
+      const clang::Module* suggested_module,
+      bool module_imported,
+      clang::SrcMgr::CharacteristicKind file_type) override;
+#else
   void InclusionDirective(
       clang::SourceLocation hash_loc,
       const clang::Token& include_tok,
@@ -449,6 +464,7 @@ public:
       llvm::StringRef relative_path,
       const clang::Module* imported,
       clang::SrcMgr::CharacteristicKind file_type) override;
+#endif
 
 private:
   optiweave::analysis::DependencyGraph* dep_graph_;
