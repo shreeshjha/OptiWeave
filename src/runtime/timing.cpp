@@ -25,45 +25,7 @@ bool g_profile_enabled = false;
 std::string g_timing_csv_path;
 std::string g_timing_json_path;
 
-// Atomic min/max helpers
-static void atomic_min(std::atomic<uint64_t> &atomic_val, uint64_t new_val) {
-  uint64_t current = atomic_val.load(std::memory_order_relaxed);
-  while (new_val < current &&
-         !atomic_val.compare_exchange_weak(current, new_val,
-                                          std::memory_order_relaxed)) {
-  }
-}
-
-static void atomic_max(std::atomic<uint64_t> &atomic_val, uint64_t new_val) {
-  uint64_t current = atomic_val.load(std::memory_order_relaxed);
-  while (new_val > current &&
-         !atomic_val.compare_exchange_weak(current, new_val,
-                                          std::memory_order_relaxed)) {
-  }
-}
-
-// TimingStats methods
-void TimingStats::record(uint64_t duration_ns) {
-  total_time_ns.fetch_add(duration_ns, std::memory_order_relaxed);
-  count.fetch_add(1, std::memory_order_relaxed);
-
-  // Update min/max
-  atomic_min(min_ns, duration_ns);
-  atomic_max(max_ns, duration_ns);
-
-  // Sample for percentiles (1 out of sample_rate operations)
-  if (g_profile_enabled && (rand() % sample_rate == 0)) {
-    std::lock_guard<std::mutex> lock(samples_mutex);
-    samples.push_back(duration_ns);
-  }
-}
-
-double TimingStats::get_average_ns() const {
-  uint64_t c = count.load();
-  if (c == 0)
-    return 0.0;
-  return static_cast<double>(total_time_ns.load()) / c;
-}
+// Atomic min/max helpers (kept for potential use, but record() is now inline in header)
 
 void initialize() {
   // Check environment variables

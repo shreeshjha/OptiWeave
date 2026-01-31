@@ -63,7 +63,7 @@ void HotspotTracker::record_operation(const std::string &op_type,
     info.location = loc;
     info.operation_count++;
     info.total_time_ns += duration_ns;
-    info.operation_breakdown[op_type]++;
+    info.operation_counts[static_cast<size_t>(string_to_operation_type(op_type.c_str()))]++;
   } catch (const std::exception& e) {
     // Count errors but don't spam logs during high-frequency operations
     ++g_recording_errors;
@@ -121,8 +121,9 @@ HotspotTracker::get_hotspots_by_function() const {
     func_info.operation_count += info.operation_count;
     func_info.total_time_ns += info.total_time_ns;
 
-    for (const auto &op : info.operation_breakdown) {
-      func_info.operation_breakdown[op.first] += op.second;
+    // Merge operation counts (array-based)
+    for (size_t i = 0; i < static_cast<size_t>(OperationType::OP_TYPE_COUNT); ++i) {
+      func_info.operation_counts[i] += info.operation_counts[i];
     }
   }
 
@@ -148,8 +149,9 @@ HotspotTracker::get_hotspots_by_file() const {
     file_info.operation_count += info.operation_count;
     file_info.total_time_ns += info.total_time_ns;
 
-    for (const auto &op : info.operation_breakdown) {
-      file_info.operation_breakdown[op.first] += op.second;
+    // Merge operation counts (array-based)
+    for (size_t i = 0; i < static_cast<size_t>(OperationType::OP_TYPE_COUNT); ++i) {
+      file_info.operation_counts[i] += info.operation_counts[i];
     }
   }
 
@@ -195,9 +197,9 @@ void HotspotTracker::merge_thread_local_buffer(ThreadLocalHotspotBuffer& buffer)
       global_info.operation_count += local_info.operation_count;
       global_info.total_time_ns += local_info.total_time_ns;
       
-      // Merge operation breakdown
-      for (const auto& op : local_info.operation_breakdown) {
-        global_info.operation_breakdown[op.first] += op.second;
+      // Merge operation counts (array-based)
+      for (size_t i = 0; i < static_cast<size_t>(OperationType::OP_TYPE_COUNT); ++i) {
+        global_info.operation_counts[i] += local_info.operation_counts[i];
       }
     }
     
@@ -452,7 +454,7 @@ void HotspotTracker::export_flamegraph(const std::string &filename) const {
   for (const auto &hs : hotspots) {
     // Create a pseudo-stack: file;function;line
     // This works well for visualizing which files/functions dominate
-    std::string stack = hs.location.file + ";" + hs.location.function;
+    std::string stack = std::string(hs.location.file) + ";" + hs.location.function;
 
     // For flame graphs, we need sample counts, not time
     // Convert time to "samples" (nanoseconds work as samples)

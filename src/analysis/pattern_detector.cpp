@@ -503,7 +503,7 @@ std::string OptimizationAnalyzer::generate_html_report(const AnalysisResult& res
 
                 oss << "      <div class=\"location\">" << pattern.location.file
                     << ":" << pattern.location.line;
-                if (!pattern.location.function.empty()) {
+                if (pattern.location.function && pattern.location.function[0] != '\0') {
                     oss << " (" << pattern.location.function << ")";
                 }
                 oss << "</div>\n";

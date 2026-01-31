@@ -4,6 +4,7 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <cstring>
 
 namespace optiweave {
 namespace runtime {
@@ -44,6 +45,63 @@ struct CacheStats {
 };
 
 /**
+ * @brief Fast location key for cache profiler map lookup
+ * OPTIMIZED: Uses pre-computed FNV-1a hash, avoids string allocation
+ */
+struct CacheLocationKey {
+    const char* file;
+    uint32_t line;
+    const char* function;
+    size_t hash_cache;
+    
+    CacheLocationKey() : file(""), line(0), function(""), hash_cache(0) {}
+    
+    CacheLocationKey(const char* f, uint32_t l, const char* fn) 
+        : file(f), line(l), function(fn), hash_cache(compute_hash(f, l, fn)) {}
+    
+    static size_t compute_hash(const char* f, uint32_t l, const char* fn) {
+        // FNV-1a hash - fast and good distribution
+        constexpr size_t FNV_PRIME = 1099511628211ULL;
+        constexpr size_t FNV_OFFSET = 14695981039346656037ULL;
+        
+        size_t h = FNV_OFFSET;
+        h ^= reinterpret_cast<size_t>(f);
+        h *= FNV_PRIME;
+        h ^= static_cast<size_t>(l);
+        h *= FNV_PRIME;
+        h ^= reinterpret_cast<size_t>(fn);
+        h *= FNV_PRIME;
+        return h;
+    }
+    
+    bool operator==(const CacheLocationKey& other) const {
+        // Fast path: compare pointers and line (usually sufficient for static strings)
+        if (file == other.file && line == other.line && function == other.function) {
+            return true;
+        }
+        // Slow path: compare string contents
+        return line == other.line && 
+               std::strcmp(file, other.file) == 0 && 
+               std::strcmp(function, other.function) == 0;
+    }
+};
+
+} // namespace runtime
+} // namespace optiweave
+
+// Hash specialization for CacheLocationKey - must be in std namespace
+namespace std {
+template<> struct hash<optiweave::runtime::CacheLocationKey> {
+    size_t operator()(const optiweave::runtime::CacheLocationKey& key) const {
+        return key.hash_cache;
+    }
+};
+} // namespace std
+
+namespace optiweave {
+namespace runtime {
+
+/**
  * @brief Location-specific cache profiling data
  */
 struct CacheLocation {
@@ -54,6 +112,8 @@ struct CacheLocation {
 
     CacheLocation() = default;
     CacheLocation(const std::string& f, uint32_t l, const std::string& func)
+        : file(f), line(l), function(func) {}
+    CacheLocation(const char* f, uint32_t l, const char* func)
         : file(f), line(l), function(func) {}
 };
 
@@ -107,10 +167,12 @@ public:
 
     /**
      * @brief Get cache statistics for a specific location
-     * @param location_key Unique key for the location (file:line:function)
-     * @return Cache statistics
+     * @param file Source file name
+     * @param line Line number
+     * @param function Function name
+     * @return Cache statistics or nullptr if not found
      */
-    const CacheStats* get_stats(const std::string& location_key) const;
+    const CacheStats* get_stats(const char* file, uint32_t line, const char* function) const;
 
     /**
      * @brief Get all cache locations sorted by total misses
@@ -164,13 +226,8 @@ private:
     int fd_l3_miss_;
     int fd_cache_refs_;
 
-    // Location-based cache statistics
-    std::unordered_map<std::string, CacheLocation> locations_;
-
-    /**
-     * @brief Create location key from file:line:function
-     */
-    std::string make_location_key(const char* file, uint32_t line, const char* function) const;
+    // Location-based cache statistics - OPTIMIZED: uses hash key instead of string
+    std::unordered_map<CacheLocationKey, CacheLocation> locations_;
 
     /**
      * @brief Read current value from performance counter

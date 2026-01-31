@@ -107,10 +107,10 @@ bool deserialize_loop_info(
     for (uint32_t i = 0; i < count; ++i) {
         analysis::LoopInfo loop;
 
-        // SourceLocation
-        loop.location.file = read_string(in);
+        // SourceLocation - use set_file/set_function for dynamic strings
+        loop.location.set_file(read_string(in));
         in.read(reinterpret_cast<char*>(&loop.location.line), sizeof(loop.location.line));
-        loop.location.function = read_string(in);
+        loop.location.set_function(read_string(in));
 
         // Line range
         in.read(reinterpret_cast<char*>(&loop.line_start), sizeof(loop.line_start));
@@ -131,7 +131,7 @@ bool deserialize_loop_info(
             loop.operations_in_loop.push_back(read_string(in));
         }
 
-        loop_info.push_back(loop);
+        loop_info.push_back(std::move(loop));
     }
 
     return true;

@@ -125,7 +125,8 @@ void CacheProfiler::record_cache_stats(const char* file, uint32_t line, const ch
     }
 
 #ifdef __linux__
-    std::string key = make_location_key(file, line, function);
+    // OPTIMIZED: Use hash-based key instead of string allocation
+    CacheLocationKey key(file, line, function);
 
     // Get or create location
     auto& location = locations_[key];
@@ -152,8 +153,9 @@ void CacheProfiler::record_cache_stats(const char* file, uint32_t line, const ch
 #endif
 }
 
-const CacheStats* CacheProfiler::get_stats(const std::string& location_key) const {
-    auto it = locations_.find(location_key);
+const CacheStats* CacheProfiler::get_stats(const char* file, uint32_t line, const char* function) const {
+    CacheLocationKey key(file, line, function);
+    auto it = locations_.find(key);
     if (it != locations_.end()) {
         return &it->second.stats;
     }
@@ -359,12 +361,6 @@ double CacheProfiler::get_overall_miss_rate() const {
 
 void CacheProfiler::reset() {
     locations_.clear();
-}
-
-std::string CacheProfiler::make_location_key(const char* file, uint32_t line, const char* function) const {
-    std::ostringstream oss;
-    oss << file << ":" << line << ":" << function;
-    return oss.str();
 }
 
 uint64_t CacheProfiler::read_counter(int fd) const {

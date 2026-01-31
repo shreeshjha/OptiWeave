@@ -423,7 +423,7 @@ SourceLocation ComplexityAnalyzer::get_source_location(clang::Decl* decl) {
             result.line = presumed.getLine();
 
             if (auto* named = llvm::dyn_cast<clang::NamedDecl>(decl)) {
-                result.function = named->getNameAsString();
+                result.set_function(named->getNameAsString());
             }
         }
     }
@@ -443,7 +443,7 @@ SourceLocation ComplexityAnalyzer::get_source_location(clang::Stmt* stmt) {
             result.line = presumed.getLine();
 
             if (current_function_) {
-                result.function = current_function_->function_name;
+                result.set_function(current_function_->function_name);
             }
         }
     }
