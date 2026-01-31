@@ -2,6 +2,7 @@
 
 #include <string>
 #include <vector>
+#include <algorithm>
 #include <optiweave/runtime/hotspot_tracker.hpp>
 
 namespace optiweave {

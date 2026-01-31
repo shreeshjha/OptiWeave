@@ -6,6 +6,7 @@
 #include <map>
 #include <set>
 #include <cstdint>
+#include <cmath>
 
 namespace optiweave {
 namespace analysis {

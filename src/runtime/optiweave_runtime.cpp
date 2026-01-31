@@ -5,6 +5,7 @@
 #include <mutex>
 #include <chrono>
 #include <iomanip>
+#include <cstring>
 
 #ifdef OPTIWEAVE_ENABLE_STATS
 #include <optiweave/runtime/statistics.hpp>
