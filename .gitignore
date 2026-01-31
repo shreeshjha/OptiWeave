@@ -244,9 +244,9 @@ Icon
 *.patch
 *.diff
 
-# Core dumps
-core
-core.*
+# Core dumps (use /core to avoid matching src/core/ directory)
+/core
+/core.*
 vgcore.*
 
 # Database files
