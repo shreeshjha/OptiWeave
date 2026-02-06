@@ -86,8 +86,13 @@ static cl::opt<std::string> OutputExecutable(
     "o", cl::desc("Output executable name (requires --compile)"),
     cl::value_desc("filename"), cl::cat(OptiWeaveCategory));
 
+static cl::opt<bool> PrintCompileCmd(
+    "print-compile-cmd",
+    cl::desc("Print the compile command for instrumented code without running it"),
+    cl::init(false), cl::cat(OptiWeaveCategory));
+
 static cl::opt<bool> GenerateCompileCommands(
-    "generate-compile-commands", 
+    "generate-compile-commands",
     cl::desc("Generate compile_commands.json for proper header resolution"),
     cl::init(false), cl::cat(OptiWeaveCategory));
 
@@ -530,10 +535,13 @@ Usage Examples:
   optiweave source.cpp -- -std=c++20
 
   # Transform and compile in one step
-  optiweave source.cpp --compile -o instrumented
+  optiweave source.cpp --compile -o instrumented -- -std=c++20
+
+  # Show the compile command without running it
+  optiweave source.cpp --print-compile-cmd -- -std=c++20
 
   # Transform multiple operator types and compile
-  optiweave --arithmetic-ops --assignment-ops source.cpp --compile -o instrumented
+  optiweave --arithmetic-ops --assignment-ops source.cpp --compile -o instrumented -- -std=c++20
 
   # Use custom prelude and output directory
   optiweave --prelude=my_prelude.hpp --output-dir=./transformed source.cpp --
@@ -683,12 +691,15 @@ bool generateCompileCommands(const std::vector<std::string> &source_paths) {
 }
 
 /**
- * @brief Compile transformed source files
+ * @brief Build the compile command for instrumented source files.
+ * @return The command as a vector of arguments, or empty on error.
  */
-bool compileTransformedFiles(const std::vector<std::string> &source_paths) {
+std::vector<std::string> buildCompileCommand(const std::vector<std::string> &source_paths) {
+  std::vector<std::string> compile_cmd;
+
   if (source_paths.empty()) {
     llvm::errs() << "Error: No source files to compile\n";
-    return false;
+    return {};
   }
 
   // Determine output executable name
@@ -696,52 +707,35 @@ bool compileTransformedFiles(const std::vector<std::string> &source_paths) {
   if (!OutputExecutable.empty()) {
     output_name = OutputExecutable;
   } else {
-    // Default: use first source file name without extension
     auto base_name = llvm::sys::path::stem(source_paths[0]);
     output_name = base_name.str() + "_instrumented";
   }
 
-  // Build compilation command
-  std::vector<std::string> compile_cmd;
   compile_cmd.push_back("clang++");
-  
-  // Add C++20 standard
   compile_cmd.push_back("-std=c++20");
-  
-  // Add system include paths for macOS using automatically detected SDK path
+
+  // Auto-detect SDK path (macOS)
   std::string sdk_path;
-  
-  // Try to auto-detect SDK path using xcrun
   FILE* xcrun_cmd = popen("xcrun --show-sdk-path 2>/dev/null", "r");
   if (xcrun_cmd) {
     char path_buffer[512];
     if (fgets(path_buffer, sizeof(path_buffer), xcrun_cmd)) {
       sdk_path = std::string(path_buffer);
-      // Remove trailing newline
       if (!sdk_path.empty() && sdk_path.back() == '\n') {
         sdk_path.pop_back();
       }
     }
     pclose(xcrun_cmd);
   }
-  
-  // Fallback to known Xcode path if xcrun fails
   if (sdk_path.empty()) {
     sdk_path = "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk";
   }
-  
-  // Only add -isysroot if SDK path exists
   if (llvm::sys::fs::exists(sdk_path)) {
     compile_cmd.push_back("-isysroot");
     compile_cmd.push_back(sdk_path);
-    if (Verbose) {
-      llvm::errs() << "Using SDK: " << sdk_path << "\n";
-    }
-  } else if (Verbose) {
-    llvm::errs() << "Warning: SDK not found at " << sdk_path << ", using system defaults\n";
   }
-  
-  // Add include path for templates
+
+  // Templates include path
   SmallString<128> templates_dir;
   if (auto exe = llvm::sys::fs::getMainExecutable(nullptr, nullptr); !exe.empty()) {
     templates_dir = exe;
@@ -750,20 +744,15 @@ bool compileTransformedFiles(const std::vector<std::string> &source_paths) {
   } else {
     templates_dir = "templates";
   }
-  
-  // Validate templates directory exists
   if (llvm::sys::fs::exists(templates_dir)) {
     compile_cmd.push_back("-I" + templates_dir.str().str());
-    if (Verbose) {
-      llvm::errs() << "Using templates: " << templates_dir << "\n";
-    }
   } else {
     llvm::errs() << "Error: Templates directory not found: " << templates_dir << "\n";
     llvm::errs() << "Please ensure OptiWeave is properly installed.\n";
-    return false;
+    return {};
   }
-  
-  // Add library path and runtime library
+
+  // Runtime library path
   SmallString<128> lib_dir;
   if (auto exe = llvm::sys::fs::getMainExecutable(nullptr, nullptr); !exe.empty()) {
     lib_dir = exe;
@@ -771,73 +760,44 @@ bool compileTransformedFiles(const std::vector<std::string> &source_paths) {
   } else {
     lib_dir = "build";
   }
-  // Validate runtime library exists
-  SmallString<128> runtime_lib_path;
-  runtime_lib_path = lib_dir;
+  SmallString<128> runtime_lib_path(lib_dir);
   llvm::sys::path::append(runtime_lib_path, "liboptiweave_runtime.a");
-
   if (llvm::sys::fs::exists(runtime_lib_path)) {
     compile_cmd.push_back("-L" + lib_dir.str().str());
     compile_cmd.push_back("-loptiweave_runtime");
-    if (Verbose) {
-      llvm::errs() << "Using runtime library: " << runtime_lib_path << "\n";
-    }
   } else {
     llvm::errs() << "Error: Runtime library not found: " << runtime_lib_path << "\n";
     llvm::errs() << "Please rebuild OptiWeave with: ./scripts/build.sh\n";
-    return false;
+    return {};
   }
 
-  // Add statistics compilation flags if enabled
+  // Feature flags
   if (EnableStats || !StatsCSV.empty() || !StatsJSON.empty()) {
     compile_cmd.push_back("-DOPTIWEAVE_ENABLE_STATS");
-    if (Verbose) {
-      llvm::errs() << "Enabling statistics collection\n";
-    }
   }
-
-  // Add timing compilation flags if enabled
   if (EnableTiming || EnableProfile || !TimingCSV.empty() || !TimingJSON.empty()) {
     compile_cmd.push_back("-DOPTIWEAVE_ENABLE_TIMING");
-    if (Verbose) {
-      llvm::errs() << "Enabling timing/profiling\n";
-    }
   }
-
-  // Add hotspot compilation flags if enabled
   if (EnableHotspots || !HotspotsCSV.empty() || !HotspotsJSON.empty()) {
     compile_cmd.push_back("-DOPTIWEAVE_ENABLE_HOTSPOTS");
-    // Hotspots require timing for duration measurement
     compile_cmd.push_back("-DOPTIWEAVE_ENABLE_TIMING");
-    if (Verbose) {
-      llvm::errs() << "Enabling hotspot detection\n";
-    }
   }
-
-  // Add cache profiling compilation flags if enabled
   if (EnableCacheProfiling || !CacheProfileCSV.empty() || !CacheProfileJSON.empty()) {
     compile_cmd.push_back("-DOPTIWEAVE_ENABLE_CACHE_PROFILE");
-    if (Verbose) {
-      llvm::errs() << "Enabling cache profiling\n";
-    }
   }
 
-  // Add runtime include path for statistics header
+  // Runtime include path
   SmallString<128> runtime_include_dir;
   if (auto exe = llvm::sys::fs::getMainExecutable(nullptr, nullptr); !exe.empty()) {
     runtime_include_dir = exe;
     llvm::sys::path::remove_filename(runtime_include_dir);
     llvm::sys::path::append(runtime_include_dir, "..", "include");
-
     if (llvm::sys::fs::exists(runtime_include_dir)) {
       compile_cmd.push_back("-I" + runtime_include_dir.str().str());
-      if (Verbose) {
-        llvm::errs() << "Using runtime includes: " << runtime_include_dir << "\n";
-      }
     }
   }
 
-  // Add source files
+  // Source files
   for (const auto &source : source_paths) {
     if (OutputDir.empty()) {
       compile_cmd.push_back(source);
@@ -848,42 +808,53 @@ bool compileTransformedFiles(const std::vector<std::string> &source_paths) {
       compile_cmd.push_back(transformed_path.str().str());
     }
   }
-  
-  // Add output option
+
   compile_cmd.push_back("-o");
   compile_cmd.push_back(output_name);
 
-  // Execute compilation command
-  if (Verbose) {
-    llvm::errs() << "Compiling with command: ";
-    for (const auto &arg : compile_cmd) {
-      llvm::errs() << arg << " ";
-    }
-    llvm::errs() << "\n";
-  }
+  return compile_cmd;
+}
 
-  // Convert to char* array for execvp
-  std::vector<const char*> argv;
-  for (const auto &arg : compile_cmd) {
-    argv.push_back(arg.c_str());
-  }
-  argv.push_back(nullptr);
-
-  // Execute using std::system for simplicity
-  std::string full_cmd;
+/**
+ * @brief Format a compile command vector as a shell-safe string
+ */
+std::string formatCompileCommand(const std::vector<std::string> &compile_cmd) {
+  std::string result;
   for (size_t i = 0; i < compile_cmd.size(); ++i) {
-    if (i > 0) full_cmd += " ";
-    // Quote arguments that might contain spaces
-    full_cmd += "\"" + compile_cmd[i] + "\"";
+    if (i > 0) result += " ";
+    // Quote arguments that contain spaces
+    if (compile_cmd[i].find(' ') != std::string::npos) {
+      result += "\"" + compile_cmd[i] + "\"";
+    } else {
+      result += compile_cmd[i];
+    }
   }
-  
+  return result;
+}
+
+/**
+ * @brief Compile transformed source files
+ */
+bool compileTransformedFiles(const std::vector<std::string> &source_paths) {
+  auto compile_cmd = buildCompileCommand(source_paths);
+  if (compile_cmd.empty()) {
+    return false;
+  }
+
+  std::string full_cmd = formatCompileCommand(compile_cmd);
+
+  if (Verbose) {
+    llvm::errs() << "Compiling: " << full_cmd << "\n";
+  }
+
   int compile_result = std::system(full_cmd.c_str());
-  
+
   if (compile_result == 0) {
     if (Verbose) {
       llvm::errs() << "Compilation successful\n";
     }
-    llvm::outs() << "Instrumented executable created: " << output_name << "\n";
+    // Find the output name (last argument)
+    llvm::outs() << "Instrumented executable created: " << compile_cmd.back() << "\n";
     return true;
   } else {
     llvm::errs() << "Compilation failed with exit code: " << compile_result << "\n";
@@ -936,6 +907,10 @@ int main(int argc, const char **argv) {
   // Validate compile options
   if (CompileAfterTransform && DryRun) {
     llvm::errs() << "Error: --compile cannot be used with --dry-run\n";
+    return 1;
+  }
+  if (PrintCompileCmd && DryRun) {
+    llvm::errs() << "Error: --print-compile-cmd cannot be used with --dry-run\n";
     return 1;
   }
 
@@ -1734,6 +1709,16 @@ int main(int argc, const char **argv) {
     }
   }
 
+  // Handle --print-compile-cmd: show the command and exit
+  if (PrintCompileCmd) {
+    auto compile_cmd = optiweave::buildCompileCommand(source_paths);
+    if (compile_cmd.empty()) {
+      return 1;
+    }
+    llvm::outs() << optiweave::formatCompileCommand(compile_cmd) << "\n";
+    return 0;
+  }
+
   // Always attempt compilation if requested (transformation often succeeds despite parse warnings)
   if (CompileAfterTransform) {
     if (Verbose) {
@@ -1742,15 +1727,29 @@ int main(int argc, const char **argv) {
 
     if (!optiweave::compileTransformedFiles(source_paths)) {
       llvm::errs() << "Compilation failed\n";
-      return 1; // Compilation failed
+      return 1;
     }
+    return 0;
   }
 
-  // Return success if compilation was attempted and succeeded, regardless of parse warnings
-  if (CompileAfterTransform) {
-    return 0; // Compilation succeeded 
+  // Check if any instrumentation transforms were applied (not analysis-only)
+  bool did_transform = TransformArraySubscripts || TransformArithmetic ||
+                        TransformAssignment || TransformComparison;
+  bool analysis_only = AnalyzeComplexity || EnableCallGraph || EnableDependencyGraph ||
+                       EnableDataFlowAnalysis || EnableMemoryProfiling ||
+                       EnableOverflowDetection || EnableFPPrecisionWarnings;
+
+  // Print compile hint after successful transformation (not dry-run, not analysis-only)
+  if (result == 0 && did_transform && !DryRun && !analysis_only) {
+    llvm::errs() << "\nTransformation complete. To compile the instrumented code:\n";
+    llvm::errs() << "  optiweave " << source_paths[0]
+                 << " --compile -o " << llvm::sys::path::stem(source_paths[0]).str()
+                 << "_instrumented -- -std=c++20\n";
+    llvm::errs() << "\nOr to see the raw compile command:\n";
+    llvm::errs() << "  optiweave " << source_paths[0]
+                 << " --print-compile-cmd -- -std=c++20\n";
   }
-  
+
   return result;
 }
 

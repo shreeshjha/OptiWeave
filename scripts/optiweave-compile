@@ -1,0 +1,203 @@
+#!/usr/bin/env bash
+# optiweave-compile - Compile OptiWeave-instrumented source files
+#
+# Usage:
+#   optiweave-compile <source-files...> [-o output] [--stats] [--timing] [--hotspots] [--suggestions] [--cache] [-- extra-flags...]
+#
+# Examples:
+#   optiweave-compile example.cpp -o example_instrumented --stats --timing
+#   optiweave-compile example.c -o example_instrumented --stats
+#   optiweave-compile file1.cpp file2.cpp -o program --stats --hotspots -- -O2 -DNDEBUG
+
+set -euo pipefail
+
+# --- Resolve OptiWeave root directory ---
+# Priority: OPTIWEAVE_DIR env var > relative to this script > relative to cwd
+if [[ -n "${OPTIWEAVE_DIR:-}" ]]; then
+    OW_ROOT="$OPTIWEAVE_DIR"
+elif [[ -f "$(dirname "$0")/../templates/prelude.hpp" ]]; then
+    OW_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+elif [[ -f "./templates/prelude.hpp" ]]; then
+    OW_ROOT="$(pwd)"
+else
+    echo "Error: Cannot find OptiWeave installation." >&2
+    echo "Set OPTIWEAVE_DIR or run from the OptiWeave project root." >&2
+    exit 1
+fi
+
+# Validate key directories
+TEMPLATES_DIR="$OW_ROOT/templates"
+INCLUDE_DIR="$OW_ROOT/include"
+LIB_DIR="$OW_ROOT/build"
+
+# Also check bin/ directory (for installed layout where lib is next to the binary)
+if [[ -f "$OW_ROOT/build/bin/liboptiweave_runtime.a" ]]; then
+    LIB_DIR="$OW_ROOT/build/bin"
+elif [[ -f "$OW_ROOT/build/lib/liboptiweave_runtime.a" ]]; then
+    LIB_DIR="$OW_ROOT/build/lib"
+fi
+
+if [[ ! -d "$TEMPLATES_DIR" ]]; then
+    echo "Error: Templates directory not found: $TEMPLATES_DIR" >&2
+    exit 1
+fi
+
+if [[ ! -f "$LIB_DIR/liboptiweave_runtime.a" ]]; then
+    echo "Error: Runtime library not found: $LIB_DIR/liboptiweave_runtime.a" >&2
+    echo "Please build OptiWeave first: ./scripts/build.sh" >&2
+    exit 1
+fi
+
+# --- Parse arguments ---
+SOURCE_FILES=()
+OUTPUT=""
+DEFINES=()
+EXTRA_FLAGS=()
+PARSING_EXTRA=false
+STD_FLAG=""
+
+usage() {
+    cat <<'EOF'
+Usage: optiweave-compile <source-files...> [options] [-- extra-compiler-flags...]
+
+Options:
+  -o <name>       Output executable name (default: <first-source>_instrumented)
+  --stats         Enable operation statistics collection
+  --timing        Enable high-resolution timing
+  --hotspots      Enable hotspot detection (implies --timing)
+  --suggestions   Enable optimization suggestions
+  --cache         Enable cache profiling (Linux only)
+  --all           Enable all runtime features
+  --std=<std>     Set C++ standard (default: c++20 for .cpp, c11 for .c)
+  --help          Show this help message
+
+Examples:
+  optiweave-compile example.cpp -o example_instrumented --stats --timing
+  optiweave-compile example.c -o out --stats
+  optiweave-compile file.cpp --all -o out -- -O2 -DNDEBUG
+EOF
+    exit 0
+}
+
+while [[ $# -gt 0 ]]; do
+    if $PARSING_EXTRA; then
+        EXTRA_FLAGS+=("$1")
+        shift
+        continue
+    fi
+
+    case "$1" in
+        --)
+            PARSING_EXTRA=true
+            shift
+            ;;
+        -o)
+            shift
+            OUTPUT="${1:-}"
+            if [[ -z "$OUTPUT" ]]; then
+                echo "Error: -o requires an argument" >&2
+                exit 1
+            fi
+            shift
+            ;;
+        --stats)
+            DEFINES+=("-DOPTIWEAVE_ENABLE_STATS")
+            shift
+            ;;
+        --timing)
+            DEFINES+=("-DOPTIWEAVE_ENABLE_TIMING")
+            shift
+            ;;
+        --hotspots)
+            DEFINES+=("-DOPTIWEAVE_ENABLE_HOTSPOTS" "-DOPTIWEAVE_ENABLE_TIMING")
+            shift
+            ;;
+        --suggestions)
+            DEFINES+=("-DOPTIWEAVE_ENABLE_SUGGESTIONS")
+            shift
+            ;;
+        --cache)
+            DEFINES+=("-DOPTIWEAVE_ENABLE_CACHE_PROFILE")
+            shift
+            ;;
+        --all)
+            DEFINES+=(
+                "-DOPTIWEAVE_ENABLE_STATS"
+                "-DOPTIWEAVE_ENABLE_TIMING"
+                "-DOPTIWEAVE_ENABLE_HOTSPOTS"
+                "-DOPTIWEAVE_ENABLE_SUGGESTIONS"
+                "-DOPTIWEAVE_ENABLE_CACHE_PROFILE"
+            )
+            shift
+            ;;
+        --std=*)
+            STD_FLAG="$1"
+            shift
+            ;;
+        --help|-h)
+            usage
+            ;;
+        -*)
+            echo "Unknown option: $1 (pass extra compiler flags after --)" >&2
+            exit 1
+            ;;
+        *)
+            SOURCE_FILES+=("$1")
+            shift
+            ;;
+    esac
+done
+
+if [[ ${#SOURCE_FILES[@]} -eq 0 ]]; then
+    echo "Error: No source files specified" >&2
+    echo "Run 'optiweave-compile --help' for usage" >&2
+    exit 1
+fi
+
+# --- Determine compiler and standard ---
+COMPILER="clang++"
+if [[ -z "$STD_FLAG" ]]; then
+    # Auto-detect from first source file extension
+    case "${SOURCE_FILES[0]}" in
+        *.c)
+            COMPILER="clang"
+            STD_FLAG="-std=c11"
+            ;;
+        *)
+            STD_FLAG="-std=c++20"
+            ;;
+    esac
+fi
+
+# --- Determine output name ---
+if [[ -z "$OUTPUT" ]]; then
+    basename="${SOURCE_FILES[0]##*/}"
+    OUTPUT="${basename%.*}_instrumented"
+fi
+
+# --- Deduplicate defines ---
+UNIQUE_DEFINES=()
+declare -A SEEN_DEFINES=()
+for d in "${DEFINES[@]}"; do
+    if [[ -z "${SEEN_DEFINES[$d]:-}" ]]; then
+        UNIQUE_DEFINES+=("$d")
+        SEEN_DEFINES[$d]=1
+    fi
+done
+
+# --- Build and run compile command ---
+CMD=(
+    "$COMPILER"
+    "$STD_FLAG"
+    "-I$TEMPLATES_DIR"
+    "-I$INCLUDE_DIR"
+    "${UNIQUE_DEFINES[@]}"
+    "${SOURCE_FILES[@]}"
+    "-L$LIB_DIR"
+    "-loptiweave_runtime"
+    "${EXTRA_FLAGS[@]}"
+    -o "$OUTPUT"
+)
+
+echo "Compiling: ${CMD[*]}" >&2
+exec "${CMD[@]}"
