@@ -59,6 +59,11 @@ struct OptimizationPattern {
     // Additional context
     std::vector<std::string> references;  // Links to documentation, papers, etc.
 
+    // Auto-patching metadata
+    int line_start = 0;     // First line of patchable region
+    int line_end = 0;       // Last line of patchable region
+    bool patchable = false; // Whether a concrete patch can be generated
+
     /// Get severity as string
     std::string severity_string() const {
         switch (severity) {

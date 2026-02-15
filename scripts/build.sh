@@ -45,7 +45,7 @@ ENV VARS:
   ENABLE_EXAMPLES, ENABLE_DOCS, CC, CXX, LLVM_DIR (for non-macOS/specific LLVM installs)
 
 Requirements:
-  - LLVM 13.x – 17.x (or compatible Apple Clang)
+  - LLVM 13.x – 21.x (or compatible Apple Clang)
   - CMake ≥ 3.20
   - A C++20-capable compiler
 EOF
@@ -106,13 +106,12 @@ else
     log_error "Neither make nor ninja found"; exit 1;
 fi
 
-#### Select compiler - Prioritize Apple Clang, then Homebrew, then generic.
+#### Select compiler
 if [[ -z "$CXX" ]]; then
   if [[ "$(uname)" == "Darwin" ]]; then
     export CXX="/usr/bin/clang++"
     export CC="/usr/bin/clang"
     log_info "Using Apple Clang from /usr/bin"
-    # We will pass LLVM_DIR to CMake directly for Homebrew LLVM
   elif command -v clang++ &>/dev/null; then
     export CXX=clang++; export CC=clang; log_info "Using generic Clang from PATH"
   elif command -v g++ &>/dev/null; then
@@ -148,20 +147,53 @@ CMAKE_ARGS=(
   -DCMAKE_CXX_COMPILER="$CXX"
 )
 
-# IMPORTANT: Set LLVM_DIR to the Homebrew LLVM installation's cmake directory
-# Assuming llvm@17 is installed at /opt/homebrew/opt/llvm@17
-# You might need to adjust this path if your Homebrew prefix is different or you installed a different llvm version.
-LLVM_HOMEBREW_PATH="/opt/homebrew/opt/llvm@17" # <--- VERIFY THIS PATH
-if [[ -d "${LLVM_HOMEBREW_PATH}/lib/cmake/llvm" ]]; then
-    CMAKE_ARGS+=( -DLLVM_DIR="${LLVM_HOMEBREW_PATH}/lib/cmake/llvm" )
-    log_info "Setting LLVM_DIR for CMake to: ${LLVM_HOMEBREW_PATH}/lib/cmake/llvm"
+# Auto-detect LLVM installation — honour LLVM_DIR env var, else search
+if [[ -n "${LLVM_DIR:-}" && -d "$LLVM_DIR" ]]; then
+    CMAKE_ARGS+=( -DLLVM_DIR="$LLVM_DIR" )
+    log_info "Using LLVM_DIR from environment: $LLVM_DIR"
+    # Derive Clang_DIR from the same prefix
+    CLANG_DIR_GUESS="${LLVM_DIR/llvm/clang}"
+    if [[ -d "$CLANG_DIR_GUESS" ]]; then
+        CMAKE_ARGS+=( -DClang_DIR="$CLANG_DIR_GUESS" )
+    fi
+elif [[ "$(uname)" == "Darwin" ]]; then
+    # Detect Homebrew prefix (Apple Silicon vs Intel)
+    BREW_PREFIX="$(brew --prefix 2>/dev/null || echo "")"
+    if [[ -z "$BREW_PREFIX" ]]; then
+        if [[ -d /opt/homebrew ]]; then
+            BREW_PREFIX=/opt/homebrew
+        elif [[ -d /usr/local/Homebrew ]]; then
+            BREW_PREFIX=/usr/local
+        fi
+    fi
+
+    if [[ -n "$BREW_PREFIX" ]]; then
+        # Search for any installed LLVM version (highest first)
+        LLVM_FOUND=""
+        for ver in $(seq 21 -1 13); do
+            candidate="${BREW_PREFIX}/opt/llvm@${ver}"
+            if [[ -d "${candidate}/lib/cmake/llvm" ]]; then
+                LLVM_FOUND="$candidate"
+                break
+            fi
+        done
+        # Also check unversioned formula
+        if [[ -z "$LLVM_FOUND" && -d "${BREW_PREFIX}/opt/llvm/lib/cmake/llvm" ]]; then
+            LLVM_FOUND="${BREW_PREFIX}/opt/llvm"
+        fi
+
+        if [[ -n "$LLVM_FOUND" ]]; then
+            CMAKE_ARGS+=( -DLLVM_DIR="${LLVM_FOUND}/lib/cmake/llvm" )
+            log_info "Found LLVM at: ${LLVM_FOUND}"
+            if [[ -d "${LLVM_FOUND}/lib/cmake/clang" ]]; then
+                CMAKE_ARGS+=( -DClang_DIR="${LLVM_FOUND}/lib/cmake/clang" )
+            fi
+        else
+            log_warning "No Homebrew LLVM found. CMake will search default paths."
+        fi
+    fi
 else
-    log_warning "Homebrew LLVM cmake directory not found at ${LLVM_HOMEBREW_PATH}/lib/cmake/llvm. CMake may struggle to find LLVM."
-fi
-# Also hint Clang_DIR if necessary, though LLVM_DIR usually covers it.
-if [[ -d "${LLVM_HOMEBREW_PATH}/lib/cmake/clang" ]]; then
-    CMAKE_ARGS+=( -DClang_DIR="${LLVM_HOMEBREW_PATH}/lib/cmake/clang" )
-    log_info "Setting Clang_DIR for CMake to: ${LLVM_HOMEBREW_PATH}/lib/cmake/clang"
+    log_info "Non-macOS: CMake will search default paths for LLVM."
 fi
 
 # Run CMake

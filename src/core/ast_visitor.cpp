@@ -505,21 +505,45 @@ bool ModernASTVisitor::transformAssignmentWithArraySubscript(clang::ArraySubscri
   auto& SM = context_.getSourceManager();
   unsigned line = SM.getExpansionLineNumber(assignment->getBeginLoc());
 
-  // FIX: Use block wrapper instead of comma operator to avoid semicolon issues.
-  // The comma operator doesn't work well with statement-level assignments because
-  // the semicolon becomes part of the expression, causing syntax errors.
-  //
-  // Solution: Wrap in a block: { record(); assignment; }
-  // This works correctly whether the assignment is a statement or expression.
-
-  // Just replace the assignment expression itself (don't touch the semicolon)
+  // Get the replacement range for the assignment
   clang::SourceRange replace_range = assignment->getSourceRange();
+  
+  // CRITICAL FIX: Check if this assignment is at statement level (has a semicolon after it).
+  // If so, we need to include the semicolon in the replacement range to avoid duplication.
+  // The bug was: replacing "arr[i] = f(arr[i])" with "({ ...; arr[i] = f(arr[i]); })"
+  // left the original semicolon, creating: "({ ... }) arr[i] = f(arr[i]);"
+  
+  // Find the semicolon token after the assignment expression using Lexer
+  clang::SourceLocation assignmentEnd = replace_range.getEnd();
+  
+  // Get the actual end location (past the last token)
+  clang::SourceLocation realEnd = clang::Lexer::getLocForEndOfToken(
+      assignmentEnd, 0, SM, context_.getLangOpts());
+  
+  // Find next token (should be semicolon for statement-level assignments)
+  clang::Token nextToken;
+  bool foundToken = !clang::Lexer::getRawToken(realEnd, nextToken, SM, context_.getLangOpts(), true);
+  
+  // Track if we found and are including a semicolon
+  bool hasSemicolon = false;
+  if (foundToken && nextToken.is(clang::tok::semi)) {
+    // Include the semicolon in the replacement range
+    // Use getLocForEndOfToken to get location after the semicolon
+    replace_range.setEnd(clang::Lexer::getLocForEndOfToken(
+        nextToken.getLocation(), 0, SM, context_.getLangOpts()).getLocWithOffset(-1));
+    hasSemicolon = true;
+  }
 
-  // Generate instrumented code as a block
+  // Generate instrumented code as a statement expression
   std::ostringstream instrumented;
   instrumented << "({ __optiweave_record_subscript("
                << getSourceLocationLiterals(subscript_expr->getExprLoc())
-               << "); " << assignment_text << "; })";  // GNU statement expression
+               << "); " << assignment_text << "; })";
+  
+  // Add back the semicolon if we removed it from the original code
+  if (hasSemicolon) {
+    instrumented << ";";
+  }
 
   // Replace with instrumented version
   if (rewriter_.ReplaceText(replace_range, instrumented.str())) {

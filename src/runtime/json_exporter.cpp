@@ -171,7 +171,10 @@ std::string export_suggestions_json(const analysis::AnalysisResult& result) {
             oss << "\"" << escape_json_string(ref) << "\"";
         }
 
-        oss << "]\n"
+        oss << "],\n"
+            << "    \"line_start\": " << pattern.line_start << ",\n"
+            << "    \"line_end\": " << pattern.line_end << ",\n"
+            << "    \"patchable\": " << (pattern.patchable ? "true" : "false") << "\n"
             << "  }";
     }
 
