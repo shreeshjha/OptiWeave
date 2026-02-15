@@ -53,6 +53,12 @@ set(UNIT_TESTS
     unit/test_operator_detection.cpp
     unit/test_template_handling.cpp
     unit/test_prelude_templates.cpp
+    unit/test_overflow_detector.cpp
+    unit/test_fp_precision_detector.cpp
+    unit/test_call_graph.cpp
+    unit/test_dependency_graph.cpp
+    unit/test_data_flow_analysis.cpp
+    unit/test_bug_fix_visitor.cpp
 )
 
 set(INTEGRATION_TESTS

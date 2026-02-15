@@ -27,49 +27,69 @@ option(BUILD_DOCUMENTATION "Enable building documentation"   OFF)
 # Locate LLVM & Clang via their CMake package configurations
 # --------------------------------------------------------------------------
 
-# Platform-specific LLVM paths
+# Supported LLVM version range
+set(OPTIWEAVE_LLVM_MIN_VERSION 13)
+set(OPTIWEAVE_LLVM_MAX_VERSION 21)
+
+# Build search paths dynamically for all supported versions
+set(LLVM_SEARCH_PATHS "")
+set(CLANG_SEARCH_PATHS "")
+
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
-    # Linux: Check for LLVM 17 installation (required version)
-    set(LLVM_SEARCH_PATHS
-        /usr/lib/llvm-17/lib/cmake/llvm
-        /usr/local/lib/cmake/llvm
-    )
-    set(CLANG_SEARCH_PATHS
-        /usr/lib/llvm-17/lib/cmake/clang
-        /usr/local/lib/cmake/clang
-    )
+    # Search versioned LLVM installs (highest first for preference)
+    foreach(ver RANGE ${OPTIWEAVE_LLVM_MAX_VERSION} ${OPTIWEAVE_LLVM_MIN_VERSION} -1)
+        list(APPEND LLVM_SEARCH_PATHS  /usr/lib/llvm-${ver}/lib/cmake/llvm)
+        list(APPEND CLANG_SEARCH_PATHS /usr/lib/llvm-${ver}/lib/cmake/clang)
+    endforeach()
+    list(APPEND LLVM_SEARCH_PATHS  /usr/local/lib/cmake/llvm)
+    list(APPEND CLANG_SEARCH_PATHS /usr/local/lib/cmake/clang)
+
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-    # macOS: Homebrew LLVM installations
-    set(LLVM_SEARCH_PATHS
-        /opt/homebrew/opt/llvm@17/lib/cmake/llvm
-        /opt/homebrew/opt/llvm/lib/cmake/llvm
-        /usr/local/opt/llvm@17/lib/cmake/llvm
-        /usr/local/opt/llvm/lib/cmake/llvm
+    # Detect Homebrew prefix (works on both Apple Silicon and Intel)
+    execute_process(
+        COMMAND brew --prefix
+        OUTPUT_VARIABLE HOMEBREW_PREFIX
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        ERROR_QUIET
+        RESULT_VARIABLE BREW_RESULT
     )
-    set(CLANG_SEARCH_PATHS
-        /opt/homebrew/opt/llvm@17/lib/cmake/clang
-        /opt/homebrew/opt/llvm/lib/cmake/clang
-        /usr/local/opt/llvm@17/lib/cmake/clang
-        /usr/local/opt/llvm/lib/cmake/clang
-    )
-else()
-    message(WARNING "Unknown platform: ${CMAKE_SYSTEM_NAME}. Using default LLVM search paths.")
-    set(LLVM_SEARCH_PATHS "")
-    set(CLANG_SEARCH_PATHS "")
+    if(NOT BREW_RESULT EQUAL 0)
+        # Fallback: check common prefixes
+        if(EXISTS /opt/homebrew)
+            set(HOMEBREW_PREFIX /opt/homebrew)
+        elseif(EXISTS /usr/local/Homebrew)
+            set(HOMEBREW_PREFIX /usr/local)
+        endif()
+    endif()
+
+    if(HOMEBREW_PREFIX)
+        # Search versioned formulae (highest first), then unversioned
+        foreach(ver RANGE ${OPTIWEAVE_LLVM_MAX_VERSION} ${OPTIWEAVE_LLVM_MIN_VERSION} -1)
+            list(APPEND LLVM_SEARCH_PATHS  ${HOMEBREW_PREFIX}/opt/llvm@${ver}/lib/cmake/llvm)
+            list(APPEND CLANG_SEARCH_PATHS ${HOMEBREW_PREFIX}/opt/llvm@${ver}/lib/cmake/clang)
+        endforeach()
+        list(APPEND LLVM_SEARCH_PATHS  ${HOMEBREW_PREFIX}/opt/llvm/lib/cmake/llvm)
+        list(APPEND CLANG_SEARCH_PATHS ${HOMEBREW_PREFIX}/opt/llvm/lib/cmake/clang)
+    endif()
 endif()
 
+# Try hint paths first, then fall back to CMake's default search
 find_package(LLVM CONFIG REQUIRED
-    PATHS ${LLVM_SEARCH_PATHS}
-    NO_DEFAULT_PATH
+    HINTS ${LLVM_SEARCH_PATHS}
 )
-
 find_package(Clang CONFIG REQUIRED
-    PATHS ${CLANG_SEARCH_PATHS}
-    NO_DEFAULT_PATH
+    HINTS ${CLANG_SEARCH_PATHS}
 )
 
-message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
-message(STATUS "Found Clang ${CLANG_PACKAGE_VERSION}")
+message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION} at ${LLVM_DIR}")
+message(STATUS "Found Clang at ${Clang_DIR}")
+
+# Validate version is within supported range
+if(LLVM_VERSION_MAJOR LESS OPTIWEAVE_LLVM_MIN_VERSION)
+    message(FATAL_ERROR "LLVM ${LLVM_PACKAGE_VERSION} is too old. OptiWeave requires LLVM ${OPTIWEAVE_LLVM_MIN_VERSION}+.")
+elseif(LLVM_VERSION_MAJOR GREATER OPTIWEAVE_LLVM_MAX_VERSION)
+    message(WARNING "LLVM ${LLVM_PACKAGE_VERSION} is newer than tested (max ${OPTIWEAVE_LLVM_MAX_VERSION}). Build may work but is untested.")
+endif()
 
 # --------------------------------------------------------------------------
 # Platform-specific compiler flags
@@ -78,8 +98,9 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     # On Linux with Clang + GCC's libstdc++, we need to point to the GCC toolchain
     # This resolves header/library lookup issues
     if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-        # Find GCC installation for libstdc++ headers
-        if(EXISTS "/usr/lib/gcc/x86_64-linux-gnu")
+        # Check for GCC installation on any architecture
+        file(GLOB GCC_LIB_DIRS "/usr/lib/gcc/*-linux-gnu*")
+        if(GCC_LIB_DIRS)
             message(STATUS "Linux detected: Adding GCC toolchain flag for Clang")
             add_compile_options("--gcc-toolchain=/usr")
         endif()
@@ -106,9 +127,13 @@ set(OPTIWEAVE_CORE_SOURCES
     src/analysis/memory_profiler.cpp
     src/analysis/overflow_detector.cpp
     src/analysis/fp_precision_detector.cpp
+    src/analysis/diff_profile.cpp
+    src/runtime/json_parser.cpp
     src/core/ast_visitor.cpp
     src/core/rewriter.cpp
     src/core/transformer.cpp
+    src/core/patch_visitor.cpp
+    src/core/bug_fix_visitor.cpp
     src/runtime/loop_info_serializer.cpp
     src/Matchers/operator_matchers.cpp
     src/Matchers/type_matchers.cpp

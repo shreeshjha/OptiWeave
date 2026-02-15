@@ -1,6 +1,10 @@
 #include <optiweave/core/ast_visitor.hpp>
 #include <optiweave/core/rewriter.hpp>
+#include <optiweave/core/patch_visitor.hpp>
+#include <optiweave/core/bug_fix_visitor.hpp>
 #include <optiweave/analysis/complexity_analyzer.hpp>
+#include <optiweave/analysis/diff_profile.hpp>
+#include <optiweave/runtime/json_parser.hpp>
 #include <optiweave/analysis/call_graph.hpp>
 #include <optiweave/analysis/dependency_graph.hpp>
 #include <optiweave/analysis/data_flow_analysis.hpp>
@@ -59,8 +63,13 @@ static cl::opt<std::string>
 
 static cl::opt<std::string> OutputDir(
     "output-dir",
-    cl::desc("Output directory for transformed files (default: overwrite)"),
+    cl::desc("Output directory for transformed files (default: .optiweave/)"),
     cl::value_desc("directory"), cl::cat(OptiWeaveCategory));
+
+static cl::opt<bool> InPlace(
+    "in-place",
+    cl::desc("Overwrite original source files with instrumented code"),
+    cl::init(false), cl::cat(OptiWeaveCategory));
 
 static cl::opt<bool> SkipSystemHeaders(
     "skip-system-headers",
@@ -276,6 +285,45 @@ static cl::opt<std::string> OverflowFormat(
     cl::desc("Overflow detection format: text, json (default: text)"),
     cl::value_desc("format"), cl::init("text"), cl::cat(OptiWeaveCategory));
 
+// Diff-profile options
+static cl::opt<std::string> DiffProfileBaseline(
+    "diff-profile", cl::desc("Baseline profile JSON for comparison"),
+    cl::value_desc("baseline.json"), cl::cat(OptiWeaveCategory));
+
+static cl::opt<std::string> DiffProfileCurrent(
+    "diff-current", cl::desc("Current profile JSON (for --diff-profile)"),
+    cl::value_desc("current.json"), cl::cat(OptiWeaveCategory));
+
+static cl::opt<std::string> DiffFormat(
+    "diff-format", cl::desc("Diff output format: terminal, json, markdown"),
+    cl::init("terminal"), cl::cat(OptiWeaveCategory));
+
+static cl::opt<std::string> DiffOutput(
+    "diff-output", cl::desc("Diff report output file (default: stdout)"),
+    cl::value_desc("filename"), cl::cat(OptiWeaveCategory));
+
+// Auto-patch options
+static cl::opt<bool> AutoPatch(
+    "auto-patch", cl::desc("Apply optimization patches from profiling suggestions"),
+    cl::init(false), cl::cat(OptiWeaveCategory));
+
+static cl::opt<std::string> SuggestionsFile(
+    "suggestions", cl::desc("Dashboard JSON with profiling suggestions (for --auto-patch)"),
+    cl::value_desc("filename"), cl::cat(OptiWeaveCategory));
+
+static cl::opt<bool> PatchDryRun(
+    "patch-dry-run", cl::desc("Show patches without applying them"),
+    cl::init(false), cl::cat(OptiWeaveCategory));
+
+// Auto-fix options (static analysis bug fixes)
+static cl::opt<bool> AutoFix(
+    "auto-fix", cl::desc("Apply safe bug fixes from static analysis (overflow, uninitialized, FP equality)"),
+    cl::init(false), cl::cat(OptiWeaveCategory));
+
+static cl::opt<bool> AutoFixDryRun(
+    "auto-fix-dry-run", cl::desc("Show bug fixes without applying them"),
+    cl::init(false), cl::cat(OptiWeaveCategory));
+
 // Floating-point precision warning options
 static cl::opt<bool> EnableFPPrecisionWarnings(
     "fp-precision-warnings",
@@ -292,7 +340,35 @@ static cl::opt<std::string> FPPrecisionFormat(
     cl::desc("FP precision warning format: text, json (default: text)"),
     cl::value_desc("format"), cl::init("text"), cl::cat(OptiWeaveCategory));
 
+/**
+ * @brief Detect macOS SDK path via xcrun, with fallback.
+ * @return SDK path string, or empty if not found/not on macOS.
+ */
+static std::string detectSDKPath() {
+#ifdef __APPLE__
+  std::string sdk_path;
+  FILE* xcrun_cmd = popen("xcrun --show-sdk-path 2>/dev/null", "r");
+  if (xcrun_cmd) {
+    char buf[512];
+    if (fgets(buf, sizeof(buf), xcrun_cmd)) {
+      sdk_path = buf;
+      if (!sdk_path.empty() && sdk_path.back() == '\n') sdk_path.pop_back();
+    }
+    pclose(xcrun_cmd);
+  }
+  if (sdk_path.empty()) {
+    sdk_path = "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk";
+  }
+  return llvm::sys::fs::exists(sdk_path) ? sdk_path : "";
+#else
+  return "";
+#endif
+}
+
 namespace optiweave {
+
+// Forward declaration — defined after the class
+std::string getEffectiveOutputDir();
 
 /**
  * @brief Frontend action for OptiWeave transformations
@@ -382,11 +458,12 @@ public:
     }
 
     // Write transformed files
-    if (OutputDir.empty()) {
-      // Overwrite original files
+    std::string effective_dir = getEffectiveOutputDir();
+    if (effective_dir.empty()) {
+      // --in-place: overwrite original files
       rewriter_.overwriteChangedFiles();
     } else {
-      // Write to output directory
+      // Write to output directory (default: .optiweave/)
       for (auto i = rewriter_.buffer_begin(), e = rewriter_.buffer_end();
            i != e; ++i) {
         FileID file_id = i->first;
@@ -400,7 +477,7 @@ public:
         auto filename = llvm::sys::path::filename(original_path);
 
         SmallString<128> output_path;
-        llvm::sys::path::append(output_path, OutputDir, filename);
+        llvm::sys::path::append(output_path, effective_dir, filename);
 
         std::error_code EC;
         raw_fd_ostream output(output_path, EC);
@@ -492,22 +569,91 @@ std::string setupPrelude() {
 }
 
 /**
+ * @brief Get the effective output directory for transformed files.
+ *
+ * Returns "" if --in-place is set (overwrite originals),
+ * the user-specified --output-dir if set, or ".optiweave" as the safe default.
+ */
+std::string getEffectiveOutputDir() {
+  if (InPlace) {
+    return ""; // Overwrite originals
+  }
+  if (!OutputDir.empty()) {
+    return OutputDir; // User-specified
+  }
+  return ".optiweave"; // Safe default
+}
+
+/**
+ * @brief Configure a ClangTool with templates include, resource dir, and sysroot.
+ */
+void configureClangTool(ClangTool& tool, bool is_c_language) {
+  // Add templates directory to include path
+  SmallString<128> templates_dir;
+  if (auto exe = llvm::sys::fs::getMainExecutable(nullptr, nullptr); !exe.empty()) {
+    templates_dir = exe;
+    llvm::sys::path::remove_filename(templates_dir);
+    llvm::sys::path::append(templates_dir, "..", "templates");
+  } else {
+    templates_dir = "templates";
+  }
+  if (llvm::sys::fs::exists(templates_dir)) {
+    std::string include_arg = "-I" + templates_dir.str().str();
+    tool.appendArgumentsAdjuster(getInsertArgumentAdjuster(include_arg.c_str(), clang::tooling::ArgumentInsertPosition::BEGIN));
+  }
+
+  if (!is_c_language) {
+    tool.appendArgumentsAdjuster(getInsertArgumentAdjuster("-std=c++20", clang::tooling::ArgumentInsertPosition::BEGIN));
+  }
+
+  // Add Clang resource directory
+  std::string resource_dir;
+  FILE* clang_cmd = popen("clang++ -print-resource-dir 2>/dev/null", "r");
+  if (clang_cmd) {
+    char buf[512];
+    if (fgets(buf, sizeof(buf), clang_cmd)) {
+      resource_dir = buf;
+      if (!resource_dir.empty() && resource_dir.back() == '\n')
+        resource_dir.pop_back();
+    }
+    pclose(clang_cmd);
+  }
+  if (!resource_dir.empty() && llvm::sys::fs::exists(resource_dir)) {
+    std::string resource_arg = "-resource-dir=" + resource_dir;
+    tool.appendArgumentsAdjuster(getInsertArgumentAdjuster(resource_arg.c_str(), clang::tooling::ArgumentInsertPosition::BEGIN));
+  }
+
+  // Add SDK sysroot (macOS)
+  std::string sdk_path = detectSDKPath();
+  if (!sdk_path.empty()) {
+    std::string sysroot_arg = "-isysroot" + sdk_path;
+    tool.appendArgumentsAdjuster(getInsertArgumentAdjuster(sysroot_arg.c_str(), clang::tooling::ArgumentInsertPosition::BEGIN));
+  }
+}
+
+/**
  * @brief Validate and create output directory if needed
  */
 bool validateOutputDirectory() {
-  if (OutputDir.empty()) {
-    return true; // Overwrite mode
+  if (InPlace && !OutputDir.empty()) {
+    llvm::errs() << "Error: --in-place and --output-dir are mutually exclusive\n";
+    return false;
   }
 
-  std::error_code EC = llvm::sys::fs::create_directories(OutputDir);
+  std::string effective_dir = getEffectiveOutputDir();
+  if (effective_dir.empty()) {
+    return true; // In-place overwrite mode
+  }
+
+  std::error_code EC = llvm::sys::fs::create_directories(effective_dir);
   if (EC) {
     llvm::errs() << "Error creating output directory: " << EC.message() << "\n";
     return false;
   }
 
   // Check if directory is writable
-  if (!llvm::sys::fs::can_write(OutputDir)) {
-    llvm::errs() << "Error: Output directory is not writable: " << OutputDir
+  if (!llvm::sys::fs::can_write(effective_dir)) {
+    llvm::errs() << "Error: Output directory is not writable: " << effective_dir
                  << "\n";
     return false;
   }
@@ -604,22 +750,7 @@ bool generateCompileCommands(const std::vector<std::string> &source_paths) {
   }
 
   // Auto-detect SDK path
-  std::string sdk_path;
-  FILE* xcrun_cmd = popen("xcrun --show-sdk-path 2>/dev/null", "r");
-  if (xcrun_cmd) {
-    char path_buffer[512];
-    if (fgets(path_buffer, sizeof(path_buffer), xcrun_cmd)) {
-      sdk_path = std::string(path_buffer);
-      if (!sdk_path.empty() && sdk_path.back() == '\n') {
-        sdk_path.pop_back();
-      }
-    }
-    pclose(xcrun_cmd);
-  }
-  
-  if (sdk_path.empty()) {
-    sdk_path = "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk";
-  }
+  std::string sdk_path = detectSDKPath();
 
   // Get templates directory
   SmallString<128> templates_dir;
@@ -657,8 +788,8 @@ bool generateCompileCommands(const std::vector<std::string> &source_paths) {
     compile_commands << "    \"directory\": \"" << cwd.str() << "\",\n";
     compile_commands << "    \"command\": \"clang++ -std=c++20";
     
-    // Add SDK if it exists
-    if (llvm::sys::fs::exists(sdk_path)) {
+    // Add SDK if detected
+    if (!sdk_path.empty()) {
       compile_commands << " -isysroot " << sdk_path;
     }
     
@@ -715,22 +846,8 @@ std::vector<std::string> buildCompileCommand(const std::vector<std::string> &sou
   compile_cmd.push_back("-std=c++20");
 
   // Auto-detect SDK path (macOS)
-  std::string sdk_path;
-  FILE* xcrun_cmd = popen("xcrun --show-sdk-path 2>/dev/null", "r");
-  if (xcrun_cmd) {
-    char path_buffer[512];
-    if (fgets(path_buffer, sizeof(path_buffer), xcrun_cmd)) {
-      sdk_path = std::string(path_buffer);
-      if (!sdk_path.empty() && sdk_path.back() == '\n') {
-        sdk_path.pop_back();
-      }
-    }
-    pclose(xcrun_cmd);
-  }
-  if (sdk_path.empty()) {
-    sdk_path = "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk";
-  }
-  if (llvm::sys::fs::exists(sdk_path)) {
+  std::string sdk_path = detectSDKPath();
+  if (!sdk_path.empty()) {
     compile_cmd.push_back("-isysroot");
     compile_cmd.push_back(sdk_path);
   }
@@ -797,14 +914,15 @@ std::vector<std::string> buildCompileCommand(const std::vector<std::string> &sou
     }
   }
 
-  // Source files
+  // Source files - use effective output dir to find transformed files
+  std::string effective_dir = getEffectiveOutputDir();
   for (const auto &source : source_paths) {
-    if (OutputDir.empty()) {
+    if (effective_dir.empty()) {
       compile_cmd.push_back(source);
     } else {
       auto filename = llvm::sys::path::filename(source);
       SmallString<128> transformed_path;
-      llvm::sys::path::append(transformed_path, OutputDir, filename);
+      llvm::sys::path::append(transformed_path, effective_dir, filename);
       compile_cmd.push_back(transformed_path.str().str());
     }
   }
@@ -902,6 +1020,514 @@ int main(int argc, const char **argv) {
   // Validate output directory
   if (!optiweave::validateOutputDirectory()) {
     return 1;
+  }
+
+  // --- Diff-profile early exit ---
+  if (!DiffProfileBaseline.empty()) {
+    if (DiffProfileCurrent.empty()) {
+      llvm::errs() << "Error: --diff-profile requires --diff-current\n";
+      return 1;
+    }
+
+    try {
+      auto baseline = optiweave::json::parse_dashboard_json(DiffProfileBaseline);
+      auto current = optiweave::json::parse_dashboard_json(DiffProfileCurrent);
+      auto diff = optiweave::analysis::compute_diff(baseline, current);
+
+      std::string output;
+      if (DiffFormat == "json") {
+        output = optiweave::analysis::format_diff_json(diff);
+      } else if (DiffFormat == "markdown") {
+        output = optiweave::analysis::format_diff_markdown(diff);
+      } else {
+        output = optiweave::analysis::format_diff_terminal(diff);
+      }
+
+      if (!DiffOutput.empty()) {
+        std::ofstream out(DiffOutput);
+        if (!out.is_open()) {
+          llvm::errs() << "Error: Could not write to " << DiffOutput << "\n";
+          return 1;
+        }
+        out << output;
+        llvm::errs() << "Diff report written to: " << DiffOutput << "\n";
+      } else {
+        llvm::outs() << output;
+      }
+    } catch (const std::exception& e) {
+      llvm::errs() << "Error: " << e.what() << "\n";
+      return 1;
+    }
+    return 0;
+  }
+
+  // --- Auto-patch early exit ---
+  if (AutoPatch) {
+    if (SuggestionsFile.empty()) {
+      llvm::errs() << "Error: --auto-patch requires --suggestions <dashboard.json>\n";
+      return 1;
+    }
+
+    auto source_paths_for_patch = OptionsParser.getSourcePathList();
+    if (source_paths_for_patch.empty()) {
+      llvm::errs() << "Error: --auto-patch requires source files\n";
+      return 1;
+    }
+
+    try {
+      auto dashboard = optiweave::json::parse_dashboard_json(SuggestionsFile);
+      auto& suggestions = dashboard.suggestions;
+
+      if (suggestions.empty()) {
+        llvm::errs() << "No suggestions found in " << SuggestionsFile << "\n";
+        return 0;
+      }
+
+      // Validate suggestions: filter out invalid entries
+      size_t original_count = suggestions.size();
+      suggestions.erase(
+          std::remove_if(suggestions.begin(), suggestions.end(),
+              [](const optiweave::analysis::OptimizationPattern& s) {
+                return s.location.get_file().empty() || s.location.line <= 0 ||
+                       s.pattern_name.empty();
+              }),
+          suggestions.end());
+
+      if (Verbose) {
+        llvm::errs() << "Loaded " << suggestions.size() << " suggestions from "
+                     << SuggestionsFile;
+        if (suggestions.size() < original_count) {
+          llvm::errs() << " (" << (original_count - suggestions.size())
+                       << " invalid entries filtered)";
+        }
+        llvm::errs() << "\n";
+      }
+
+      // Detect C vs C++ from file extensions
+      bool is_c_language = false;
+      for (const auto& src : source_paths_for_patch) {
+        auto ext = llvm::sys::path::extension(src);
+        if (ext == ".c" || ext == ".h") {
+          is_c_language = true;
+          break;
+        }
+      }
+
+      // Validate output directory
+      std::string effective_dir = optiweave::getEffectiveOutputDir();
+      if (!effective_dir.empty()) {
+        std::error_code EC = llvm::sys::fs::create_directories(effective_dir);
+        if (EC) {
+          llvm::errs() << "Error creating output directory: " << EC.message() << "\n";
+          return 1;
+        }
+      }
+
+      // Create ClangTool for the original source files
+      ClangTool PatchTool(OptionsParser.getCompilations(),
+                          source_paths_for_patch);
+      optiweave::configureClangTool(PatchTool, is_c_language);
+
+      // PatchFrontendAction defined inline
+      class PatchFrontendAction : public ASTFrontendAction {
+      public:
+        PatchFrontendAction(const std::vector<optiweave::analysis::OptimizationPattern>& suggestions,
+                           bool dry_run,
+                           bool is_c_language,
+                           size_t* total_patches,
+                           size_t* total_advisories,
+                           size_t* total_skipped,
+                           std::vector<std::string>* all_logs)
+            : suggestions_(suggestions), dry_run_(dry_run),
+              is_c_language_(is_c_language),
+              total_patches_(total_patches), total_advisories_(total_advisories),
+              total_skipped_(total_skipped),
+              all_logs_(all_logs) {}
+
+        std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance& CI,
+                                                       StringRef file) override {
+          rewriter_.setSourceMgr(CI.getSourceManager(), CI.getLangOpts());
+
+          class PatchConsumer : public ASTConsumer {
+          public:
+            PatchConsumer(clang::Rewriter& rewriter,
+                         const std::vector<optiweave::analysis::OptimizationPattern>& suggestions,
+                         bool dry_run,
+                         bool is_c_language,
+                         size_t* total_patches,
+                         size_t* total_advisories,
+                         size_t* total_skipped,
+                         std::vector<std::string>* all_logs)
+                : rewriter_(rewriter), suggestions_(suggestions), dry_run_(dry_run),
+                  is_c_language_(is_c_language),
+                  total_patches_(total_patches), total_advisories_(total_advisories),
+                  total_skipped_(total_skipped),
+                  all_logs_(all_logs) {}
+
+            void HandleTranslationUnit(ASTContext& context) override {
+              optiweave::core::PatchVisitor visitor(rewriter_, context, suggestions_,
+                                                     dry_run_, is_c_language_);
+              visitor.TraverseDecl(context.getTranslationUnitDecl());
+
+              *total_patches_ += visitor.patches_applied();
+              *total_advisories_ += visitor.advisories_applied();
+              *total_skipped_ += visitor.skipped_count();
+              all_logs_->insert(all_logs_->end(),
+                               visitor.patch_log().begin(),
+                               visitor.patch_log().end());
+            }
+
+          private:
+            clang::Rewriter& rewriter_;
+            const std::vector<optiweave::analysis::OptimizationPattern>& suggestions_;
+            bool dry_run_;
+            bool is_c_language_;
+            size_t* total_patches_;
+            size_t* total_advisories_;
+            size_t* total_skipped_;
+            std::vector<std::string>* all_logs_;
+          };
+
+          return std::make_unique<PatchConsumer>(rewriter_, suggestions_, dry_run_,
+                                                  is_c_language_,
+                                                  total_patches_, total_advisories_,
+                                                  total_skipped_, all_logs_);
+        }
+
+        void EndSourceFileAction() override {
+          if (dry_run_) return;
+
+          auto& sm = rewriter_.getSourceMgr();
+          std::string eff_dir = optiweave::getEffectiveOutputDir();
+
+          if (eff_dir.empty()) {
+            rewriter_.overwriteChangedFiles();
+          } else {
+            for (auto i = rewriter_.buffer_begin(), e = rewriter_.buffer_end();
+                 i != e; ++i) {
+              FileID file_id = i->first;
+              const RewriteBuffer& buffer = i->second;
+
+              auto file_entry = sm.getFileEntryRefForID(file_id);
+              if (!file_entry) continue;
+
+              auto original_path = file_entry->getName();
+              auto filename = llvm::sys::path::filename(original_path);
+
+              SmallString<128> output_path;
+              llvm::sys::path::append(output_path, eff_dir, filename);
+
+              std::error_code EC;
+              raw_fd_ostream output(output_path, EC);
+              if (EC) {
+                llvm::errs() << "Error writing to " << output_path << ": "
+                             << EC.message() << "\n";
+                continue;
+              }
+              buffer.write(output);
+            }
+          }
+        }
+
+      private:
+        Rewriter rewriter_;
+        const std::vector<optiweave::analysis::OptimizationPattern>& suggestions_;
+        bool dry_run_;
+        bool is_c_language_;
+        size_t* total_patches_;
+        size_t* total_advisories_;
+        size_t* total_skipped_;
+        std::vector<std::string>* all_logs_;
+      };
+
+      size_t total_patches = 0;
+      size_t total_advisories = 0;
+      size_t total_skipped = 0;
+      std::vector<std::string> all_logs;
+
+      class PatchActionFactory : public FrontendActionFactory {
+      public:
+        PatchActionFactory(const std::vector<optiweave::analysis::OptimizationPattern>& suggestions,
+                          bool dry_run,
+                          bool is_c_language,
+                          size_t* total_patches,
+                          size_t* total_advisories,
+                          size_t* total_skipped,
+                          std::vector<std::string>* all_logs)
+            : suggestions_(suggestions), dry_run_(dry_run),
+              is_c_language_(is_c_language),
+              total_patches_(total_patches), total_advisories_(total_advisories),
+              total_skipped_(total_skipped),
+              all_logs_(all_logs) {}
+
+        std::unique_ptr<FrontendAction> create() override {
+          return std::make_unique<PatchFrontendAction>(
+              suggestions_, dry_run_, is_c_language_,
+              total_patches_, total_advisories_, total_skipped_, all_logs_);
+        }
+
+      private:
+        const std::vector<optiweave::analysis::OptimizationPattern>& suggestions_;
+        bool dry_run_;
+        bool is_c_language_;
+        size_t* total_patches_;
+        size_t* total_advisories_;
+        size_t* total_skipped_;
+        std::vector<std::string>* all_logs_;
+      };
+
+      PatchActionFactory patch_factory(suggestions, PatchDryRun, is_c_language,
+                                        &total_patches, &total_advisories,
+                                        &total_skipped, &all_logs);
+      PatchTool.run(&patch_factory);
+
+      // Print patch log
+      for (const auto& entry : all_logs) {
+        llvm::errs() << "  " << entry << "\n";
+      }
+
+      if (PatchDryRun) {
+        llvm::outs() << "\nDry run: would apply " << total_patches << " patches, "
+                     << total_advisories << " advisories";
+        if (total_skipped > 0)
+          llvm::outs() << ", " << total_skipped << " skipped";
+        llvm::outs() << "\n";
+      } else {
+        llvm::outs() << "\nApplied " << total_patches << " patches, "
+                     << total_advisories << " advisories";
+        if (total_skipped > 0)
+          llvm::outs() << ", " << total_skipped << " skipped";
+        llvm::outs() << ". Output: "
+                     << (effective_dir.empty() ? "(in-place)" : effective_dir) << "/\n";
+      }
+    } catch (const std::exception& e) {
+      llvm::errs() << "Error: " << e.what() << "\n";
+      return 1;
+    }
+    return 0;
+  }
+
+  // --- Auto-fix early exit (static analysis bug fixes) ---
+  if (AutoFix) {
+    if (AutoPatch) {
+      llvm::errs() << "Error: --auto-fix and --auto-patch are mutually exclusive\n";
+      return 1;
+    }
+
+    auto source_paths_for_fix = OptionsParser.getSourcePathList();
+    if (source_paths_for_fix.empty()) {
+      llvm::errs() << "Error: --auto-fix requires source files\n";
+      return 1;
+    }
+
+    // Detect C vs C++ from file extensions
+    bool is_c_language = false;
+    for (const auto& src : source_paths_for_fix) {
+      auto ext = llvm::sys::path::extension(src);
+      if (ext == ".c" || ext == ".h") {
+        is_c_language = true;
+        break;
+      }
+    }
+
+    // Validate output directory
+    std::string effective_dir = optiweave::getEffectiveOutputDir();
+    if (!effective_dir.empty()) {
+      std::error_code EC = llvm::sys::fs::create_directories(effective_dir);
+      if (EC) {
+        llvm::errs() << "Error creating output directory: " << EC.message() << "\n";
+        return 1;
+      }
+    }
+
+    // Create ClangTool for the original source files
+    ClangTool FixTool(OptionsParser.getCompilations(), source_paths_for_fix);
+    optiweave::configureClangTool(FixTool, is_c_language);
+
+    // BugFixFrontendAction defined inline
+    class BugFixFrontendAction : public ASTFrontendAction {
+    public:
+      BugFixFrontendAction(bool dry_run, bool is_c_language,
+                           size_t* total_fixes, size_t* total_skipped,
+                           std::vector<std::string>* all_logs)
+          : dry_run_(dry_run), is_c_language_(is_c_language),
+            total_fixes_(total_fixes), total_skipped_(total_skipped),
+            all_logs_(all_logs) {}
+
+      std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance& CI,
+                                                     StringRef file) override {
+        rewriter_.setSourceMgr(CI.getSourceManager(), CI.getLangOpts());
+
+        class BugFixConsumer : public ASTConsumer {
+        public:
+          BugFixConsumer(clang::Rewriter& rewriter, bool dry_run, bool is_c_language,
+                         size_t* total_fixes, size_t* total_skipped,
+                         std::vector<std::string>* all_logs)
+              : rewriter_(rewriter), dry_run_(dry_run), is_c_language_(is_c_language),
+                total_fixes_(total_fixes), total_skipped_(total_skipped),
+                all_logs_(all_logs) {}
+
+          void HandleTranslationUnit(ASTContext& context) override {
+            std::vector<optiweave::analysis::BugFixIssue> all_issues;
+
+            // 1. Run overflow detector
+            {
+              optiweave::analysis::OverflowDetector detector(context);
+              detector.TraverseDecl(context.getTranslationUnitDecl());
+              auto issues = optiweave::analysis::convert_overflow_issues(detector.get_issues());
+              all_issues.insert(all_issues.end(), issues.begin(), issues.end());
+            }
+
+            // 2. Run data flow analysis per function
+            {
+              optiweave::analysis::DataFlowAnalysis dfa;
+              // Iterate over all function declarations
+              for (auto* decl : context.getTranslationUnitDecl()->decls()) {
+                if (auto* func = llvm::dyn_cast<clang::FunctionDecl>(decl)) {
+                  if (func->hasBody()) {
+                    dfa.analyze_function(func, context);
+                  }
+                }
+              }
+              dfa.detect_uninitialized_variables();
+              dfa.detect_unused_variables();
+              dfa.generate_refactoring_opportunities();
+              auto issues = optiweave::analysis::convert_dataflow_issues(
+                  dfa.get_opportunities(), dfa.get_variables(),
+                  context.getSourceManager());
+              all_issues.insert(all_issues.end(), issues.begin(), issues.end());
+            }
+
+            // 3. Run FP precision detector
+            {
+              optiweave::analysis::FPPrecisionDetector detector(context);
+              detector.TraverseDecl(context.getTranslationUnitDecl());
+              auto issues = optiweave::analysis::convert_fp_issues(detector.get_issues());
+              all_issues.insert(all_issues.end(), issues.begin(), issues.end());
+            }
+
+            if (all_issues.empty()) {
+              all_logs_->push_back("No auto-fixable issues detected.");
+              return;
+            }
+
+            // Run BugFixVisitor
+            optiweave::core::BugFixVisitor visitor(rewriter_, context, all_issues,
+                                                    dry_run_, is_c_language_);
+            visitor.TraverseDecl(context.getTranslationUnitDecl());
+
+            *total_fixes_ += visitor.fixes_applied();
+            *total_skipped_ += visitor.skipped_count();
+            all_logs_->insert(all_logs_->end(),
+                              visitor.fix_log().begin(),
+                              visitor.fix_log().end());
+          }
+
+        private:
+          clang::Rewriter& rewriter_;
+          bool dry_run_;
+          bool is_c_language_;
+          size_t* total_fixes_;
+          size_t* total_skipped_;
+          std::vector<std::string>* all_logs_;
+        };
+
+        return std::make_unique<BugFixConsumer>(rewriter_, dry_run_, is_c_language_,
+                                                 total_fixes_, total_skipped_, all_logs_);
+      }
+
+      void EndSourceFileAction() override {
+        if (dry_run_) return;
+
+        auto& sm = rewriter_.getSourceMgr();
+        std::string eff_dir = optiweave::getEffectiveOutputDir();
+
+        if (eff_dir.empty()) {
+          rewriter_.overwriteChangedFiles();
+        } else {
+          for (auto i = rewriter_.buffer_begin(), e = rewriter_.buffer_end();
+               i != e; ++i) {
+            FileID file_id = i->first;
+            const RewriteBuffer& buffer = i->second;
+
+            auto file_entry = sm.getFileEntryRefForID(file_id);
+            if (!file_entry) continue;
+
+            auto original_path = file_entry->getName();
+            auto filename = llvm::sys::path::filename(original_path);
+
+            SmallString<128> output_path;
+            llvm::sys::path::append(output_path, eff_dir, filename);
+
+            std::error_code EC;
+            raw_fd_ostream output(output_path, EC);
+            if (EC) {
+              llvm::errs() << "Error writing to " << output_path << ": "
+                           << EC.message() << "\n";
+              continue;
+            }
+            buffer.write(output);
+          }
+        }
+      }
+
+    private:
+      Rewriter rewriter_;
+      bool dry_run_;
+      bool is_c_language_;
+      size_t* total_fixes_;
+      size_t* total_skipped_;
+      std::vector<std::string>* all_logs_;
+    };
+
+    size_t total_fixes = 0;
+    size_t total_skipped = 0;
+    std::vector<std::string> all_logs;
+
+    class BugFixActionFactory : public FrontendActionFactory {
+    public:
+      BugFixActionFactory(bool dry_run, bool is_c_language,
+                          size_t* total_fixes, size_t* total_skipped,
+                          std::vector<std::string>* all_logs)
+          : dry_run_(dry_run), is_c_language_(is_c_language),
+            total_fixes_(total_fixes), total_skipped_(total_skipped),
+            all_logs_(all_logs) {}
+
+      std::unique_ptr<FrontendAction> create() override {
+        return std::make_unique<BugFixFrontendAction>(
+            dry_run_, is_c_language_, total_fixes_, total_skipped_, all_logs_);
+      }
+
+    private:
+      bool dry_run_;
+      bool is_c_language_;
+      size_t* total_fixes_;
+      size_t* total_skipped_;
+      std::vector<std::string>* all_logs_;
+    };
+
+    BugFixActionFactory fix_factory(AutoFixDryRun, is_c_language,
+                                     &total_fixes, &total_skipped, &all_logs);
+    FixTool.run(&fix_factory);
+
+    // Print fix log
+    for (const auto& entry : all_logs) {
+      llvm::errs() << "  " << entry << "\n";
+    }
+
+    if (AutoFixDryRun) {
+      llvm::outs() << "\nDry run: would apply " << total_fixes << " bug fixes";
+      if (total_skipped > 0)
+        llvm::outs() << ", " << total_skipped << " skipped";
+      llvm::outs() << "\n";
+    } else {
+      llvm::outs() << "\nApplied " << total_fixes << " bug fixes";
+      if (total_skipped > 0)
+        llvm::outs() << ", " << total_skipped << " skipped";
+      llvm::outs() << ". Output: "
+                   << (effective_dir.empty() ? "(in-place)" : effective_dir) << "/\n";
+    }
+    return 0;
   }
 
   // Validate compile options
@@ -1062,6 +1688,16 @@ int main(int argc, const char **argv) {
     }
   }
 
+  // Add SDK sysroot for system header resolution (macOS)
+  std::string sdk_path = detectSDKPath();
+  if (!sdk_path.empty()) {
+    std::string sysroot_arg = "-isysroot" + sdk_path;
+    Tool.appendArgumentsAdjuster(getInsertArgumentAdjuster(sysroot_arg.c_str(), clang::tooling::ArgumentInsertPosition::BEGIN));
+    if (Verbose) {
+      llvm::errs() << "Using SDK sysroot: " << sdk_path << "\n";
+    }
+  }
+
   // Create factory and run tool
   optiweave::OptiWeaveFrontendActionFactory factory(config);
   int result = Tool.run(&factory);
@@ -1107,6 +1743,12 @@ int main(int argc, const char **argv) {
       if (Verbose) {
         llvm::errs() << "Using Clang resource directory for complexity analysis: " << resource_dir << "\n";
       }
+    }
+
+    // Add SDK sysroot for system header resolution (macOS)
+    if (!sdk_path.empty()) {
+      std::string sysroot_arg = "-isysroot" + sdk_path;
+      ComplexityTool.appendArgumentsAdjuster(getInsertArgumentAdjuster(sysroot_arg.c_str(), clang::tooling::ArgumentInsertPosition::BEGIN));
     }
 
     // Run complexity analysis
@@ -1344,6 +1986,12 @@ int main(int argc, const char **argv) {
       }
     }
 
+    // Add SDK sysroot for system header resolution (macOS)
+    if (!sdk_path.empty()) {
+      std::string sysroot_arg = "-isysroot" + sdk_path;
+      OverflowTool.appendArgumentsAdjuster(getInsertArgumentAdjuster(sysroot_arg.c_str(), clang::tooling::ArgumentInsertPosition::BEGIN));
+    }
+
     // Create frontend action that collects overflow issues
     class OverflowDetectionAction : public clang::ASTFrontendAction {
     public:
@@ -1538,6 +2186,12 @@ int main(int argc, const char **argv) {
     if (!resource_dir.empty() && llvm::sys::fs::exists(resource_dir)) {
       std::string resource_arg = "-resource-dir=" + resource_dir;
       FPPrecisionTool.appendArgumentsAdjuster(getInsertArgumentAdjuster(resource_arg.c_str(), clang::tooling::ArgumentInsertPosition::BEGIN));
+    }
+
+    // Add SDK sysroot for system header resolution (macOS)
+    if (!sdk_path.empty()) {
+      std::string sysroot_arg = "-isysroot" + sdk_path;
+      FPPrecisionTool.appendArgumentsAdjuster(getInsertArgumentAdjuster(sysroot_arg.c_str(), clang::tooling::ArgumentInsertPosition::BEGIN));
     }
 
     // Create frontend action for FP precision detection
@@ -1741,7 +2395,14 @@ int main(int argc, const char **argv) {
 
   // Print compile hint after successful transformation (not dry-run, not analysis-only)
   if (result == 0 && did_transform && !DryRun && !analysis_only) {
-    llvm::errs() << "\nTransformation complete. To compile the instrumented code:\n";
+    std::string effective_dir = optiweave::getEffectiveOutputDir();
+    if (effective_dir.empty()) {
+      llvm::errs() << "\nTransformation complete. Original files modified in-place.\n";
+    } else {
+      llvm::errs() << "\nTransformation complete. Instrumented files written to: "
+                   << effective_dir << "/\n";
+    }
+    llvm::errs() << "\nTo compile the instrumented code:\n";
     llvm::errs() << "  optiweave " << source_paths[0]
                  << " --compile -o " << llvm::sys::path::stem(source_paths[0]).str()
                  << "_instrumented -- -std=c++20\n";
