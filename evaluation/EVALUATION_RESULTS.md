@@ -1,7 +1,7 @@
 # OptiWeave Thesis Evaluation Results
 ## Master Summary Document
 
-**Author:** Shreesh Tripathi
+**Author:** Shreesh Jha
 **Date:** November 30, 2025
 **Degree:** MSc Computer Science (Thesis)
 **Tool:** OptiWeave - C++ Source-to-Source Compiler
