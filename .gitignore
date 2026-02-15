@@ -33,13 +33,16 @@ compile_commands.json
 # OptiWeave default output directory
 .optiweave/
 
-# Compiled binaries in examples
+# Example build artifacts and generated output
 examples/**/*_instrumented
 examples/**/*_benchmark
 examples/**/*_baseline
 examples/**/*_fresh*
 examples/**/*.o
 examples/**/results/
+examples/**/instrumented/
+examples/**/*_instrument_log*
+examples/**/*_optimized.c
 
 # Generated files
 *.generated.*
