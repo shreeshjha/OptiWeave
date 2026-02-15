@@ -14,6 +14,33 @@ CTestTestfile.cmake
 install_manifest.txt
 compile_commands.json
 
+# IDE / editor caches
+.cache/
+.clangd/
+.ccls-cache/
+.vscode/
+.vs/
+.idea/
+*.iml
+*.swp
+*.swo
+*~
+.*.swp
+.*.swo
+#*#
+.#*
+
+# OptiWeave default output directory
+.optiweave/
+
+# Compiled binaries in examples
+examples/**/*_instrumented
+examples/**/*_benchmark
+examples/**/*_baseline
+examples/**/*_fresh*
+examples/**/*.o
+examples/**/results/
+
 # Generated files
 *.generated.*
 *.tmp
@@ -89,23 +116,9 @@ tmp/
 temp/
 *.tmp.*
 
-# Editor files
-.vscode/
-.vs/
-*.swp
-*.swo
-*~
-.*.swp
-.*.swo
-
-# IDE files
-.idea/
-*.iml
+# IDE project files
 *.ipr
 *.iws
-.clangd/
-.ccls-cache/
-.cache/
 
 # OS generated files
 .DS_Store
@@ -317,13 +330,10 @@ Thesis_Proposal*.txt
 Thesis_Proposal*.docx
 
 # Example build artifacts
-examples/**/*.o
 examples/**/benchmark_*
 examples/**/demo
 examples/**/test
 examples/**/profile_*
-examples/**/*_fresh*
-examples/**/*_baseline*
 examples/**/instrumented/
 examples/**/instrumented_*/
 examples/**/cJSON.c
