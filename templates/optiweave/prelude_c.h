@@ -98,6 +98,9 @@ static inline void __optiweave_record_subscript(const char *file, int line, cons
 
 #define ow_mod(lhs, rhs) \
   (optiweave_increment_modulo(), (lhs) % (rhs))
+/* alias: AST visitor emits ow_rem for BO_Rem */
+#define ow_rem(lhs, rhs) ow_mod(lhs, rhs)
+#define ow_rem_assign(lhs, rhs) ((lhs) %= (rhs))
 
 #else
 
@@ -107,6 +110,8 @@ static inline void __optiweave_record_subscript(const char *file, int line, cons
 #define ow_mul(lhs, rhs) ((lhs) * (rhs))
 #define ow_div(lhs, rhs) ((lhs) / (rhs))
 #define ow_mod(lhs, rhs) ((lhs) % (rhs))
+#define ow_rem(lhs, rhs) ((lhs) % (rhs))
+#define ow_rem_assign(lhs, rhs) ((lhs) %= (rhs))
 
 #endif
 
