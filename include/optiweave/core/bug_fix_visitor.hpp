@@ -3,6 +3,7 @@
 #include <optiweave/analysis/bug_fix_issue.hpp>
 #include <clang/AST/RecursiveASTVisitor.h>
 #include <clang/AST/ASTContext.h>
+#include <clang/Basic/FileManager.h>
 #include <clang/Rewrite/Core/Rewriter.h>
 #include <set>
 #include <string>
@@ -17,7 +18,8 @@ public:
                   clang::ASTContext& context,
                   const std::vector<analysis::BugFixIssue>& issues,
                   bool dry_run = false,
-                  bool is_c_language = false);
+                  bool is_c_language = false,
+                  std::set<analysis::BugFixKind> enabled_kinds = {});
 
     bool VisitBinaryOperator(clang::BinaryOperator* op);
     bool VisitUnaryOperator(clang::UnaryOperator* op);
@@ -40,6 +42,12 @@ private:
     /// Dedup tracker keyed by "file:line:kind"
     std::set<std::string> applied_locations_;
 
+    /// Injected include headers (idempotency guard across multiple fixes in one file)
+    std::set<std::string> injected_includes_;
+
+    /// If non-empty, only these fix kinds are applied
+    std::set<analysis::BugFixKind> enabled_kinds_;
+
     // --- Location matching ---
     bool filesMatch(const std::string& a, const std::string& b) const;
     const analysis::BugFixIssue* findMatch(
@@ -50,6 +58,12 @@ private:
     std::string getIndentation(clang::SourceLocation loc) const;
     bool isInMacro(clang::SourceLocation loc) const;
     std::string kindToString(analysis::BugFixKind kind) const;
+
+    /// Inject `#include <header>` if not already present. Returns true if injected.
+    bool injectIncludeIfMissing(clang::FileID file_id, const std::string& header);
+
+    /// Returns true if the given fix kind is enabled (empty set = all enabled)
+    bool isKindEnabled(analysis::BugFixKind kind) const;
 
     // --- Fix applicators ---
     bool applyUnsignedWraparoundFix(clang::BinaryOperator* op,

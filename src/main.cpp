@@ -25,7 +25,10 @@
 
 #include <iostream>
 #include <fstream>
+#include <functional>
 #include <memory>
+#include <set>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -323,6 +326,12 @@ static cl::opt<bool> AutoFix(
 static cl::opt<bool> AutoFixDryRun(
     "auto-fix-dry-run", cl::desc("Show bug fixes without applying them"),
     cl::init(false), cl::cat(OptiWeaveCategory));
+
+static cl::opt<std::string> FixKinds(
+    "fix-kinds",
+    cl::desc("Comma-separated list of fix kinds to enable: "
+             "overflow,negation,shift,uninitialized,unused,fp-equality  (default: all)"),
+    cl::init(""), cl::cat(OptiWeaveCategory));
 
 // Floating-point precision warning options
 static cl::opt<bool> EnableFPPrecisionWarnings(
@@ -1330,6 +1339,30 @@ int main(int argc, const char **argv) {
       }
     }
 
+    // Fix 9: Parse --fix-kinds into an enabled-kinds set.
+    // Empty set means all kinds are enabled.
+    std::set<optiweave::analysis::BugFixKind> enabled_fix_kinds;
+    if (!FixKinds.empty()) {
+      std::string kinds_str = FixKinds;
+      std::istringstream ss(kinds_str);
+      std::string token;
+      while (std::getline(ss, token, ',')) {
+        // Trim whitespace
+        token.erase(0, token.find_first_not_of(" \t"));
+        token.erase(token.find_last_not_of(" \t") + 1);
+        if (token == "overflow")      enabled_fix_kinds.insert(optiweave::analysis::BugFixKind::UnsignedWraparound);
+        else if (token == "negation") enabled_fix_kinds.insert(optiweave::analysis::BugFixKind::SignedNegationOverflow);
+        else if (token == "shift")    enabled_fix_kinds.insert(optiweave::analysis::BugFixKind::SignedLeftShift);
+        else if (token == "uninitialized") enabled_fix_kinds.insert(optiweave::analysis::BugFixKind::UninitializedVariable);
+        else if (token == "unused")   enabled_fix_kinds.insert(optiweave::analysis::BugFixKind::UnusedVariable);
+        else if (token == "fp-equality") enabled_fix_kinds.insert(optiweave::analysis::BugFixKind::FPEqualityComparison);
+        else {
+          llvm::errs() << "Warning: unknown fix kind '" << token
+                       << "' (valid: overflow,negation,shift,uninitialized,unused,fp-equality)\n";
+        }
+      }
+    }
+
     // Validate output directory
     std::string effective_dir = optiweave::getEffectiveOutputDir();
     if (!effective_dir.empty()) {
@@ -1349,10 +1382,11 @@ int main(int argc, const char **argv) {
     public:
       BugFixFrontendAction(bool dry_run, bool is_c_language,
                            size_t* total_fixes, size_t* total_skipped,
-                           std::vector<std::string>* all_logs)
+                           std::vector<std::string>* all_logs,
+                           std::set<optiweave::analysis::BugFixKind> enabled_kinds)
           : dry_run_(dry_run), is_c_language_(is_c_language),
             total_fixes_(total_fixes), total_skipped_(total_skipped),
-            all_logs_(all_logs) {}
+            all_logs_(all_logs), enabled_kinds_(std::move(enabled_kinds)) {}
 
       std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance& CI,
                                                      StringRef file) override {
@@ -1362,10 +1396,11 @@ int main(int argc, const char **argv) {
         public:
           BugFixConsumer(clang::Rewriter& rewriter, bool dry_run, bool is_c_language,
                          size_t* total_fixes, size_t* total_skipped,
-                         std::vector<std::string>* all_logs)
+                         std::vector<std::string>* all_logs,
+                         std::set<optiweave::analysis::BugFixKind> enabled_kinds)
               : rewriter_(rewriter), dry_run_(dry_run), is_c_language_(is_c_language),
                 total_fixes_(total_fixes), total_skipped_(total_skipped),
-                all_logs_(all_logs) {}
+                all_logs_(all_logs), enabled_kinds_(std::move(enabled_kinds)) {}
 
           void HandleTranslationUnit(ASTContext& context) override {
             std::vector<optiweave::analysis::BugFixIssue> all_issues;
@@ -1378,17 +1413,19 @@ int main(int argc, const char **argv) {
               all_issues.insert(all_issues.end(), issues.begin(), issues.end());
             }
 
-            // 2. Run data flow analysis per function
+            // 2. Run data flow analysis (Fix 4: recursive descent to find class methods)
             {
               optiweave::analysis::DataFlowAnalysis dfa;
-              // Iterate over all function declarations
-              for (auto* decl : context.getTranslationUnitDecl()->decls()) {
-                if (auto* func = llvm::dyn_cast<clang::FunctionDecl>(decl)) {
-                  if (func->hasBody()) {
-                    dfa.analyze_function(func, context);
-                  }
+              std::function<void(const clang::DeclContext*)> visit_dc;
+              visit_dc = [&](const clang::DeclContext* dc) {
+                for (auto* d : dc->decls()) {
+                  if (auto* func = llvm::dyn_cast<clang::FunctionDecl>(d))
+                    if (func->hasBody()) dfa.analyze_function(func, context);
+                  if (auto* ns = llvm::dyn_cast<clang::NamespaceDecl>(d)) visit_dc(ns);
+                  if (auto* rec = llvm::dyn_cast<clang::CXXRecordDecl>(d)) visit_dc(rec);
                 }
-              }
+              };
+              visit_dc(context.getTranslationUnitDecl());
               dfa.detect_uninitialized_variables();
               dfa.detect_unused_variables();
               dfa.generate_refactoring_opportunities();
@@ -1406,6 +1443,16 @@ int main(int argc, const char **argv) {
               all_issues.insert(all_issues.end(), issues.begin(), issues.end());
             }
 
+            // Fix 9: filter issues by enabled kinds (empty set = all enabled)
+            if (!enabled_kinds_.empty()) {
+              all_issues.erase(
+                  std::remove_if(all_issues.begin(), all_issues.end(),
+                      [&](const optiweave::analysis::BugFixIssue& bi) {
+                          return enabled_kinds_.find(bi.kind) == enabled_kinds_.end();
+                      }),
+                  all_issues.end());
+            }
+
             if (all_issues.empty()) {
               all_logs_->push_back("No auto-fixable issues detected.");
               return;
@@ -1413,7 +1460,8 @@ int main(int argc, const char **argv) {
 
             // Run BugFixVisitor
             optiweave::core::BugFixVisitor visitor(rewriter_, context, all_issues,
-                                                    dry_run_, is_c_language_);
+                                                    dry_run_, is_c_language_,
+                                                    enabled_kinds_);
             visitor.TraverseDecl(context.getTranslationUnitDecl());
 
             *total_fixes_ += visitor.fixes_applied();
@@ -1430,10 +1478,12 @@ int main(int argc, const char **argv) {
           size_t* total_fixes_;
           size_t* total_skipped_;
           std::vector<std::string>* all_logs_;
+          std::set<optiweave::analysis::BugFixKind> enabled_kinds_;
         };
 
         return std::make_unique<BugFixConsumer>(rewriter_, dry_run_, is_c_language_,
-                                                 total_fixes_, total_skipped_, all_logs_);
+                                                 total_fixes_, total_skipped_, all_logs_,
+                                                 enabled_kinds_);
       }
 
       void EndSourceFileAction() override {
@@ -1478,6 +1528,7 @@ int main(int argc, const char **argv) {
       size_t* total_fixes_;
       size_t* total_skipped_;
       std::vector<std::string>* all_logs_;
+      std::set<optiweave::analysis::BugFixKind> enabled_kinds_;
     };
 
     size_t total_fixes = 0;
@@ -1488,14 +1539,16 @@ int main(int argc, const char **argv) {
     public:
       BugFixActionFactory(bool dry_run, bool is_c_language,
                           size_t* total_fixes, size_t* total_skipped,
-                          std::vector<std::string>* all_logs)
+                          std::vector<std::string>* all_logs,
+                          std::set<optiweave::analysis::BugFixKind> enabled_kinds)
           : dry_run_(dry_run), is_c_language_(is_c_language),
             total_fixes_(total_fixes), total_skipped_(total_skipped),
-            all_logs_(all_logs) {}
+            all_logs_(all_logs), enabled_kinds_(std::move(enabled_kinds)) {}
 
       std::unique_ptr<FrontendAction> create() override {
         return std::make_unique<BugFixFrontendAction>(
-            dry_run_, is_c_language_, total_fixes_, total_skipped_, all_logs_);
+            dry_run_, is_c_language_, total_fixes_, total_skipped_, all_logs_,
+            enabled_kinds_);
       }
 
     private:
@@ -1504,10 +1557,12 @@ int main(int argc, const char **argv) {
       size_t* total_fixes_;
       size_t* total_skipped_;
       std::vector<std::string>* all_logs_;
+      std::set<optiweave::analysis::BugFixKind> enabled_kinds_;
     };
 
     BugFixActionFactory fix_factory(AutoFixDryRun, is_c_language,
-                                     &total_fixes, &total_skipped, &all_logs);
+                                     &total_fixes, &total_skipped, &all_logs,
+                                     std::move(enabled_fix_kinds));
     FixTool.run(&fix_factory);
 
     // Print fix log
