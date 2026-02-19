@@ -271,7 +271,6 @@ bool ModernASTVisitor::shouldSkipExpression(const clang::Expr *expr) const {
     return true;
   }
 
-  // Skip if in OptiWeave prelude/templates (to avoid transforming our own instrumentation code)
   auto &source_manager = context_.getSourceManager();
   auto location = expr->getBeginLoc();
   if (location.isValid()) {
@@ -346,6 +345,67 @@ bool ModernASTVisitor::shouldSkipExpression(const clang::Expr *expr) const {
     }
   }
 
+  // Skip expressions in constant-evaluated contexts (enum initializers,
+  // constexpr variables, bit-field widths, case-label values).
+  // Function calls are illegal in those contexts, so instrumenting them
+  // would produce code that fails to compile.
+  if (isInConstantEvaluatedContext(expr)) {
+    return true;
+  }
+
+  return false;
+}
+
+bool ModernASTVisitor::isInConstantEvaluatedContext(const clang::Stmt *stmt) const {
+  auto parents = context_.getParents(*stmt);
+  // No parent in the Stmt/Decl map means this expression lives inside a type
+  // declaration (e.g., array dimension inside a struct member or typedef).
+  // These must remain compile-time constants — skip them.
+  if (parents.empty()) return true;
+
+  for (const auto &p : parents) {
+    // --- Decl parents ---
+    if (const auto *decl = p.get<clang::Decl>()) {
+      // Enum constant initializer: e.g. enum { A = x + 1 }
+      if (clang::isa<clang::EnumConstantDecl>(decl)) return true;
+      // Variable initializer that must be a compile-time constant:
+      //   - C++: constexpr var
+      //   - C/C++: static-duration variable (global, static local, thread_local)
+      //     whose initializer must be a constant expression.
+      if (const auto *var = clang::dyn_cast<clang::VarDecl>(decl)) {
+        if (var->isConstexpr()) return true;
+        if (var->hasGlobalStorage()) return true;
+      }
+      // Any FieldDecl parent means we're in a struct/union member declaration.
+      // Both bit-field widths AND array sizes in struct members must be constant.
+      if (clang::isa<clang::FieldDecl>(decl)) return true;
+    }
+    // --- TypeLoc parents (array size expressions) ---
+    // When a BinaryOperator is the size expression of an array type
+    // (e.g., struct { int arr[N+1]; }), its parent in the parent map is a
+    // TypeLoc, not a Decl or Stmt.  Any array TypeLoc means the size must
+    // remain a compile-time constant expression.
+    if (const auto tl = p.get<clang::TypeLoc>()) {
+      if (tl->getTypeLocClass() == clang::TypeLoc::ConstantArray ||
+          tl->getTypeLocClass() == clang::TypeLoc::VariableArray ||
+          tl->getTypeLocClass() == clang::TypeLoc::IncompleteArray ||
+          tl->getTypeLocClass() == clang::TypeLoc::DependentSizedArray) {
+        return true;
+      }
+    }
+
+    // --- Stmt parents ---
+    if (const auto *parent_stmt = p.get<clang::Stmt>()) {
+      // A compound statement marks a function-body boundary — stop recursing.
+      if (clang::isa<clang::CompoundStmt>(parent_stmt)) return false;
+      // case <expr>: value — the expression must be ICE.
+      if (const auto *cs = clang::dyn_cast<clang::CaseStmt>(parent_stmt)) {
+        if (cs->getLHS() == stmt) return true;
+      }
+      // Recurse upward through nested expression parents.
+      if (isInConstantEvaluatedContext(parent_stmt)) return true;
+    }
+  }
   return false;
 }
 
@@ -451,9 +511,16 @@ bool ModernASTVisitor::transformArraySubscript(clang::ArraySubscriptExpr *
     std::string instrumentation = generateArraySubscriptInstrumentation(
         expr, lhs->getType(), lhs_text, rhs_text);
 
-    // Apply transformation
+    // Apply transformation — verify range is fully in-file first.
     auto source_range = expr->getSourceRange();
-    if (rewriter_.ReplaceText(source_range, instrumentation)) {
+    auto &sm = context_.getSourceManager();
+    auto &lo = context_.getLangOpts();
+    auto file_range = clang::Lexer::makeFileCharRange(
+        clang::CharSourceRange::getTokenRange(source_range), sm, lo);
+    if (file_range.isInvalid()) {
+      return false;
+    }
+    if (rewriter_.ReplaceText(file_range, instrumentation)) {
       llvm::errs()
           << "Error: Failed to apply array subscript transformation\n";
       return false;
@@ -574,9 +641,18 @@ bool ModernASTVisitor::transformBinaryOperator(clang::BinaryOperator *expr) {
         expr->getOpcode(), lhs->getType(), rhs->getType(), lhs_text,
         rhs_text);
 
-    // Apply transformation
+    // Apply transformation — first verify the range is fully in-file
+    // (not spanning a macro expansion boundary, e.g. `a * MACRO_CONST`).
     auto source_range = expr->getSourceRange();
-    if (rewriter_.ReplaceText(source_range, instrumentation)) {
+    auto &sm = context_.getSourceManager();
+    auto &lo = context_.getLangOpts();
+    auto file_range = clang::Lexer::makeFileCharRange(
+        clang::CharSourceRange::getTokenRange(source_range), sm, lo);
+    if (file_range.isInvalid()) {
+      // Range crosses a macro boundary — skip silently to avoid corruption.
+      return false;
+    }
+    if (rewriter_.ReplaceText(file_range, instrumentation)) {
       llvm::errs()
           << "Error: Failed to apply binary operator transformation\n";
       return false;

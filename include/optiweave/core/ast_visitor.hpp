@@ -286,6 +286,14 @@ private:
   bool shouldSkipExpression(const clang::Expr *expr) const;
 
   /**
+      @brief Walk the parent chain to detect constant-evaluated contexts.
+      Returns true if stmt (or any ancestor) is an enum constant initializer,
+      constexpr variable initializer, bit-field width, or case-label value.
+      These contexts forbid function calls, so instrumentation must be skipped.
+  */
+  bool isInConstantEvaluatedContext(const clang::Stmt *stmt) const;
+
+  /**
       @brief Check if array subscript is on the LHS of an assignment
       @param expr The array subscript expression to check
       @return true if this is arr[i] = value pattern
