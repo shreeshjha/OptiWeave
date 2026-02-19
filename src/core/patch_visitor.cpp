@@ -1,4 +1,5 @@
 #include <optiweave/core/patch_visitor.hpp>
+#include <optiweave/analysis/pattern_names.hpp>
 #include <clang/AST/Stmt.h>
 #include <clang/AST/Expr.h>
 #include <clang/AST/Decl.h>
@@ -23,9 +24,14 @@ PatchVisitor::PatchVisitor(clang::Rewriter& rewriter,
 // --- Location matching ---
 
 bool PatchVisitor::filesMatch(const std::string& a, const std::string& b) const {
-    auto basename_a = llvm::sys::path::filename(a);
-    auto basename_b = llvm::sys::path::filename(b);
-    return basename_a == basename_b;
+    // Fix 6: prefer exact full-path match; fall back to basename only when
+    // at least one path has no directory component (bare filename).
+    if (a == b) return true;
+    bool a_bare = (a.find('/') == std::string::npos);
+    bool b_bare = (b.find('/') == std::string::npos);
+    if (a_bare || b_bare)
+        return llvm::sys::path::filename(a) == llvm::sys::path::filename(b);
+    return false;
 }
 
 const analysis::OptimizationPattern* PatchVisitor::findMatch(
@@ -184,10 +190,11 @@ bool PatchVisitor::checkExistingPragma(clang::SourceLocation loc) const {
         // Check this region for the pragma
     }
 
-    // Extract the text from pos to offset and search for pragma
+    // Extract the text from pos to offset and search for either vectorization pragma
     if (pos < offset) {
         auto region = buf.substr(pos, offset - pos);
-        if (region.find("#pragma clang loop vectorize") != llvm::StringRef::npos) {
+        if (region.find("#pragma clang loop vectorize") != llvm::StringRef::npos ||
+            region.find("#pragma GCC ivdep") != llvm::StringRef::npos) {
             return true;
         }
     }
@@ -243,22 +250,24 @@ void PatchVisitor::handleLoopPatches(clang::Stmt* body,
         return;
     }
 
+    namespace pat = optiweave::analysis::patterns;
+
     // Try division-in-loop match first (apply before vectorization for correct ordering)
-    auto* div_pat = findMatch(keyword_loc, "Division in Hot Loop");
+    auto* div_pat = findMatch(keyword_loc, std::string(pat::kDivisionInHotLoop));
     if (div_pat) {
         applyDivisionPatch(keyword_loc, body, *div_pat);
     }
 
     // Try vectorization match
-    auto* vec_pat = findMatch(keyword_loc, "SIMD Vectorization Opportunity");
+    auto* vec_pat = findMatch(keyword_loc, std::string(pat::kSIMDVectorization));
     if (vec_pat) {
         applyVectorizationPatch(keyword_loc, *vec_pat);
     }
 
     // Try other pattern matches for advisory comments
     auto* any_pat = findMatchByLocation(keyword_loc);
-    if (any_pat && any_pat->pattern_name != "Division in Hot Loop" &&
-        any_pat->pattern_name != "SIMD Vectorization Opportunity") {
+    if (any_pat && any_pat->pattern_name != pat::kDivisionInHotLoop &&
+        any_pat->pattern_name != pat::kSIMDVectorization) {
         applyAdvisoryComment(keyword_loc, *any_pat);
     }
 }
@@ -270,7 +279,8 @@ bool PatchVisitor::applyDivisionPatch(clang::SourceLocation insert_loc,
                                        const analysis::OptimizationPattern& pat) {
     // Dedup check
     std::string dedup_key = pat.location.get_file() + ":" +
-                            std::to_string(pat.location.line) + ":Division in Hot Loop";
+                            std::to_string(pat.location.line) + ":" +
+                            std::string(optiweave::analysis::patterns::kDivisionInHotLoop);
     if (applied_locations_.count(dedup_key)) {
         return false;
     }
@@ -371,7 +381,8 @@ bool PatchVisitor::applyVectorizationPatch(clang::SourceLocation keyword_loc,
                                             const analysis::OptimizationPattern& pat) {
     // Dedup check
     std::string dedup_key = pat.location.get_file() + ":" +
-                            std::to_string(pat.location.line) + ":SIMD Vectorization Opportunity";
+                            std::to_string(pat.location.line) + ":" +
+                            std::string(optiweave::analysis::patterns::kSIMDVectorization);
     if (applied_locations_.count(dedup_key)) {
         return false;
     }
@@ -385,7 +396,13 @@ bool PatchVisitor::applyVectorizationPatch(clang::SourceLocation keyword_loc,
     }
 
     std::string indent = getIndentation(keyword_loc);
-    std::string pragma = indent + "#pragma clang loop vectorize(enable)\n";
+    // Fix 7: wrap in compiler guards so the pragma is accepted by both Clang and GCC
+    std::string pragma =
+        indent + "#if defined(__clang__)\n" +
+        indent + "#pragma clang loop vectorize(enable)\n" +
+        indent + "#elif defined(__GNUC__)\n" +
+        indent + "#pragma GCC ivdep\n" +
+        indent + "#endif\n";
 
     if (dry_run_) {
         log_.push_back("PATCH (dry-run): Vectorization at " + pat.location.get_file() + ":" +
@@ -417,21 +434,21 @@ bool PatchVisitor::applyAdvisoryComment(clang::SourceLocation loc,
     std::string indent = getIndentation(loc);
     std::string comment;
 
+    namespace pat_names = optiweave::analysis::patterns;
     // Match actual detector output names from pattern_detector.cpp
-    if (pat.pattern_name == "Naive Matrix Multiplication") {
+    if (pat.pattern_name == pat_names::kNaiveMatrixMultiply) {
         comment = indent + "// OPTIWEAVE: " + pat.description +
                   " -- consider optimized libraries (e.g., BLAS)\n";
-    } else if (pat.pattern_name == "O(n²) Algorithm") {
-        // Note: the actual pattern name uses the Unicode superscript
+    } else if (pat.pattern_name == pat_names::kQuadraticAlgorithm) {
         comment = indent + "// OPTIWEAVE: Quadratic complexity detected" +
                   " -- consider more efficient algorithm\n";
-    } else if (pat.pattern_name == "Poor Memory Locality") {
+    } else if (pat.pattern_name == pat_names::kPoorMemoryLocality) {
         comment = indent + "// OPTIWEAVE: Poor memory locality detected" +
                   " -- consider loop interchange or cache blocking\n";
-    } else if (pat.pattern_name == "Repeated Computation in Loop") {
+    } else if (pat.pattern_name == pat_names::kRepeatedComputation) {
         comment = indent + "// OPTIWEAVE: Loop-invariant computation" +
                   " -- consider hoisting outside loop\n";
-    } else if (pat.pattern_name == "Potential Branch Misprediction") {
+    } else if (pat.pattern_name == pat_names::kBranchMisprediction) {
         comment = indent + "// OPTIWEAVE: High branch ratio" +
                   " -- consider branchless alternatives\n";
     } else {

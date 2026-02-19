@@ -1,4 +1,5 @@
 #include <optiweave/analysis/pattern_detector.hpp>
+#include <optiweave/analysis/pattern_names.hpp>
 #include <sstream>
 #include <fstream>
 #include <iomanip>
@@ -608,7 +609,7 @@ void DivisionInLoopDetector::analyze(
         if (loop.total_time_ns < thresholds::kMinHotLoopTimeNs) continue;
 
         OptimizationPattern pattern;
-        pattern.pattern_name = "Division in Hot Loop";
+        pattern.pattern_name = std::string(optiweave::analysis::patterns::kDivisionInHotLoop);
         pattern.location = loop.location;
         pattern.severity = Severity::MEDIUM;
         pattern.category = PatternCategory::ARITHMETIC;
@@ -661,7 +662,7 @@ void ComplexityDetector::analyze(
         // Triple nested loops might be matrix multiplication
         if (loop.nesting_level == 3 && is_matrix_multiply_pattern(loop)) {
             OptimizationPattern pattern;
-            pattern.pattern_name = "Naive Matrix Multiplication";
+            pattern.pattern_name = std::string(optiweave::analysis::patterns::kNaiveMatrixMultiply);
             pattern.location = loop.location;
             pattern.severity = Severity::HIGH;
             pattern.category = PatternCategory::ALGORITHMIC;
@@ -705,7 +706,7 @@ void ComplexityDetector::analyze(
         // Other O(n²) patterns
         else if (loop.nesting_level == 2 && loop.total_time_ns > thresholds::kMinQuadraticAlgoTimeNs) {
             OptimizationPattern pattern;
-            pattern.pattern_name = "O(n²) Algorithm";
+            pattern.pattern_name = std::string(optiweave::analysis::patterns::kQuadraticAlgorithm);
             pattern.location = loop.location;
             pattern.severity = Severity::MEDIUM;
             pattern.category = PatternCategory::ALGORITHMIC;
@@ -757,7 +758,7 @@ void MemoryAccessDetector::analyze(
 
         if (has_poor_locality(loop)) {
             OptimizationPattern pattern;
-            pattern.pattern_name = "Poor Memory Locality";
+            pattern.pattern_name = std::string(optiweave::analysis::patterns::kPoorMemoryLocality);
             pattern.location = loop.location;
             pattern.severity = Severity::MEDIUM;
             pattern.category = PatternCategory::MEMORY_ACCESS;
@@ -807,7 +808,7 @@ void VectorizationDetector::analyze(
 
         if (is_simd_friendly(loop)) {
             OptimizationPattern pattern;
-            pattern.pattern_name = "SIMD Vectorization Opportunity";
+            pattern.pattern_name = std::string(optiweave::analysis::patterns::kSIMDVectorization);
             pattern.location = loop.location;
             pattern.severity = Severity::MEDIUM;
             pattern.category = PatternCategory::VECTORIZATION;
@@ -874,7 +875,7 @@ void RepeatedComputationDetector::analyze(
         // Check if loop likely has loop-invariant code that could be hoisted
         if (has_loop_invariant_code(loop)) {
             OptimizationPattern pattern;
-            pattern.pattern_name = "Repeated Computation in Loop";
+            pattern.pattern_name = std::string(optiweave::analysis::patterns::kRepeatedComputation);
             pattern.severity = Severity::MEDIUM;
             pattern.category = PatternCategory::ARITHMETIC;
             pattern.location = loop.location;
@@ -958,7 +959,7 @@ void BranchMispredictionDetector::analyze(
 
             if (likely_has_unpredictable_branches(loop)) {
                 OptimizationPattern pattern;
-                pattern.pattern_name = "Potential Branch Misprediction";
+                pattern.pattern_name = std::string(optiweave::analysis::patterns::kBranchMisprediction);
                 pattern.severity = Severity::MEDIUM;
                 pattern.category = PatternCategory::ARITHMETIC;
                 pattern.location = loop.location;
