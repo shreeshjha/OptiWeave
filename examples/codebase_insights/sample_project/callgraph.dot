@@ -1,0 +1,38 @@
+digraph CallGraph {
+    rankdir=LR;
+    node [shape=box, style=rounded];
+
+    "recursiveHelper" [];
+    "convertLongToInt" [];
+    "accumulateSum" [];
+    "runSimulation" [];
+    "processInput" [];
+    "main" [];
+    "multiplyValues" [];
+    "std::__math::sqrt" [];
+    "initialize" [];
+    "processArray" [];
+    "calculateDistance" [];
+    "DataProcessor::processData" [];
+    "DataProcessor::helperFunction" [];
+    "ConfigParser::saveConfig" [];
+    "countToMax" [];
+    "isZero" [];
+    "DataProcessor::computeResult" [];
+    "computeDelta" [];
+    "utilityFunction" [];
+    "convertToFloat" [];
+    "ConfigParser::loadConfig" [];
+
+    "runSimulation" -> "DataProcessor::processData";
+    "processInput" -> "initialize";
+    "processInput" -> "runSimulation";
+    "processInput" -> "processInput";
+    "initialize" -> "calculateDistance";
+    "initialize" -> "multiplyValues";
+    "initialize" -> "isZero";
+    "ConfigParser::saveConfig" -> "utilityFunction";
+    "computeDelta" -> "std::__math::sqrt";
+    "utilityFunction" -> "recursiveHelper";
+    "ConfigParser::loadConfig" -> "utilityFunction";
+}

@@ -1,0 +1,24 @@
+digraph DependencyGraph {
+    rankdir=LR;
+    node [shape=box, style=rounded];
+
+    "/Users/shreesh/Dev/Github/OptiWeave/examples/codebase_insights/sample_project/utils.cpp" [label="utils.cpp", color=green, fontcolor=green];
+    "/Users/shreesh/Dev/Github/OptiWeave/examples/codebase_insights/sample_project/config_parser.cpp" [label="config_parser.cpp", color=green, fontcolor=green];
+    "/Users/shreesh/Dev/Github/OptiWeave/examples/codebase_insights/sample_project/data_processor.hpp" [label="data_processor.hpp", color=blue, fontcolor=blue];
+    "/Users/shreesh/Dev/Github/OptiWeave/examples/codebase_insights/sample_project/config_parser.hpp" [label="config_parser.hpp", color=blue, fontcolor=blue];
+    "/Users/shreesh/Dev/Github/OptiWeave/examples/codebase_insights/sample_project/math_utils.hpp" [label="math_utils.hpp", color=blue, fontcolor=blue];
+    "/Users/shreesh/Dev/Github/OptiWeave/examples/codebase_insights/sample_project/data_processor.cpp" [label="data_processor.cpp", color=green, fontcolor=green];
+    "/Users/shreesh/Dev/Github/OptiWeave/examples/codebase_insights/sample_project/main.cpp" [label="main.cpp", color=green, fontcolor=green];
+    "/Users/shreesh/Dev/Github/OptiWeave/examples/codebase_insights/sample_project/math_utils.cpp" [label="math_utils.cpp", color=green, fontcolor=green];
+    "/Users/shreesh/Dev/Github/OptiWeave/examples/codebase_insights/sample_project/utils.hpp" [label="utils.hpp"];
+
+    "/Users/shreesh/Dev/Github/OptiWeave/examples/codebase_insights/sample_project/utils.cpp" -> "/Users/shreesh/Dev/Github/OptiWeave/examples/codebase_insights/sample_project/utils.hpp";
+    "/Users/shreesh/Dev/Github/OptiWeave/examples/codebase_insights/sample_project/config_parser.cpp" -> "/Users/shreesh/Dev/Github/OptiWeave/examples/codebase_insights/sample_project/utils.hpp";
+    "/Users/shreesh/Dev/Github/OptiWeave/examples/codebase_insights/sample_project/config_parser.cpp" -> "/Users/shreesh/Dev/Github/OptiWeave/examples/codebase_insights/sample_project/config_parser.hpp";
+    "/Users/shreesh/Dev/Github/OptiWeave/examples/codebase_insights/sample_project/data_processor.cpp" -> "/Users/shreesh/Dev/Github/OptiWeave/examples/codebase_insights/sample_project/data_processor.hpp";
+    "/Users/shreesh/Dev/Github/OptiWeave/examples/codebase_insights/sample_project/main.cpp" -> "/Users/shreesh/Dev/Github/OptiWeave/examples/codebase_insights/sample_project/config_parser.hpp";
+    "/Users/shreesh/Dev/Github/OptiWeave/examples/codebase_insights/sample_project/main.cpp" -> "/Users/shreesh/Dev/Github/OptiWeave/examples/codebase_insights/sample_project/data_processor.hpp";
+    "/Users/shreesh/Dev/Github/OptiWeave/examples/codebase_insights/sample_project/main.cpp" -> "/Users/shreesh/Dev/Github/OptiWeave/examples/codebase_insights/sample_project/math_utils.hpp";
+    "/Users/shreesh/Dev/Github/OptiWeave/examples/codebase_insights/sample_project/math_utils.cpp" -> "/Users/shreesh/Dev/Github/OptiWeave/examples/codebase_insights/sample_project/math_utils.hpp";
+    "/Users/shreesh/Dev/Github/OptiWeave/examples/codebase_insights/sample_project/utils.hpp" -> "/Users/shreesh/Dev/Github/OptiWeave/examples/codebase_insights/sample_project/config_parser.hpp";
+}
