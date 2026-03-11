@@ -1,6 +1,7 @@
 #pragma once
 
 #include <optiweave/analysis/bug_fix_issue.hpp>
+#include <optiweave/core/rule_config.hpp>
 #include <clang/AST/RecursiveASTVisitor.h>
 #include <clang/AST/ASTContext.h>
 #include <clang/Basic/FileManager.h>
@@ -19,11 +20,16 @@ public:
                   const std::vector<analysis::BugFixIssue>& issues,
                   bool dry_run = false,
                   bool is_c_language = false,
-                  std::set<analysis::BugFixKind> enabled_kinds = {});
+                  std::set<analysis::BugFixKind> enabled_kinds = {},
+                  const RuleConfig& config = RuleConfig{},
+                  bool verbose_rules = false);
 
     bool VisitBinaryOperator(clang::BinaryOperator* op);
     bool VisitUnaryOperator(clang::UnaryOperator* op);
     bool VisitVarDecl(clang::VarDecl* decl);
+    bool VisitCallExpr(clang::CallExpr* call);
+    bool VisitSwitchStmt(clang::SwitchStmt* stmt);
+    bool VisitIfStmt(clang::IfStmt* stmt);
 
     size_t fixes_applied() const { return applied_; }
     size_t skipped_count() const { return skipped_; }
@@ -38,8 +44,10 @@ private:
     size_t applied_ = 0;
     size_t skipped_ = 0;
     std::vector<std::string> log_;
+    RuleConfig config_;
+    bool verbose_rules_;
 
-    /// Dedup tracker keyed by "file:line:kind"
+    /// Dedup tracker keyed by "file:line:ruleId"
     std::set<std::string> applied_locations_;
 
     /// Injected include headers (idempotency guard across multiple fixes in one file)
@@ -54,30 +62,10 @@ private:
         clang::SourceLocation loc, analysis::BugFixKind kind) const;
 
     // --- Helpers ---
-    std::string getSourceText(clang::SourceRange range) const;
-    std::string getIndentation(clang::SourceLocation loc) const;
     bool isInMacro(clang::SourceLocation loc) const;
-    std::string kindToString(analysis::BugFixKind kind) const;
-
-    /// Inject `#include <header>` if not already present. Returns true if injected.
-    bool injectIncludeIfMissing(clang::FileID file_id, const std::string& header);
-
-    /// Returns true if the given fix kind is enabled (empty set = all enabled)
     bool isKindEnabled(analysis::BugFixKind kind) const;
-
-    // --- Fix applicators ---
-    bool applyUnsignedWraparoundFix(clang::BinaryOperator* op,
-                                     const analysis::BugFixIssue& issue);
-    bool applySignedNegationFix(clang::UnaryOperator* op,
-                                 const analysis::BugFixIssue& issue);
-    bool applySignedLeftShiftFix(clang::BinaryOperator* op,
-                                  const analysis::BugFixIssue& issue);
-    bool applyUninitializedVarFix(clang::VarDecl* decl,
-                                   const analysis::BugFixIssue& issue);
-    bool applyUnusedVarFix(clang::VarDecl* decl,
-                            const analysis::BugFixIssue& issue);
-    bool applyFPEqualityFix(clang::BinaryOperator* op,
-                             const analysis::BugFixIssue& issue);
+    bool isRuleEnabled(const std::string& rule_id) const;
+    std::string kindToString(analysis::BugFixKind kind) const;
 };
 
 } // namespace core
