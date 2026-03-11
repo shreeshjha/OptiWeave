@@ -2,6 +2,9 @@
 #include <optiweave/core/rewriter.hpp>
 #include <optiweave/core/patch_visitor.hpp>
 #include <optiweave/core/bug_fix_visitor.hpp>
+#include <optiweave/core/rule_registry.hpp>
+#include <optiweave/core/rule_config.hpp>
+#include <optiweave/core/safety_tier.hpp>
 #include <optiweave/analysis/complexity_analyzer.hpp>
 #include <optiweave/analysis/diff_profile.hpp>
 #include <optiweave/runtime/json_parser.hpp>
@@ -348,6 +351,32 @@ static cl::opt<std::string> FPPrecisionFormat(
     "fp-precision-format",
     cl::desc("FP precision warning format: text, json (default: text)"),
     cl::value_desc("format"), cl::init("text"), cl::cat(OptiWeaveCategory));
+
+// Rule registry options
+static cl::opt<std::string> SafetyTierOpt(
+    "safety-tier",
+    cl::desc("Maximum safety tier for auto-fix/auto-patch rules: safe, mostly-safe, aggressive, advisory (default: aggressive)"),
+    cl::init("aggressive"), cl::cat(OptiWeaveCategory));
+
+static cl::opt<double> MinConfidence(
+    "min-confidence",
+    cl::desc("Minimum confidence threshold (0.0-1.0) for rule application (default: 0.0)"),
+    cl::init(0.0), cl::cat(OptiWeaveCategory));
+
+static cl::opt<std::string> RuleConfigOpt(
+    "rule-config",
+    cl::desc("Override rule thresholds: key=val,key=val"),
+    cl::value_desc("overrides"), cl::init(""), cl::cat(OptiWeaveCategory));
+
+static cl::opt<bool> ListRules(
+    "list-rules",
+    cl::desc("Print all registered fix and patch rules, then exit"),
+    cl::init(false), cl::cat(OptiWeaveCategory));
+
+static cl::opt<bool> VerboseRules(
+    "verbose-rules",
+    cl::desc("Print per-rule match detail (confidence, tier, reason)"),
+    cl::init(false), cl::cat(OptiWeaveCategory));
 
 /**
  * @brief Detect macOS SDK path via xcrun, with fallback.
@@ -994,11 +1023,40 @@ bool compileTransformedFiles(const std::vector<std::string> &source_paths) {
 int main(int argc, const char **argv) {
   // Early detection of C vs C++ based on -x flag (before OptionsParser)
   bool user_specified_c = false;
-  for (int i = 1; i < argc - 1; ++i) {
-    if (std::string(argv[i]) == "-x" && std::string(argv[i + 1]) == "c") {
+  bool early_list_rules = false;
+  for (int i = 1; i < argc; ++i) {
+    if (std::string(argv[i]) == "-x" && i + 1 < argc && std::string(argv[i + 1]) == "c") {
       user_specified_c = true;
-      break;
     }
+    if (std::string(argv[i]) == "--list-rules") {
+      early_list_rules = true;
+    }
+  }
+
+  // Handle --list-rules before OptionsParser (which requires source files)
+  if (early_list_rules) {
+    optiweave::core::register_builtin_rules();
+    auto pad = [](const std::string& s, size_t width) {
+      return s + std::string(s.size() < width ? width - s.size() : 0, ' ');
+    };
+    llvm::outs() << "\nRegistered Fix Rules:\n";
+    llvm::outs() << "  " << pad("ID", 25) << pad("Safety Tier", 15) << "Description\n";
+    llvm::outs() << "  " << std::string(70, '-') << "\n";
+    for (auto& r : optiweave::core::FixRuleRegistry::instance().all_rules()) {
+      llvm::outs() << "  " << pad(r->id(), 25)
+                   << pad(optiweave::core::safetyTierToString(r->safety_tier()), 15)
+                   << r->description() << "\n";
+    }
+    llvm::outs() << "\nRegistered Patch Rules:\n";
+    llvm::outs() << "  " << pad("ID", 25) << pad("Safety Tier", 15) << "Description\n";
+    llvm::outs() << "  " << std::string(70, '-') << "\n";
+    for (auto& r : optiweave::core::PatchRuleRegistry::instance().all_rules()) {
+      llvm::outs() << "  " << pad(r->id(), 25)
+                   << pad(optiweave::core::safetyTierToString(r->safety_tier()), 15)
+                   << r->description() << "\n";
+    }
+    llvm::outs() << "\n";
+    return 0;
   }
 
   // Parse command line arguments
@@ -1011,6 +1069,15 @@ int main(int argc, const char **argv) {
   }
 
   CommonOptionsParser &OptionsParser = ExpectedParser.get();
+
+  // Register all built-in rules
+  optiweave::core::register_builtin_rules();
+
+  // Build RuleConfig from CLI options
+  optiweave::core::RuleConfig rule_config;
+  rule_config.max_safety_tier = optiweave::core::parseSafetyTier(SafetyTierOpt);
+  rule_config.min_confidence = MinConfidence;
+  rule_config.apply_overrides(RuleConfigOpt);
 
   // Print version if requested
   if (argc == 2 &&
@@ -1146,12 +1213,15 @@ int main(int argc, const char **argv) {
                            size_t* total_patches,
                            size_t* total_advisories,
                            size_t* total_skipped,
-                           std::vector<std::string>* all_logs)
+                           std::vector<std::string>* all_logs,
+                           const optiweave::core::RuleConfig& rule_config,
+                           bool verbose_rules)
             : suggestions_(suggestions), dry_run_(dry_run),
               is_c_language_(is_c_language),
               total_patches_(total_patches), total_advisories_(total_advisories),
               total_skipped_(total_skipped),
-              all_logs_(all_logs) {}
+              all_logs_(all_logs), rule_config_(rule_config),
+              verbose_rules_(verbose_rules) {}
 
         std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance& CI,
                                                        StringRef file) override {
@@ -1166,16 +1236,20 @@ int main(int argc, const char **argv) {
                          size_t* total_patches,
                          size_t* total_advisories,
                          size_t* total_skipped,
-                         std::vector<std::string>* all_logs)
+                         std::vector<std::string>* all_logs,
+                         const optiweave::core::RuleConfig& rule_config,
+                         bool verbose_rules)
                 : rewriter_(rewriter), suggestions_(suggestions), dry_run_(dry_run),
                   is_c_language_(is_c_language),
                   total_patches_(total_patches), total_advisories_(total_advisories),
                   total_skipped_(total_skipped),
-                  all_logs_(all_logs) {}
+                  all_logs_(all_logs), rule_config_(rule_config),
+                  verbose_rules_(verbose_rules) {}
 
             void HandleTranslationUnit(ASTContext& context) override {
               optiweave::core::PatchVisitor visitor(rewriter_, context, suggestions_,
-                                                     dry_run_, is_c_language_);
+                                                     dry_run_, is_c_language_,
+                                                     rule_config_, verbose_rules_);
               visitor.TraverseDecl(context.getTranslationUnitDecl());
 
               *total_patches_ += visitor.patches_applied();
@@ -1195,12 +1269,15 @@ int main(int argc, const char **argv) {
             size_t* total_advisories_;
             size_t* total_skipped_;
             std::vector<std::string>* all_logs_;
+            optiweave::core::RuleConfig rule_config_;
+            bool verbose_rules_;
           };
 
           return std::make_unique<PatchConsumer>(rewriter_, suggestions_, dry_run_,
                                                   is_c_language_,
                                                   total_patches_, total_advisories_,
-                                                  total_skipped_, all_logs_);
+                                                  total_skipped_, all_logs_,
+                                                  rule_config_, verbose_rules_);
         }
 
         void EndSourceFileAction() override {
@@ -1247,6 +1324,8 @@ int main(int argc, const char **argv) {
         size_t* total_advisories_;
         size_t* total_skipped_;
         std::vector<std::string>* all_logs_;
+        optiweave::core::RuleConfig rule_config_;
+        bool verbose_rules_;
       };
 
       size_t total_patches = 0;
@@ -1262,17 +1341,21 @@ int main(int argc, const char **argv) {
                           size_t* total_patches,
                           size_t* total_advisories,
                           size_t* total_skipped,
-                          std::vector<std::string>* all_logs)
+                          std::vector<std::string>* all_logs,
+                          const optiweave::core::RuleConfig& rule_config,
+                          bool verbose_rules)
             : suggestions_(suggestions), dry_run_(dry_run),
               is_c_language_(is_c_language),
               total_patches_(total_patches), total_advisories_(total_advisories),
               total_skipped_(total_skipped),
-              all_logs_(all_logs) {}
+              all_logs_(all_logs), rule_config_(rule_config),
+              verbose_rules_(verbose_rules) {}
 
         std::unique_ptr<FrontendAction> create() override {
           return std::make_unique<PatchFrontendAction>(
               suggestions_, dry_run_, is_c_language_,
-              total_patches_, total_advisories_, total_skipped_, all_logs_);
+              total_patches_, total_advisories_, total_skipped_, all_logs_,
+              rule_config_, verbose_rules_);
         }
 
       private:
@@ -1283,11 +1366,14 @@ int main(int argc, const char **argv) {
         size_t* total_advisories_;
         size_t* total_skipped_;
         std::vector<std::string>* all_logs_;
+        optiweave::core::RuleConfig rule_config_;
+        bool verbose_rules_;
       };
 
       PatchActionFactory patch_factory(suggestions, PatchDryRun, is_c_language,
                                         &total_patches, &total_advisories,
-                                        &total_skipped, &all_logs);
+                                        &total_skipped, &all_logs, rule_config,
+                                        VerboseRules);
       PatchTool.run(&patch_factory);
 
       // Print patch log
@@ -1383,10 +1469,13 @@ int main(int argc, const char **argv) {
       BugFixFrontendAction(bool dry_run, bool is_c_language,
                            size_t* total_fixes, size_t* total_skipped,
                            std::vector<std::string>* all_logs,
-                           std::set<optiweave::analysis::BugFixKind> enabled_kinds)
+                           std::set<optiweave::analysis::BugFixKind> enabled_kinds,
+                           const optiweave::core::RuleConfig& rule_config,
+                           bool verbose_rules)
           : dry_run_(dry_run), is_c_language_(is_c_language),
             total_fixes_(total_fixes), total_skipped_(total_skipped),
-            all_logs_(all_logs), enabled_kinds_(std::move(enabled_kinds)) {}
+            all_logs_(all_logs), enabled_kinds_(std::move(enabled_kinds)),
+            rule_config_(rule_config), verbose_rules_(verbose_rules) {}
 
       std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance& CI,
                                                      StringRef file) override {
@@ -1397,10 +1486,13 @@ int main(int argc, const char **argv) {
           BugFixConsumer(clang::Rewriter& rewriter, bool dry_run, bool is_c_language,
                          size_t* total_fixes, size_t* total_skipped,
                          std::vector<std::string>* all_logs,
-                         std::set<optiweave::analysis::BugFixKind> enabled_kinds)
+                         std::set<optiweave::analysis::BugFixKind> enabled_kinds,
+                         const optiweave::core::RuleConfig& rule_config,
+                         bool verbose_rules)
               : rewriter_(rewriter), dry_run_(dry_run), is_c_language_(is_c_language),
                 total_fixes_(total_fixes), total_skipped_(total_skipped),
-                all_logs_(all_logs), enabled_kinds_(std::move(enabled_kinds)) {}
+                all_logs_(all_logs), enabled_kinds_(std::move(enabled_kinds)),
+                rule_config_(rule_config), verbose_rules_(verbose_rules) {}
 
           void HandleTranslationUnit(ASTContext& context) override {
             std::vector<optiweave::analysis::BugFixIssue> all_issues;
@@ -1461,7 +1553,8 @@ int main(int argc, const char **argv) {
             // Run BugFixVisitor
             optiweave::core::BugFixVisitor visitor(rewriter_, context, all_issues,
                                                     dry_run_, is_c_language_,
-                                                    enabled_kinds_);
+                                                    enabled_kinds_, rule_config_,
+                                                    verbose_rules_);
             visitor.TraverseDecl(context.getTranslationUnitDecl());
 
             *total_fixes_ += visitor.fixes_applied();
@@ -1479,11 +1572,14 @@ int main(int argc, const char **argv) {
           size_t* total_skipped_;
           std::vector<std::string>* all_logs_;
           std::set<optiweave::analysis::BugFixKind> enabled_kinds_;
+          optiweave::core::RuleConfig rule_config_;
+          bool verbose_rules_;
         };
 
         return std::make_unique<BugFixConsumer>(rewriter_, dry_run_, is_c_language_,
                                                  total_fixes_, total_skipped_, all_logs_,
-                                                 enabled_kinds_);
+                                                 enabled_kinds_, rule_config_,
+                                                 verbose_rules_);
       }
 
       void EndSourceFileAction() override {
@@ -1529,6 +1625,8 @@ int main(int argc, const char **argv) {
       size_t* total_skipped_;
       std::vector<std::string>* all_logs_;
       std::set<optiweave::analysis::BugFixKind> enabled_kinds_;
+      optiweave::core::RuleConfig rule_config_;
+      bool verbose_rules_;
     };
 
     size_t total_fixes = 0;
@@ -1540,15 +1638,18 @@ int main(int argc, const char **argv) {
       BugFixActionFactory(bool dry_run, bool is_c_language,
                           size_t* total_fixes, size_t* total_skipped,
                           std::vector<std::string>* all_logs,
-                          std::set<optiweave::analysis::BugFixKind> enabled_kinds)
+                          std::set<optiweave::analysis::BugFixKind> enabled_kinds,
+                          const optiweave::core::RuleConfig& rule_config,
+                          bool verbose_rules)
           : dry_run_(dry_run), is_c_language_(is_c_language),
             total_fixes_(total_fixes), total_skipped_(total_skipped),
-            all_logs_(all_logs), enabled_kinds_(std::move(enabled_kinds)) {}
+            all_logs_(all_logs), enabled_kinds_(std::move(enabled_kinds)),
+            rule_config_(rule_config), verbose_rules_(verbose_rules) {}
 
       std::unique_ptr<FrontendAction> create() override {
         return std::make_unique<BugFixFrontendAction>(
             dry_run_, is_c_language_, total_fixes_, total_skipped_, all_logs_,
-            enabled_kinds_);
+            enabled_kinds_, rule_config_, verbose_rules_);
       }
 
     private:
@@ -1558,11 +1659,14 @@ int main(int argc, const char **argv) {
       size_t* total_skipped_;
       std::vector<std::string>* all_logs_;
       std::set<optiweave::analysis::BugFixKind> enabled_kinds_;
+      optiweave::core::RuleConfig rule_config_;
+      bool verbose_rules_;
     };
 
     BugFixActionFactory fix_factory(AutoFixDryRun, is_c_language,
                                      &total_fixes, &total_skipped, &all_logs,
-                                     std::move(enabled_fix_kinds));
+                                     std::move(enabled_fix_kinds), rule_config,
+                                     VerboseRules);
     FixTool.run(&fix_factory);
 
     // Print fix log

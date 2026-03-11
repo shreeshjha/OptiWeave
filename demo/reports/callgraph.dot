@@ -1,0 +1,31 @@
+digraph CallGraph {
+    rankdir=LR;
+    node [shape=box, style=rounded];
+
+    "std::basic_string<char>::c_str" [];
+    "std::basic_string<char>::operator=" [];
+    "printf" [];
+    "vector_sum" [];
+    "grade_report" [];
+    "std::vector<int>::operator[]" [];
+    "main" [];
+    "naive_sum" [];
+    "scale_and_shift" [];
+    "std::vector<int>::size" [];
+    "is_converged" [];
+    "in_range" [];
+    "dot" [];
+    "classify_score" [];
+
+    "vector_sum" -> "dot";
+    "vector_sum" -> "vector_sum";
+    "vector_sum" -> "printf";
+    "vector_sum" -> "std::basic_string<char>::c_str";
+    "vector_sum" -> "scale_and_shift";
+    "vector_sum" -> "grade_report";
+    "vector_sum" -> "is_converged";
+    "naive_sum" -> "std::vector<int>::size";
+    "naive_sum" -> "std::vector<int>::operator[]";
+    "scale_and_shift" -> "classify_score";
+    "scale_and_shift" -> "std::basic_string<char>::operator=";
+}

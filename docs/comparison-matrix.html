@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OptiWeave — Tool Comparison Matrix</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --border: #30363d;
+    --text: #e6edf3;
+    --muted: #8b949e;
+    --green: #3fb950;
+    --green-bg: rgba(63,185,80,0.12);
+    --red: #f85149;
+    --red-bg: rgba(248,81,73,0.10);
+    --yellow: #d29922;
+    --yellow-bg: rgba(210,153,34,0.12);
+    --blue: #58a6ff;
+    --blue-bg: rgba(88,166,255,0.10);
+    --purple: #bc8cff;
+    --accent: #58a6ff;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    padding: 2rem;
+    line-height: 1.5;
+  }
+
+  .container { max-width: 1400px; margin: 0 auto; }
+
+  h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+    background: linear-gradient(135deg, var(--blue), var(--purple));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .subtitle {
+    color: var(--muted);
+    font-size: 0.95rem;
+    margin-bottom: 2rem;
+  }
+
+  h2 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 2.5rem 0 1rem;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  h2 .badge {
+    font-size: 0.7rem;
+    font-weight: 500;
+    padding: 2px 8px;
+    border-radius: 10px;
+    background: var(--blue-bg);
+    color: var(--blue);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .table-wrap {
+    overflow-x: auto;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+  }
+
+  thead th {
+    background: var(--surface);
+    color: var(--muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.7rem;
+    letter-spacing: 0.8px;
+    padding: 12px 16px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    white-space: nowrap;
+  }
+
+  thead th.tool-header {
+    text-align: center;
+    min-width: 100px;
+  }
+
+  thead th.ow-header {
+    background: linear-gradient(180deg, rgba(88,166,255,0.15), var(--surface));
+    color: var(--blue);
+    border-bottom: 2px solid var(--blue);
+  }
+
+  tbody td {
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+  }
+
+  tbody tr:last-child td { border-bottom: none; }
+
+  tbody tr:hover { background: rgba(136,198,255,0.04); }
+
+  td.feature-label {
+    font-weight: 500;
+    white-space: nowrap;
+    color: var(--text);
+    min-width: 200px;
+  }
+
+  td.category {
+    font-weight: 700;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--muted);
+    padding-top: 18px;
+    background: rgba(255,255,255,0.02);
+    border-bottom: 1px solid var(--border);
+  }
+
+  td.center { text-align: center; }
+
+  /* Chips */
+  .chip {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .chip-yes    { background: var(--green-bg); color: var(--green); }
+  .chip-no     { background: var(--red-bg);   color: var(--red);   }
+  .chip-partial{ background: var(--yellow-bg); color: var(--yellow);}
+  .chip-unique { background: linear-gradient(135deg, rgba(88,166,255,0.18), rgba(188,140,255,0.18));
+                 color: var(--purple); border: 1px solid rgba(188,140,255,0.25); }
+
+  /* Overhead bars */
+  .bar-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .bar {
+    height: 8px;
+    border-radius: 4px;
+    min-width: 4px;
+    transition: width 0.4s ease;
+  }
+  .bar-green  { background: var(--green); }
+  .bar-yellow { background: var(--yellow); }
+  .bar-red    { background: var(--red); }
+  .bar-label  { font-size: 0.8rem; color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+  /* Legend */
+  .legend {
+    display: flex;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    margin-top: 0.75rem;
+    font-size: 0.8rem;
+    color: var(--muted);
+  }
+  .legend-item { display: flex; align-items: center; gap: 6px; }
+  .legend-dot {
+    width: 10px; height: 10px; border-radius: 50%; display: inline-block;
+  }
+
+  /* Metric cards */
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.25rem;
+    text-align: center;
+  }
+  .card .value {
+    font-size: 2rem;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 0.25rem;
+  }
+  .card .label {
+    font-size: 0.8rem;
+    color: var(--muted);
+  }
+  .card .value.green { color: var(--green); }
+  .card .value.yellow { color: var(--yellow); }
+  .card .value.blue { color: var(--blue); }
+  .card .value.purple { color: var(--purple); }
+
+  /* Footer */
+  .footnotes {
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+    font-size: 0.8rem;
+    color: var(--muted);
+  }
+  .footnotes p { margin-bottom: 0.3rem; }
+
+  .ow-col { background: rgba(88,166,255,0.04); }
+
+  @media (max-width: 768px) {
+    body { padding: 1rem; }
+    h1 { font-size: 1.5rem; }
+    .cards { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>OptiWeave vs. Industry Tools</h1>
+<p class="subtitle">Comparison across 6 open-source C projects &mdash; tinyexpr, cJSON, hashmap.c, lz4, xxhash, Lua&nbsp;5.4</p>
+
+<!-- ── Key metrics ────────────────────────────────────────────────── -->
+<div class="cards">
+  <div class="card">
+    <div class="value green">&asymp;1&times;</div>
+    <div class="label">Memory Overhead</div>
+  </div>
+  <div class="card">
+    <div class="value yellow">5.1&times;</div>
+    <div class="label">Geo-Mean Runtime Overhead</div>
+  </div>
+  <div class="card">
+    <div class="value blue">6</div>
+    <div class="label">Auto-Fix Bug Kinds</div>
+  </div>
+  <div class="card">
+    <div class="value purple">7</div>
+    <div class="label">Static Analyzers</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     TABLE 1 — Feature / Capability Matrix
+     ═══════════════════════════════════════════════════════════════════ -->
+<h2>Feature Capabilities <span class="badge">what each tool can do</span></h2>
+<div class="table-wrap">
+<table>
+<thead>
+  <tr>
+    <th>Capability</th>
+    <th class="tool-header">perf</th>
+    <th class="tool-header">gprof</th>
+    <th class="tool-header">ASan</th>
+    <th class="tool-header">Valgrind</th>
+    <th class="tool-header ow-header">OptiWeave</th>
+  </tr>
+</thead>
+<tbody>
+  <!-- Profiling -->
+  <tr><td class="category" colspan="6">Profiling</td></tr>
+  <tr>
+    <td class="feature-label">Function-level hotspot detection</td>
+    <td class="center"><span class="chip chip-yes">Yes</span></td>
+    <td class="center"><span class="chip chip-yes">Sampling</span></td>
+    <td class="center"><span class="chip chip-no">No</span></td>
+    <td class="center"><span class="chip chip-yes">Exact</span></td>
+    <td class="center ow-col"><span class="chip chip-yes">Exact</span></td>
+  </tr>
+  <tr>
+    <td class="feature-label">Per-operation-type breakdown</td>
+    <td class="center"><span class="chip chip-no">No</span></td>
+    <td class="center"><span class="chip chip-no">No</span></td>
+    <td class="center"><span class="chip chip-no">No</span></td>
+    <td class="center"><span class="chip chip-no">No</span></td>
+    <td class="center ow-col"><span class="chip chip-unique">Unique</span></td>
+  </tr>
+  <tr>
+    <td class="feature-label">Hardware PMU counters (cycles, cache)</td>
+    <td class="center"><span class="chip chip-yes">Yes</span></td>
+    <td class="center"><span class="chip chip-no">No</span></td>
+    <td class="center"><span class="chip chip-no">No</span></td>
+    <td class="center"><span class="chip chip-partial">Simulated</span></td>
+    <td class="center ow-col"><span class="chip chip-partial">Linux</span></td>
+  </tr>
+  <tr>
+    <td class="feature-label">Operation timing (latency per op)</td>
+    <td class="center"><span class="chip chip-no">No</span></td>
+    <td class="center"><span class="chip chip-partial">Sampling</span></td>
+    <td class="center"><span class="chip chip-no">No</span></td>
+    <td class="center"><span class="chip chip-yes">Yes</span></td>
+    <td class="center ow-col"><span class="chip chip-yes">RDTSC</span></td>
+  </tr>
+  <tr>
+    <td class="feature-label">Diff-profile (before vs. after)</td>
+    <td class="center"><span class="chip chip-no">No</span></td>
+    <td class="center"><span class="chip chip-no">No</span></td>
+    <td class="center"><span class="chip chip-no">No</span></td>
+    <td class="center"><span class="chip chip-partial">Manual</span></td>
+    <td class="center ow-col"><span class="chip chip-unique">Built-in</span></td>
+  </tr>
+
+  <!-- Static analysis -->
+  <tr><td class="category" colspan="6">Static Analysis</td></tr>
+  <tr>
+    <td class="feature-label">Cyclomatic / cognitive complexity</td>
+    <td class="center"><span class="chip chip-no">No</span></td>
+    <td class="center"><span class="chip chip-no">No</span></td>
+    <td class="center"><span class="chip chip-no">No</span></td>
+    <td class="center"><span class="chip chip-no">No</span></td>
+    <td class="center ow-col"><span class="chip chip-unique">Unique</span></td>
+  </tr>
+  <tr>
+    <td class="feature-label">Call graph generation</td>
+    <td class="center"><span class="chip chip-no">No</span></td>
+    <td class="center"><span class="chip chip-yes">Flat</span></td>
+    <td class="center"><span class="chip chip-no">No</span></td>
+    <td class="center"><span class="chip chip-yes">Full</span></td>
+    <td class="center ow-col"><span class="chip chip-yes">DOT/HTML</span></td>
+  </tr>
+  <tr>
+    <td class="feature-label">Dependency / include graph</td>
+    <td class="center"><span class="chip chip-no">No</span></td>
+    <td class="center"><span class="chip chip-no">No</span></td>
+    <td class="center"><span class="chip chip-no">No</span></td>
+    <td class="center"><span class="chip chip-no">No</span></td>
+    <td class="center ow-col"><span class="chip chip-unique">Unique</span></td>
+  </tr>
+  <tr>
+    <td class="feature-label">Data flow analysis (uninit, unused, dead code)</td>
+    <td class="center"><span class="chip chip-no">No</span></td>
+    <td class="center"><span class="chip chip-no">No</span></td>
+    <td class="center"><span class="chip chip-partial">Uninit only</span></td>
+    <td class="center"><span class="chip chip-partial">Uninit only</span></td>
+    <td class="center ow-col"><span class="chip chip-yes">Full</span></td>
+  </tr>
+  <tr>
+    <td class="feature-label">Integer overflow detection</td>
+    <td class="center"><span class="chip chip-no">No</span></td>
+    <td class="center"><span class="chip chip-no">No</span></td>
+    <td class="center"><span class="chip chip-no">No</span></td>
+    <td class="center"><span class="chip chip-no">No</span></td>
+    <td class="center ow-col"><span class="chip chip-unique">Unique</span></td>
+  </tr>
+  <tr>
+    <td class="feature-label">Floating-point precision warnings</td>
+    <td class="center"><span class="chip chip-no">No</span></td>
+    <td class="center"><span class="chip chip-no">No</span></td>
+    <td class="center"><span class="chip chip-no">No</span></td>
+    <td class="center"><span class="chip chip-no">No</span></td>
+    <td class="center ow-col"><span class="chip chip-unique">Unique</span></td>
+  </tr>
+  <tr>
+    <td class="feature-label">Static memory leak analysis</td>
+    <td class="center"><span class="chip chip-no">No</span></td>
+    <td class="center"><span class="chip chip-no">No</span></td>
+    <td class="center"><span class="chip chip-yes">Runtime</span></td>
+    <td class="center"><span class="chip chip-yes">Runtime</span></td>
+    <td class="center ow-col"><span class="chip chip-yes">Static</span></td>
+  </tr>
+
+  <!-- Automated fixes -->
+  <tr><td class="category" colspan="6">Automated Code Fixes</td></tr>
+  <tr>
+    <td class="feature-label">Auto-patch (reciprocal hoist, SIMD hints)</td>
+    <td class="center"><span class="chip chip-no">No</span></td>
+    <td class="center"><span class="chip chip-no">No</span></td>
+    <td class="center"><span class="chip chip-no">No</span></td>
+    <td class="center"><span class="chip chip-no">No</span></td>
+    <td class="center ow-col"><span class="chip chip-unique">Unique</span></td>
+  </tr>
+  <tr>
+    <td class="feature-label">Auto-fix (overflow, shift, FP equality, ...)</td>
+    <td class="center"><span class="chip chip-no">No</span></td>
+    <td class="center"><span class="chip chip-no">No</span></td>
+    <td class="center"><span class="chip chip-no">No</span></td>
+    <td class="center"><span class="chip chip-no">No</span></td>
+    <td class="center ow-col"><span class="chip chip-unique">Unique</span></td>
+  </tr>
+
+  <!-- Practical -->
+  <tr><td class="category" colspan="6">Practical Considerations</td></tr>
+  <tr>
+    <td class="feature-label">Works without recompilation</td>
+    <td class="center"><span class="chip chip-yes">Yes</span></td>
+    <td class="center"><span class="chip chip-no">-pg flag</span></td>
+    <td class="center"><span class="chip chip-no">-fsanitize</span></td>
+    <td class="center"><span class="chip chip-yes">Yes</span></td>
+    <td class="center ow-col"><span class="chip chip-no">Transform</span></td>
+  </tr>
+  <tr>
+    <td class="feature-label">No kernel privileges required</td>
+    <td class="center"><span class="chip chip-no">CAP_PERFMON</span></td>
+    <td class="center"><span class="chip chip-yes">Yes</span></td>
+    <td class="center"><span class="chip chip-yes">Yes</span></td>
+    <td class="center"><span class="chip chip-yes">Yes</span></td>
+    <td class="center ow-col"><span class="chip chip-yes">Yes</span></td>
+  </tr>
+  <tr>
+    <td class="feature-label">Thread-safe profiling</td>
+    <td class="center"><span class="chip chip-yes">Yes</span></td>
+    <td class="center"><span class="chip chip-partial">Partial</span></td>
+    <td class="center"><span class="chip chip-yes">Yes</span></td>
+    <td class="center"><span class="chip chip-yes">Yes</span></td>
+    <td class="center ow-col"><span class="chip chip-yes">Lock-free</span></td>
+  </tr>
+  <tr>
+    <td class="feature-label">CI / container friendly</td>
+    <td class="center"><span class="chip chip-no">Needs perms</span></td>
+    <td class="center"><span class="chip chip-yes">Yes</span></td>
+    <td class="center"><span class="chip chip-yes">Yes</span></td>
+    <td class="center"><span class="chip chip-yes">Yes</span></td>
+    <td class="center ow-col"><span class="chip chip-yes">Yes</span></td>
+  </tr>
+  <tr>
+    <td class="feature-label">Export formats</td>
+    <td class="center"><span class="chip chip-partial">Text</span></td>
+    <td class="center"><span class="chip chip-partial">Text</span></td>
+    <td class="center"><span class="chip chip-partial">Text</span></td>
+    <td class="center"><span class="chip chip-partial">XML</span></td>
+    <td class="center ow-col"><span class="chip chip-yes">JSON/CSV/DOT/HTML/MD</span></td>
+  </tr>
+</tbody>
+</table>
+</div>
+
+<div class="legend">
+  <div class="legend-item"><span class="chip chip-yes" style="font-size:0.7rem">Yes</span> Fully supported</div>
+  <div class="legend-item"><span class="chip chip-partial" style="font-size:0.7rem">Partial</span> Limited support</div>
+  <div class="legend-item"><span class="chip chip-no" style="font-size:0.7rem">No</span> Not supported</div>
+  <div class="legend-item"><span class="chip chip-unique" style="font-size:0.7rem">Unique</span> Only in OptiWeave</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     TABLE 2 — Runtime Overhead
+     ═══════════════════════════════════════════════════════════════════ -->
+<h2>Runtime Overhead <span class="badge">normalized to baseline = 1&times;</span></h2>
+<div class="table-wrap">
+<table>
+<thead>
+  <tr>
+    <th>Project</th>
+    <th>Baseline</th>
+    <th class="tool-header">gprof</th>
+    <th class="tool-header">ASan</th>
+    <th class="tool-header">Valgrind</th>
+    <th class="tool-header ow-header">OptiWeave</th>
+    <th style="min-width:220px">OptiWeave visual</th>
+  </tr>
+</thead>
+<tbody>
+  <tr>
+    <td class="feature-label">tinyexpr <span style="color:var(--muted);font-size:0.75rem">(900 LOC)</span></td>
+    <td class="center">8 ms</td>
+    <td class="center">1.3&times;</td>
+    <td class="center">3.8&times;</td>
+    <td class="center">77&times;</td>
+    <td class="center ow-col"><strong>1.3&times;</strong></td>
+    <td><div class="bar-wrap"><div class="bar bar-green" style="width:12px"></div><span class="bar-label">1.3&times;</span></div></td>
+  </tr>
+  <tr>
+    <td class="feature-label">cJSON <span style="color:var(--muted);font-size:0.75rem">(2.1K LOC)</span></td>
+    <td class="center">10 ms</td>
+    <td class="center">1.0&times;</td>
+    <td class="center">12&times;</td>
+    <td class="center">85&times;</td>
+    <td class="center ow-col"><strong>6.5&times;</strong></td>
+    <td><div class="bar-wrap"><div class="bar bar-yellow" style="width:60px"></div><span class="bar-label">6.5&times;</span></div></td>
+  </tr>
+  <tr>
+    <td class="feature-label">hashmap.c <span style="color:var(--muted);font-size:0.75rem">(1K LOC)</span></td>
+    <td class="center">50 ms</td>
+    <td class="center">1.4&times;</td>
+    <td class="center">2.0&times;</td>
+    <td class="center">29&times;</td>
+    <td class="center ow-col"><strong>1.4&times;</strong></td>
+    <td><div class="bar-wrap"><div class="bar bar-green" style="width:14px"></div><span class="bar-label">1.4&times;</span></div></td>
+  </tr>
+  <tr>
+    <td class="feature-label">lz4 <span style="color:var(--muted);font-size:0.75rem">(4K LOC)</span></td>
+    <td class="center">10 ms</td>
+    <td class="center">1.0&times;</td>
+    <td class="center">6.5&times;</td>
+    <td class="center">95&times;</td>
+    <td class="center ow-col"><strong>2.5&times;</strong></td>
+    <td><div class="bar-wrap"><div class="bar bar-green" style="width:24px"></div><span class="bar-label">2.5&times;</span></div></td>
+  </tr>
+  <tr>
+    <td class="feature-label">xxhash <span style="color:var(--muted);font-size:0.75rem">(header-only)</span></td>
+    <td class="center">10 ms</td>
+    <td class="center">3.0&times;</td>
+    <td class="center">5.0&times;</td>
+    <td class="center">55&times;</td>
+    <td class="center ow-col"><strong>36&times;</strong>&nbsp;&sup1;</td>
+    <td><div class="bar-wrap"><div class="bar bar-red" style="width:180px"></div><span class="bar-label">36&times; (mul-saturated)</span></div></td>
+  </tr>
+  <tr>
+    <td class="feature-label">Lua 5.4 <span style="color:var(--muted);font-size:0.75rem">(25K LOC)</span></td>
+    <td class="center">3.38 s</td>
+    <td class="center">1.4&times;</td>
+    <td class="center">2.7&times;</td>
+    <td class="center">40&times;</td>
+    <td class="center ow-col"><strong>3.4&times;</strong></td>
+    <td><div class="bar-wrap"><div class="bar bar-yellow" style="width:34px"></div><span class="bar-label">3.4&times;</span></div></td>
+  </tr>
+  <tr style="background:rgba(88,166,255,0.06);">
+    <td class="feature-label" style="font-weight:700;">Geometric Mean</td>
+    <td class="center">&mdash;</td>
+    <td class="center"><strong>1.4&times;</strong></td>
+    <td class="center"><strong>4.4&times;</strong></td>
+    <td class="center"><strong>57&times;</strong></td>
+    <td class="center ow-col"><strong>5.1&times;</strong></td>
+    <td></td>
+  </tr>
+</tbody>
+</table>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     TABLE 3 — Memory Overhead
+     ═══════════════════════════════════════════════════════════════════ -->
+<h2>Memory Overhead <span class="badge">RSS normalized to baseline</span></h2>
+<div class="table-wrap">
+<table>
+<thead>
+  <tr>
+    <th>Project</th>
+    <th>Baseline RSS</th>
+    <th class="tool-header">gprof</th>
+    <th class="tool-header">ASan</th>
+    <th class="tool-header">Valgrind</th>
+    <th class="tool-header ow-header">OptiWeave</th>
+  </tr>
+</thead>
+<tbody>
+  <tr>
+    <td class="feature-label">tinyexpr</td>
+    <td class="center">2.4 MB</td>
+    <td class="center">1.0&times;</td>
+    <td class="center">2.3&times;</td>
+    <td class="center">16&times;</td>
+    <td class="center ow-col"><strong>0.9&times;</strong></td>
+  </tr>
+  <tr>
+    <td class="feature-label">cJSON</td>
+    <td class="center">1.5 MB</td>
+    <td class="center">1.2&times;</td>
+    <td class="center">8.5&times;</td>
+    <td class="center">25&times;</td>
+    <td class="center ow-col"><strong>1.0&times;</strong></td>
+  </tr>
+  <tr>
+    <td class="feature-label">hashmap.c</td>
+    <td class="center">10.6 MB</td>
+    <td class="center">1.0&times;</td>
+    <td class="center">1.8&times;</td>
+    <td class="center">3.6&times;</td>
+    <td class="center ow-col"><strong>1.0&times;</strong></td>
+  </tr>
+  <tr>
+    <td class="feature-label">lz4</td>
+    <td class="center">1.5 MB</td>
+    <td class="center">1.2&times;</td>
+    <td class="center">3.3&times;</td>
+    <td class="center">25&times;</td>
+    <td class="center ow-col"><strong>1.0&times;</strong></td>
+  </tr>
+  <tr>
+    <td class="feature-label">xxhash</td>
+    <td class="center">1.2 MB</td>
+    <td class="center">1.3&times;</td>
+    <td class="center">3.8&times;</td>
+    <td class="center">32&times;</td>
+    <td class="center ow-col"><strong>1.3&times;</strong></td>
+  </tr>
+  <tr>
+    <td class="feature-label">Lua 5.4</td>
+    <td class="center">1.8 MB</td>
+    <td class="center">1.0&times;</td>
+    <td class="center">4.6&times;</td>
+    <td class="center">22&times;</td>
+    <td class="center ow-col"><strong>1.2&times;</strong></td>
+  </tr>
+</tbody>
+</table>
+</div>
+<p style="font-size:0.85rem;color:var(--muted);margin-top:0.5rem;">
+  OptiWeave adds &lt;0.5&nbsp;MB regardless of program size &mdash; entirely from the runtime counter array and hotspot table (fixed-size structures).
+</p>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     TABLE 4 — Semantic Operation Counts (OptiWeave-exclusive)
+     ═══════════════════════════════════════════════════════════════════ -->
+<h2>Semantic Operation Counts <span class="badge">OptiWeave exclusive</span></h2>
+<div class="table-wrap">
+<table>
+<thead>
+  <tr>
+    <th>Operation</th>
+    <th class="tool-header">tinyexpr</th>
+    <th class="tool-header">cJSON</th>
+    <th class="tool-header">hashmap.c</th>
+    <th class="tool-header">lz4</th>
+    <th class="tool-header">xxhash</th>
+    <th class="tool-header">Lua 5.4</th>
+  </tr>
+</thead>
+<tbody>
+  <tr>
+    <td class="feature-label">Array subscripts</td>
+    <td class="center">159,498</td>
+    <td class="center">1,508,000</td>
+    <td class="center">187,560</td>
+    <td class="center">131,000</td>
+    <td class="center">16,000,000</td>
+    <td class="center">269,610,900</td>
+  </tr>
+  <tr>
+    <td class="feature-label">Additions</td>
+    <td class="center">30,857</td>
+    <td class="center">128,000</td>
+    <td class="center">770,173</td>
+    <td class="center">75,500</td>
+    <td class="center">400,000</td>
+    <td class="center">404,028,648</td>
+  </tr>
+  <tr>
+    <td class="feature-label">Subtractions</td>
+    <td class="center">35,601</td>
+    <td class="center">414,000</td>
+    <td class="center">100,084</td>
+    <td class="center">80,500</td>
+    <td class="center">200,000</td>
+    <td class="center">134,631,039</td>
+  </tr>
+  <tr>
+    <td class="feature-label">Multiplications</td>
+    <td class="center">6,875</td>
+    <td class="center">0</td>
+    <td class="center">400,435</td>
+    <td class="center">130,500</td>
+    <td class="center">8,000,000</td>
+    <td class="center">16,202</td>
+  </tr>
+  <tr>
+    <td class="feature-label">Divisions</td>
+    <td class="center">12,872</td>
+    <td class="center">0</td>
+    <td class="center">14</td>
+    <td class="center">500</td>
+    <td class="center">0</td>
+    <td class="center">600</td>
+  </tr>
+  <tr>
+    <td class="feature-label">Modulo</td>
+    <td class="center">0</td>
+    <td class="center">0</td>
+    <td class="center">100,000</td>
+    <td class="center">500</td>
+    <td class="center">0</td>
+    <td class="center">0</td>
+  </tr>
+  <tr style="background:rgba(88,166,255,0.06);font-weight:600;">
+    <td class="feature-label" style="font-weight:700;">Total ops</td>
+    <td class="center">245,703</td>
+    <td class="center">2,050,000</td>
+    <td class="center">1,558,266</td>
+    <td class="center">418,500</td>
+    <td class="center">24,600,000</td>
+    <td class="center">808,287,389</td>
+  </tr>
+</tbody>
+</table>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     TABLE 5 — Hotspot Identification
+     ═══════════════════════════════════════════════════════════════════ -->
+<h2>Hotspot Identification <span class="badge">OptiWeave vs gprof</span></h2>
+<div class="table-wrap">
+<table>
+<thead>
+  <tr>
+    <th>Project</th>
+    <th class="tool-header">OptiWeave #1 Hotspot</th>
+    <th class="tool-header">OW Hotspot %</th>
+    <th class="tool-header">gprof #1 Function</th>
+    <th class="tool-header">gprof Top %</th>
+    <th>Insight</th>
+  </tr>
+</thead>
+<tbody>
+  <tr>
+    <td class="feature-label">tinyexpr</td>
+    <td class="center"><code>next_token</code></td>
+    <td class="center">35.0%</td>
+    <td class="center"><code>te_eval</code></td>
+    <td class="center">~100%</td>
+    <td style="font-size:0.8rem;color:var(--muted)">OW finds the <em>memory</em> hotspot (lexer); gprof finds the <em>CPU</em> hotspot (eval)</td>
+  </tr>
+  <tr>
+    <td class="feature-label">cJSON</td>
+    <td class="center"><code>parse_string</code></td>
+    <td class="center">16.2%</td>
+    <td class="center"><em>(too fast)</em></td>
+    <td class="center">&mdash;</td>
+    <td style="font-size:0.8rem;color:var(--muted)">gprof sampling fails entirely; OW gives exact counts</td>
+  </tr>
+  <tr>
+    <td class="feature-label">hashmap.c</td>
+    <td class="center"><code>SIP64</code></td>
+    <td class="center">50.0%</td>
+    <td class="center"><code>hashmap_set</code></td>
+    <td class="center">~100%</td>
+    <td style="font-size:0.8rem;color:var(--muted)">OW drills into the hash function <em>inside</em> hashmap_set</td>
+  </tr>
+  <tr>
+    <td class="feature-label">lz4</td>
+    <td class="center"><code>LZ4_putIndexOnHash</code></td>
+    <td class="center">24.8%</td>
+    <td class="center"><code>LZ4_compress_fast_extState</code></td>
+    <td class="center">100%</td>
+    <td style="font-size:0.8rem;color:var(--muted)">OW identifies the specific hash-table op inside the compressor</td>
+  </tr>
+  <tr>
+    <td class="feature-label">xxhash</td>
+    <td class="center"><code>XXH64_consumeLong</code></td>
+    <td class="center">40.0%</td>
+    <td class="center"><code>XXH64</code></td>
+    <td class="center">100%</td>
+    <td style="font-size:0.8rem;color:var(--muted)">OW finds the inner accumulator loop; auto-patch target for SIMD</td>
+  </tr>
+  <tr>
+    <td class="feature-label">Lua 5.4</td>
+    <td class="center"><code>luaV_execute</code></td>
+    <td class="center">49.9%</td>
+    <td class="center"><code>luaV_execute</code></td>
+    <td class="center">80.5%</td>
+    <td style="font-size:0.8rem;color:var(--muted)">Both tools agree; OW adds 404M additions + 269M subscripts breakdown</td>
+  </tr>
+</tbody>
+</table>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     TABLE 6 — When to use what
+     ═══════════════════════════════════════════════════════════════════ -->
+<h2>When to Use What <span class="badge">recommendations</span></h2>
+<div class="table-wrap">
+<table>
+<thead>
+  <tr>
+    <th>Goal</th>
+    <th>Best Tool</th>
+    <th>Why</th>
+  </tr>
+</thead>
+<tbody>
+  <tr>
+    <td class="feature-label">Find CPU bottleneck function</td>
+    <td><span class="chip chip-yes">gprof</span> &nbsp;/&nbsp; <span class="chip chip-yes" style="background:var(--blue-bg);color:var(--blue)">OptiWeave</span></td>
+    <td style="color:var(--muted);font-size:0.85rem">gprof for quick sampling; OptiWeave for exact counts + operation breakdown</td>
+  </tr>
+  <tr>
+    <td class="feature-label">Find memory access patterns</td>
+    <td><span class="chip chip-yes" style="background:var(--blue-bg);color:var(--blue)">OptiWeave</span></td>
+    <td style="color:var(--muted);font-size:0.85rem">Subscript counting + hotspot tracking pinpoint array access bottlenecks</td>
+  </tr>
+  <tr>
+    <td class="feature-label">Find op-type bottleneck (mul vs div vs sub)</td>
+    <td><span class="chip chip-unique">OptiWeave only</span></td>
+    <td style="color:var(--muted);font-size:0.85rem">No other tool distinguishes between operation types</td>
+  </tr>
+  <tr>
+    <td class="feature-label">Find memory safety bugs</td>
+    <td><span class="chip chip-yes">ASan</span> &nbsp;+&nbsp; <span class="chip chip-yes">Valgrind</span></td>
+    <td style="color:var(--muted);font-size:0.85rem">Purpose-built for buffer overflows, use-after-free, etc.</td>
+  </tr>
+  <tr>
+    <td class="feature-label">Profile in CI / containers</td>
+    <td><span class="chip chip-yes" style="background:var(--blue-bg);color:var(--blue)">OptiWeave</span></td>
+    <td style="color:var(--muted);font-size:0.85rem">No kernel privileges needed; works in sandboxed environments</td>
+  </tr>
+  <tr>
+    <td class="feature-label">Profile production binary (no rebuild)</td>
+    <td><span class="chip chip-yes">perf</span> &nbsp;/&nbsp; <span class="chip chip-yes">Valgrind</span></td>
+    <td style="color:var(--muted);font-size:0.85rem">Attach to running process without source transformation</td>
+  </tr>
+  <tr>
+    <td class="feature-label">Auto-fix detected issues in source</td>
+    <td><span class="chip chip-unique">OptiWeave only</span></td>
+    <td style="color:var(--muted);font-size:0.85rem">--auto-patch for perf, --auto-fix for correctness &mdash; no other tool rewrites source</td>
+  </tr>
+  <tr>
+    <td class="feature-label">Static code quality analysis</td>
+    <td><span class="chip chip-yes" style="background:var(--blue-bg);color:var(--blue)">OptiWeave</span></td>
+    <td style="color:var(--muted);font-size:0.85rem">Complexity, data flow, FP precision, overflow &mdash; all in one tool</td>
+  </tr>
+</tbody>
+</table>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     Overhead formula
+     ═══════════════════════════════════════════════════════════════════ -->
+<h2>Overhead Model <span class="badge">predictable from source</span></h2>
+<div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:1.5rem;font-family:'SF Mono',Consolas,'Liberation Mono',Menlo,monospace;font-size:0.95rem;margin-bottom:1rem;text-align:center;">
+  overhead &asymp; 1 + (instrumented_ops_per_second &times; 8&thinsp;ns) / program_runtime
+</div>
+<div class="table-wrap">
+<table>
+<thead>
+  <tr>
+    <th>Project</th>
+    <th class="tool-header">Total Ops</th>
+    <th class="tool-header">Baseline Time</th>
+    <th class="tool-header">Ops/sec</th>
+    <th class="tool-header">Predicted</th>
+    <th class="tool-header">Measured</th>
+    <th class="tool-header">Match?</th>
+  </tr>
+</thead>
+<tbody>
+  <tr>
+    <td class="feature-label">tinyexpr</td>
+    <td class="center">245K</td>
+    <td class="center">8 ms</td>
+    <td class="center">30M/s</td>
+    <td class="center">1.2&times;</td>
+    <td class="center">1.3&times;</td>
+    <td class="center"><span class="chip chip-yes">Yes</span></td>
+  </tr>
+  <tr>
+    <td class="feature-label">cJSON</td>
+    <td class="center">2.05M</td>
+    <td class="center">10 ms</td>
+    <td class="center">205M/s</td>
+    <td class="center">2.6&times;</td>
+    <td class="center">6.5&times;</td>
+    <td class="center"><span class="chip chip-partial">~3&times;</span></td>
+  </tr>
+  <tr>
+    <td class="feature-label">hashmap.c</td>
+    <td class="center">1.56M</td>
+    <td class="center">50 ms</td>
+    <td class="center">31M/s</td>
+    <td class="center">1.3&times;</td>
+    <td class="center">1.4&times;</td>
+    <td class="center"><span class="chip chip-yes">Yes</span></td>
+  </tr>
+  <tr>
+    <td class="feature-label">lz4</td>
+    <td class="center">418K</td>
+    <td class="center">10 ms</td>
+    <td class="center">42M/s</td>
+    <td class="center">1.3&times;</td>
+    <td class="center">2.5&times;</td>
+    <td class="center"><span class="chip chip-partial">~2&times;</span></td>
+  </tr>
+  <tr>
+    <td class="feature-label">xxhash</td>
+    <td class="center">24.6M</td>
+    <td class="center">10 ms</td>
+    <td class="center">2.46B/s</td>
+    <td class="center">20&times;</td>
+    <td class="center">36&times;</td>
+    <td class="center"><span class="chip chip-partial">~2&times;</span></td>
+  </tr>
+  <tr>
+    <td class="feature-label">Lua 5.4</td>
+    <td class="center">808M</td>
+    <td class="center">3.38 s</td>
+    <td class="center">239M/s</td>
+    <td class="center">2.9&times;</td>
+    <td class="center">3.4&times;</td>
+    <td class="center"><span class="chip chip-yes">Yes</span></td>
+  </tr>
+</tbody>
+</table>
+</div>
+
+<div class="footnotes">
+  <p>&sup1; xxhash overhead is an extreme case: the 4-lane accumulator inner loop contains 40 multiplications per hash &mdash; every <code>*</code> is instrumented. This represents the ceiling of OptiWeave overhead.</p>
+  <p>&sup2; All benchmarks run on Linux 6.8.0 x86-64, gcc -O2 baseline, clang-18 for OptiWeave instrumentation.</p>
+  <p>&sup3; Memory overhead for OptiWeave is &lt;0.5 MB fixed (counter array + hotspot table), independent of program size.</p>
+  <p style="margin-top:1rem;color:var(--blue);">Generated from benchmark data collected 2026-02-19 &mdash; OptiWeave</p>
+</div>
+
+</div>
+</body>
+</html>

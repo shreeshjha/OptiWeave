@@ -134,6 +134,30 @@ set(OPTIWEAVE_CORE_SOURCES
     src/core/transformer.cpp
     src/core/patch_visitor.cpp
     src/core/bug_fix_visitor.cpp
+    src/core/rule_registry.cpp
+    # Fix rules
+    src/core/rules/fixes/unsigned_wraparound_rule.cpp
+    src/core/rules/fixes/signed_negation_rule.cpp
+    src/core/rules/fixes/signed_left_shift_rule.cpp
+    src/core/rules/fixes/uninitialized_var_rule.cpp
+    src/core/rules/fixes/unused_var_rule.cpp
+    src/core/rules/fixes/fp_equality_rule.cpp
+    src/core/rules/fixes/division_by_zero_rule.cpp
+    src/core/rules/fixes/null_deref_guard_rule.cpp
+    src/core/rules/fixes/string_overflow_rule.cpp
+    src/core/rules/fixes/implicit_fallthrough_rule.cpp
+    src/core/rules/fixes/sizeof_pointer_rule.cpp
+    src/core/rules/fixes/integer_truncation_rule.cpp
+    src/core/rules/fixes/dangling_else_rule.cpp
+    # Patch rules
+    src/core/rules/patches/division_reciprocal_rule.cpp
+    src/core/rules/patches/vectorization_pragma_rule.cpp
+    src/core/rules/patches/advisory_comment_rule.cpp
+    src/core/rules/patches/loop_interchange_rule.cpp
+    src/core/rules/patches/strength_reduction_rule.cpp
+    src/core/rules/patches/loop_unroll_hint_rule.cpp
+    src/core/rules/patches/prefetch_hint_rule.cpp
+    src/core/rules/patches/restrict_qualifier_rule.cpp
     src/runtime/loop_info_serializer.cpp
     src/Matchers/operator_matchers.cpp
     src/Matchers/type_matchers.cpp

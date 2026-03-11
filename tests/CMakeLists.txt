@@ -59,6 +59,9 @@ set(UNIT_TESTS
     unit/test_dependency_graph.cpp
     unit/test_data_flow_analysis.cpp
     unit/test_bug_fix_visitor.cpp
+    unit/test_rule_registry.cpp
+    unit/test_pattern_detectors.cpp
+    unit/test_rule_config.cpp
 )
 
 set(INTEGRATION_TESTS

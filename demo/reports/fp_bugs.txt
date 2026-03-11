@@ -1,0 +1,20 @@
+=== Floating-Point Precision Warning Report ===
+
+Total issues found: 2
+
+Critical: 0
+Warning: 0
+Info: 2
+
+[info] FP precision issue
+  Location: /Users/shreesh/Dev/Github/OptiWeave/demo/src/bugs.c:95:19 (in bad_precision)
+  Description: Subtraction of floating-point values may lose precision if operands are nearly equal
+  Suggestion: Consider restructuring computation to avoid subtracting nearly equal values
+  Expression: big - (big + small_delta)
+
+[info] FP precision issue
+  Location: /Users/shreesh/Dev/Github/OptiWeave/demo/src/bugs.c:112:51 (in main)
+  Description: Subtraction of floating-point values may lose precision if operands are nearly equal
+  Suggestion: Consider restructuring computation to avoid subtracting nearly equal values
+  Expression: 0.1f - 0.1f
+

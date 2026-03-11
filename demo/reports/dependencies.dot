@@ -1,0 +1,7 @@
+digraph DependencyGraph {
+    rankdir=LR;
+    node [shape=box, style=rounded];
+
+    "/Users/shreesh/Dev/Github/OptiWeave/demo/src/compute.cpp" [label="compute.cpp", color=green, fontcolor=green];
+
+}

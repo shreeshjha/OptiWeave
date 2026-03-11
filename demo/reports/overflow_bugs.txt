@@ -1,0 +1,48 @@
+=== Integer Overflow Detection Report ===
+
+Total issues found: 8
+
+Critical: 6
+Warning: 2
+Info: 0
+
+[warning] unsigned_wraparound
+  Location: /Users/shreesh/Dev/Github/OptiWeave/demo/src/bugs.c:27:12 (in safe_subtract)
+  Description: Unsigned integer subtraction may wrap around
+  Suggestion: Ensure LHS >= RHS before subtraction, or use signed integers if negative results are expected
+
+[critical] signed_negation_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/demo/src/bugs.c:36:12 (in safe_negate)
+  Description: Negation of signed integer may cause overflow (e.g., -INT_MIN)
+  Suggestion: Check if value is INT_MIN before negating, or use unsigned type
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/demo/src/bugs.c:44:12 (in make_flags)
+  Description: Potential undefined behavior: left shift of signed integer
+  Suggestion: Use unsigned integers for bit manipulation, or ensure shift amount is valid
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/demo/src/bugs.c:53:29 (in compute)
+  Description: Potential signed integer overflow in addition
+  Suggestion: Use safer arithmetic (e.g., check before addition, use wider type, or use unsigned)
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/demo/src/bugs.c:54:34 (in compute)
+  Description: Potential signed integer overflow in multiplication
+  Suggestion: Check operand magnitudes or use a wider type (e.g., int64_t)
+
+[warning] loop_counter_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/demo/src/bugs.c:66:5 (in process)
+  Description: Loop counter may overflow causing infinite loop
+  Suggestion: Ensure loop bounds don't cause counter overflow, use wider type, or check explicitly
+
+[critical] signed_addition_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/demo/src/bugs.c:67:9 (in process)
+  Description: Potential signed integer overflow in addition
+  Suggestion: Use safer arithmetic (e.g., check before addition, use wider type, or use unsigned)
+
+[critical] signed_negation_overflow
+  Location: /Users/shreesh/Dev/Github/OptiWeave/demo/src/bugs.c:104:55 (in main)
+  Description: Negation of signed integer may cause overflow (e.g., -INT_MIN)
+  Suggestion: Check if value is INT_MIN before negating, or use unsigned type
+
