@@ -48,14 +48,28 @@ namespace thresholds {
 // OptimizationAnalyzer Implementation
 // ============================================================================
 
-OptimizationAnalyzer::OptimizationAnalyzer() {
-    // Register default detectors
-    register_detector(std::make_unique<DivisionInLoopDetector>());
-    register_detector(std::make_unique<ComplexityDetector>());
-    register_detector(std::make_unique<MemoryAccessDetector>());
-    register_detector(std::make_unique<VectorizationDetector>());
-    register_detector(std::make_unique<RepeatedComputationDetector>());
-    register_detector(std::make_unique<BranchMispredictionDetector>());
+static void register_all_detectors(OptimizationAnalyzer& analyzer) {
+    analyzer.register_detector(std::make_unique<DivisionInLoopDetector>());
+    analyzer.register_detector(std::make_unique<ComplexityDetector>());
+    analyzer.register_detector(std::make_unique<MemoryAccessDetector>());
+    analyzer.register_detector(std::make_unique<VectorizationDetector>());
+    analyzer.register_detector(std::make_unique<RepeatedComputationDetector>());
+    analyzer.register_detector(std::make_unique<BranchMispredictionDetector>());
+    analyzer.register_detector(std::make_unique<LoopInterchangeDetector>());
+    analyzer.register_detector(std::make_unique<StrengthReductionDetector>());
+    analyzer.register_detector(std::make_unique<LoopUnrollHintDetector>());
+    analyzer.register_detector(std::make_unique<PrefetchHintDetector>());
+    analyzer.register_detector(std::make_unique<RestrictQualifierDetector>());
+}
+
+OptimizationAnalyzer::OptimizationAnalyzer()
+    : config_(core::RuleConfig{}) {
+    register_all_detectors(*this);
+}
+
+OptimizationAnalyzer::OptimizationAnalyzer(const core::RuleConfig& config)
+    : config_(config) {
+    register_all_detectors(*this);
 }
 
 void OptimizationAnalyzer::register_detector(std::unique_ptr<PatternDetector> detector) {
@@ -71,7 +85,7 @@ AnalysisResult OptimizationAnalyzer::analyze(
 
     // Run all registered detectors
     for (auto& detector : detectors_) {
-        detector->analyze(hotspots, stats, loop_info);
+        detector->analyze(hotspots, stats, loop_info, config_);
         auto patterns = detector->get_patterns();
 
         for (const auto& pattern : patterns) {
@@ -596,7 +610,8 @@ bool OptimizationAnalyzer::export_to_file(
 void DivisionInLoopDetector::analyze(
     const hotspots::HotspotTracker& hotspots,
     const optiweave::statistics::OperationCounters& stats,
-    const std::vector<LoopInfo>& loop_info
+    const std::vector<LoopInfo>& loop_info,
+    const core::RuleConfig& config
 ) {
     patterns_.clear();
 
@@ -606,7 +621,7 @@ void DivisionInLoopDetector::analyze(
         if (!loop.has_constant_divisor) continue;  // Only optimize constant divisors
 
         // Only flag if it's in a hot spot
-        if (loop.total_time_ns < thresholds::kMinHotLoopTimeNs) continue;
+        if (loop.total_time_ns < config.min_hot_loop_time_ns) continue;
 
         OptimizationPattern pattern;
         pattern.pattern_name = std::string(optiweave::analysis::patterns::kDivisionInHotLoop);
@@ -651,7 +666,8 @@ void DivisionInLoopDetector::analyze(
 void ComplexityDetector::analyze(
     const hotspots::HotspotTracker& hotspots,
     const optiweave::statistics::OperationCounters& stats,
-    const std::vector<LoopInfo>& loop_info
+    const std::vector<LoopInfo>& loop_info,
+    const core::RuleConfig& config
 ) {
     patterns_.clear();
 
@@ -704,7 +720,7 @@ void ComplexityDetector::analyze(
             patterns_.push_back(pattern);
         }
         // Other O(n²) patterns
-        else if (loop.nesting_level == 2 && loop.total_time_ns > thresholds::kMinQuadraticAlgoTimeNs) {
+        else if (loop.nesting_level == 2 && loop.total_time_ns > config.min_quadratic_algo_time_ns) {
             OptimizationPattern pattern;
             pattern.pattern_name = std::string(optiweave::analysis::patterns::kQuadraticAlgorithm);
             pattern.location = loop.location;
@@ -748,7 +764,8 @@ bool ComplexityDetector::is_matrix_multiply_pattern(const LoopInfo& loop) const 
 void MemoryAccessDetector::analyze(
     const hotspots::HotspotTracker& hotspots,
     const optiweave::statistics::OperationCounters& stats,
-    const std::vector<LoopInfo>& loop_info
+    const std::vector<LoopInfo>& loop_info,
+    const core::RuleConfig& config
 ) {
     patterns_.clear();
 
@@ -756,7 +773,7 @@ void MemoryAccessDetector::analyze(
         if (!loop.has_strided_access) continue;
         if (loop.stride_value <= 1) continue;  // Sequential access is fine
 
-        if (has_poor_locality(loop)) {
+        if (loop.stride_value * config.assumed_element_size > config.cache_line_size) {
             OptimizationPattern pattern;
             pattern.pattern_name = std::string(optiweave::analysis::patterns::kPoorMemoryLocality);
             pattern.location = loop.location;
@@ -798,13 +815,14 @@ int MemoryAccessDetector::estimate_cache_line_size() const {
 void VectorizationDetector::analyze(
     const hotspots::HotspotTracker& hotspots,
     const optiweave::statistics::OperationCounters& stats,
-    const std::vector<LoopInfo>& loop_info
+    const std::vector<LoopInfo>& loop_info,
+    const core::RuleConfig& config
 ) {
     patterns_.clear();
 
     for (const auto& loop : loop_info) {
         if (!loop.is_vectorizable) continue;
-        if (loop.total_time_ns < thresholds::kMinHotLoopTimeNs) continue;
+        if (loop.total_time_ns < config.min_hot_loop_time_ns) continue;
 
         if (is_simd_friendly(loop)) {
             OptimizationPattern pattern;
@@ -863,14 +881,15 @@ bool VectorizationDetector::is_simd_friendly(const LoopInfo& loop) const {
 void RepeatedComputationDetector::analyze(
     const hotspots::HotspotTracker& hotspots,
     const optiweave::statistics::OperationCounters& stats,
-    const std::vector<LoopInfo>& loop_info
+    const std::vector<LoopInfo>& loop_info,
+    const core::RuleConfig& config
 ) {
     patterns_.clear();
 
     // Look for loops with expensive operations that might be loop-invariant
     // Heuristic: loops with high iteration counts and significant time
     for (const auto& loop : loop_info) {
-        if (loop.total_time_ns < thresholds::kMinHotLoopTimeNs) continue;
+        if (loop.total_time_ns < config.min_hot_loop_time_ns) continue;
 
         // Check if loop likely has loop-invariant code that could be hoisted
         if (has_loop_invariant_code(loop)) {
@@ -918,6 +937,8 @@ bool RepeatedComputationDetector::has_loop_invariant_code(const LoopInfo& loop) 
 
     // Only flag loops that spend significant time (>100μs) AND have many iterations (>5000)
     // This avoids false positives on already-optimized loops
+    // Note: these thresholds come from the thresholds namespace defaults
+    // The config-based thresholds are checked at the caller level
     return loop.total_time_ns > thresholds::kMinLoopInvariantTimeNs &&
            loop.iteration_count > thresholds::kMinLoopInvariantIterations;
 }
@@ -929,7 +950,8 @@ bool RepeatedComputationDetector::has_loop_invariant_code(const LoopInfo& loop) 
 void BranchMispredictionDetector::analyze(
     const hotspots::HotspotTracker& hotspots,
     const optiweave::statistics::OperationCounters& stats,
-    const std::vector<LoopInfo>& loop_info
+    const std::vector<LoopInfo>& loop_info,
+    const core::RuleConfig& config
 ) {
     patterns_.clear();
 
@@ -951,11 +973,11 @@ void BranchMispredictionDetector::analyze(
     // If comparisons are >15% of operations, might have branch issues
     double comparison_ratio = static_cast<double>(comparison_ops) / total_ops;
 
-    if (comparison_ratio > thresholds::kBranchComparisonRatioThreshold) {
+    if (comparison_ratio > config.branch_comparison_ratio_threshold) {
         // Look for loops that might benefit from branchless code
         for (const auto& loop : loop_info) {
-            if (loop.total_time_ns < thresholds::kMinBranchAnalysisTimeNs) continue;
-            if (loop.iteration_count < thresholds::kMinBranchOptIterations) continue;
+            if (loop.total_time_ns < config.min_branch_analysis_time_ns) continue;
+            if (loop.iteration_count < config.min_branch_opt_iterations) continue;
 
             if (likely_has_unpredictable_branches(loop)) {
                 OptimizationPattern pattern;
@@ -1018,6 +1040,197 @@ bool BranchMispredictionDetector::likely_has_unpredictable_branches(const LoopIn
     // - Pattern of branches (random vs predictable)
     // For now, use a simple heuristic: high iteration count suggests benefit from branchless code
     return loop.iteration_count > thresholds::kMinBranchOptIterations;
+}
+
+// ============================================================================
+// LoopInterchangeDetector Implementation
+// ============================================================================
+
+void LoopInterchangeDetector::analyze(
+    const hotspots::HotspotTracker& hotspots,
+    const optiweave::statistics::OperationCounters& stats,
+    const std::vector<LoopInfo>& loop_info,
+    const core::RuleConfig& config
+) {
+    patterns_.clear();
+
+    for (const auto& loop : loop_info) {
+        if (loop.nesting_level < 2) continue;
+        if (!loop.has_strided_access) continue;
+        if (loop.stride_value * config.assumed_element_size <= config.cache_line_size) continue;
+        if (loop.total_time_ns < config.min_hot_loop_time_ns) continue;
+
+        OptimizationPattern pattern;
+        pattern.pattern_name = std::string(patterns::kLoopInterchange);
+        pattern.location = loop.location;
+        pattern.severity = Severity::MEDIUM;
+        pattern.category = PatternCategory::MEMORY_ACCESS;
+
+        pattern.description = "Nested loop with strided access (stride = " +
+                              std::to_string(loop.stride_value) +
+                              ") — loop interchange may improve cache locality";
+        pattern.why_slow = "Inner loop accesses memory with stride > cache line, causing frequent cache misses";
+        pattern.rationale = "Swapping inner and outer loop headers can convert column-major to row-major access";
+
+        pattern.estimated_speedup_min = 2.0f;
+        pattern.estimated_speedup_max = 5.0f;
+        pattern.time_ns = loop.total_time_ns;
+
+        patterns_.push_back(pattern);
+    }
+}
+
+// ============================================================================
+// StrengthReductionDetector Implementation
+// ============================================================================
+
+void StrengthReductionDetector::analyze(
+    const hotspots::HotspotTracker& hotspots,
+    const optiweave::statistics::OperationCounters& stats,
+    const std::vector<LoopInfo>& loop_info,
+    const core::RuleConfig& config
+) {
+    patterns_.clear();
+
+    for (const auto& loop : loop_info) {
+        if (loop.total_time_ns < config.min_hot_loop_time_ns) continue;
+
+        bool has_mult = false;
+        for (const auto& op : loop.operations_in_loop) {
+            if (op == "multiplication") { has_mult = true; break; }
+        }
+        if (!has_mult) continue;
+
+        OptimizationPattern pattern;
+        pattern.pattern_name = std::string(patterns::kStrengthReduction);
+        pattern.location = loop.location;
+        pattern.severity = Severity::MEDIUM;
+        pattern.category = PatternCategory::ARITHMETIC;
+
+        pattern.description = "Hot loop contains multiplication that may be reducible to addition";
+        pattern.why_slow = "Multiplication is more expensive than addition; if one operand is the induction variable, an accumulator can replace it";
+        pattern.rationale = "Replace i*K with accumulator += K each iteration";
+
+        pattern.estimated_speedup_min = 1.2f;
+        pattern.estimated_speedup_max = 2.0f;
+        pattern.time_ns = loop.total_time_ns;
+
+        patterns_.push_back(pattern);
+    }
+}
+
+// ============================================================================
+// LoopUnrollHintDetector Implementation
+// ============================================================================
+
+void LoopUnrollHintDetector::analyze(
+    const hotspots::HotspotTracker& hotspots,
+    const optiweave::statistics::OperationCounters& stats,
+    const std::vector<LoopInfo>& loop_info,
+    const core::RuleConfig& config
+) {
+    patterns_.clear();
+
+    for (const auto& loop : loop_info) {
+        if (loop.total_time_ns < config.min_hot_loop_time_ns) continue;
+
+        int body_stmts = loop.line_end - loop.line_start;
+        if (body_stmts <= 0 || body_stmts > config.loop_unroll_max_body_stmts) continue;
+        if (loop.iteration_count == 0) continue;
+        if (static_cast<int>(loop.iteration_count) > config.loop_unroll_max_trip_count) continue;
+
+        OptimizationPattern pattern;
+        pattern.pattern_name = std::string(patterns::kLoopUnrollHint);
+        pattern.location = loop.location;
+        pattern.severity = Severity::LOW;
+        pattern.category = PatternCategory::VECTORIZATION;
+
+        pattern.description = "Small bounded loop (" + std::to_string(body_stmts) +
+                              " stmts, ~" + std::to_string(loop.iteration_count) +
+                              " iters) is a candidate for unrolling";
+        pattern.why_slow = "Loop overhead (branch, increment, compare) dominates small loop bodies";
+        pattern.rationale = "Compiler unroll hint reduces loop overhead for small trip counts";
+
+        pattern.estimated_speedup_min = 1.1f;
+        pattern.estimated_speedup_max = 1.5f;
+        pattern.time_ns = loop.total_time_ns;
+
+        patterns_.push_back(pattern);
+    }
+}
+
+// ============================================================================
+// PrefetchHintDetector Implementation
+// ============================================================================
+
+void PrefetchHintDetector::analyze(
+    const hotspots::HotspotTracker& hotspots,
+    const optiweave::statistics::OperationCounters& stats,
+    const std::vector<LoopInfo>& loop_info,
+    const core::RuleConfig& config
+) {
+    patterns_.clear();
+
+    for (const auto& loop : loop_info) {
+        if (!loop.has_strided_access) continue;
+        if (loop.stride_value * config.assumed_element_size < config.prefetch_min_stride) continue;
+        if (loop.nesting_level >= 2) continue;  // Prefetch in nested loops is counterproductive
+        if (loop.total_time_ns < config.min_hot_loop_time_ns) continue;
+
+        OptimizationPattern pattern;
+        pattern.pattern_name = std::string(patterns::kPrefetchHint);
+        pattern.location = loop.location;
+        pattern.severity = Severity::LOW;
+        pattern.category = PatternCategory::MEMORY_ACCESS;
+
+        pattern.description = "Strided single-level loop (stride = " +
+                              std::to_string(loop.stride_value) +
+                              ") may benefit from software prefetch";
+        pattern.why_slow = "Large stride causes cache misses; prefetching can hide memory latency";
+        pattern.rationale = "Insert __builtin_prefetch ahead of access to warm the cache line";
+
+        pattern.estimated_speedup_min = 1.1f;
+        pattern.estimated_speedup_max = 1.5f;
+        pattern.time_ns = loop.total_time_ns;
+
+        patterns_.push_back(pattern);
+    }
+}
+
+// ============================================================================
+// RestrictQualifierDetector Implementation
+// ============================================================================
+
+void RestrictQualifierDetector::analyze(
+    const hotspots::HotspotTracker& hotspots,
+    const optiweave::statistics::OperationCounters& stats,
+    const std::vector<LoopInfo>& loop_info,
+    const core::RuleConfig& config
+) {
+    patterns_.clear();
+
+    for (const auto& loop : loop_info) {
+        if (loop.total_time_ns < config.min_hot_loop_time_ns) continue;
+        if (loop.num_pointer_params < 2) continue;
+
+        OptimizationPattern pattern;
+        pattern.pattern_name = std::string(patterns::kRestrictQualifier);
+        pattern.location = loop.location;
+        pattern.severity = Severity::LOW;
+        pattern.category = PatternCategory::MEMORY_ACCESS;
+
+        pattern.description = "Hot loop in function with " +
+                              std::to_string(loop.num_pointer_params) +
+                              " pointer params — restrict qualifier may enable vectorization";
+        pattern.why_slow = "Without restrict, compiler assumes pointers may alias and cannot vectorize safely";
+        pattern.rationale = "Add __restrict to pointer parameters to promise no aliasing";
+
+        pattern.estimated_speedup_min = 1.5f;
+        pattern.estimated_speedup_max = 4.0f;
+        pattern.time_ns = loop.total_time_ns;
+
+        patterns_.push_back(pattern);
+    }
 }
 
 } // namespace analysis

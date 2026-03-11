@@ -10,14 +10,24 @@
 namespace optiweave {
 namespace analysis {
 
-/// The six auto-fixable bug categories
+/// Auto-fixable bug categories (13 total)
 enum class BugFixKind {
+    // Original 6
     UnsignedWraparound,      // a - b  →  ((a) >= (b) ? (a) - (b) : 0)
     SignedNegationOverflow,  // -x  →  ((x) == INT_MIN ? INT_MAX : -(x))
     SignedLeftShift,         // x << n  →  ((unsigned)(x)) << n
     UninitializedVariable,   // int x;  →  int x = 0;
     UnusedVariable,          // insert (void)x;
-    FPEqualityComparison     // a == b  →  fabs((a)-(b)) < 1e-9
+    FPEqualityComparison,    // a == b  →  fabs((a)-(b)) < 1e-9
+
+    // New 7 (standalone — self-matched by rules, no analyzer prerequisite)
+    DivisionByZero,          // a / b  →  (b != 0 ? a / b : 0)
+    NullDerefGuard,          // insert null check at function entry
+    StringOverflow,          // strcpy → strncpy, sprintf → snprintf
+    ImplicitFallthrough,     // insert break; before next case
+    SizeofPointer,           // malloc(sizeof(ptr)) → malloc(sizeof(*ptr))
+    IntegerTruncation,       // add explicit cast on narrowing
+    DanglingElse             // wrap single-statement if/else bodies in braces
 };
 
 /// Unified issue consumed by BugFixVisitor

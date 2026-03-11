@@ -266,6 +266,7 @@ private:
   std::vector<optiweave::analysis::LoopInfo> loop_info_;
   int current_loop_nesting_ = 0;
   optiweave::analysis::LoopInfo* current_loop_ = nullptr;
+  int current_function_pointer_params_ = 0;
 
   // Call graph builder
   optiweave::analysis::CallGraphBuilder call_graph_builder_;

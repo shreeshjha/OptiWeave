@@ -999,6 +999,7 @@ void ModernASTVisitor::analyzeLoop(clang::Stmt *loop_body, clang::SourceLocation
   info.nesting_level = current_loop_nesting_;
   info.has_divisions = containsDivisions(loop_body);
   info.has_strided_access = containsStridedAccess(loop_body);
+  info.num_pointer_params = current_function_pointer_params_;
 
   // Basic heuristics for vectorization
   info.is_vectorizable = true;  // Assume vectorizable unless proven otherwise
@@ -1175,10 +1176,6 @@ void DependencyTrackerPPCallbacks::InclusionDirective(
 // ============================================================================
 
 bool ModernASTVisitor::VisitFunctionDecl(clang::FunctionDecl *decl) {
-  if (!config_.enable_call_graph) {
-    return true;
-  }
-
   // Only process function definitions (not just declarations)
   if (!decl->hasBody()) {
     return true;
@@ -1187,6 +1184,17 @@ bool ModernASTVisitor::VisitFunctionDecl(clang::FunctionDecl *decl) {
   // Skip if in system header
   auto &sm = context_.getSourceManager();
   if (config_.skip_system_headers && sm.isInSystemHeader(decl->getLocation())) {
+    return true;
+  }
+
+  // Count pointer parameters for restrict qualifier analysis
+  current_function_pointer_params_ = 0;
+  for (unsigned i = 0; i < decl->getNumParams(); i++) {
+    if (decl->getParamDecl(i)->getType()->isPointerType())
+      current_function_pointer_params_++;
+  }
+
+  if (!config_.enable_call_graph) {
     return true;
   }
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <optiweave/analysis/optimization_pattern.hpp>
+#include <optiweave/core/rule_config.hpp>
 #include <optiweave/runtime/hotspot_tracker.hpp>
 #include <optiweave/runtime/statistics.hpp>
 #include <memory>
@@ -22,6 +23,8 @@ struct LoopInfo {
     bool is_vectorizable;           // No loop-carried dependencies?
     std::vector<std::string> operations_in_loop;  // Operation types in loop body
 
+    int num_pointer_params = 0;     // Pointer params in enclosing function
+
     // Set at runtime
     uint64_t iteration_count = 0;   // How many times loop executed
     uint64_t total_time_ns = 0;     // Time spent in loop
@@ -41,10 +44,12 @@ public:
     /// @param hotspots Hotspot data from runtime profiling
     /// @param stats Operation statistics
     /// @param loop_info Loop information from AST analysis (optional)
+    /// @param config Rule configuration with tunable thresholds
     virtual void analyze(
         const hotspots::HotspotTracker& hotspots,
         const optiweave::statistics::OperationCounters& stats,
-        const std::vector<LoopInfo>& loop_info = {}
+        const std::vector<LoopInfo>& loop_info,
+        const core::RuleConfig& config
     ) = 0;
 
     /// Get detected patterns
@@ -61,6 +66,7 @@ protected:
 class OptimizationAnalyzer {
 public:
     OptimizationAnalyzer();
+    explicit OptimizationAnalyzer(const core::RuleConfig& config);
 
     /// Register a pattern detector
     void register_detector(std::unique_ptr<PatternDetector> detector);
@@ -90,6 +96,7 @@ public:
 
 private:
     std::vector<std::unique_ptr<PatternDetector>> detectors_;
+    core::RuleConfig config_;
 
     // Helper methods for report generation
     std::string format_code_block(const std::string& code, const std::string& language = "cpp") const;
@@ -102,7 +109,8 @@ public:
     void analyze(
         const hotspots::HotspotTracker& hotspots,
         const optiweave::statistics::OperationCounters& stats,
-        const std::vector<LoopInfo>& loop_info
+        const std::vector<LoopInfo>& loop_info,
+        const core::RuleConfig& config
     ) override;
 
     std::vector<OptimizationPattern> get_patterns() const override {
@@ -120,7 +128,8 @@ public:
     void analyze(
         const hotspots::HotspotTracker& hotspots,
         const optiweave::statistics::OperationCounters& stats,
-        const std::vector<LoopInfo>& loop_info
+        const std::vector<LoopInfo>& loop_info,
+        const core::RuleConfig& config
     ) override;
 
     std::vector<OptimizationPattern> get_patterns() const override {
@@ -141,7 +150,8 @@ public:
     void analyze(
         const hotspots::HotspotTracker& hotspots,
         const optiweave::statistics::OperationCounters& stats,
-        const std::vector<LoopInfo>& loop_info
+        const std::vector<LoopInfo>& loop_info,
+        const core::RuleConfig& config
     ) override;
 
     std::vector<OptimizationPattern> get_patterns() const override {
@@ -163,7 +173,8 @@ public:
     void analyze(
         const hotspots::HotspotTracker& hotspots,
         const optiweave::statistics::OperationCounters& stats,
-        const std::vector<LoopInfo>& loop_info
+        const std::vector<LoopInfo>& loop_info,
+        const core::RuleConfig& config
     ) override;
 
     std::vector<OptimizationPattern> get_patterns() const override {
@@ -184,7 +195,8 @@ public:
     void analyze(
         const hotspots::HotspotTracker& hotspots,
         const optiweave::statistics::OperationCounters& stats,
-        const std::vector<LoopInfo>& loop_info
+        const std::vector<LoopInfo>& loop_info,
+        const core::RuleConfig& config
     ) override;
 
     std::vector<OptimizationPattern> get_patterns() const override {
@@ -205,7 +217,8 @@ public:
     void analyze(
         const hotspots::HotspotTracker& hotspots,
         const optiweave::statistics::OperationCounters& stats,
-        const std::vector<LoopInfo>& loop_info
+        const std::vector<LoopInfo>& loop_info,
+        const core::RuleConfig& config
     ) override;
 
     std::vector<OptimizationPattern> get_patterns() const override {
@@ -218,6 +231,101 @@ public:
 
 private:
     bool likely_has_unpredictable_branches(const LoopInfo& loop) const;
+};
+
+/// Detector for loop interchange opportunities (nested loops with poor cache access)
+class LoopInterchangeDetector : public PatternDetector {
+public:
+    void analyze(
+        const hotspots::HotspotTracker& hotspots,
+        const optiweave::statistics::OperationCounters& stats,
+        const std::vector<LoopInfo>& loop_info,
+        const core::RuleConfig& config
+    ) override;
+
+    std::vector<OptimizationPattern> get_patterns() const override {
+        return patterns_;
+    }
+
+    std::string name() const override {
+        return "Loop Interchange Detector";
+    }
+};
+
+/// Detector for strength reduction opportunities (i*K → accumulator)
+class StrengthReductionDetector : public PatternDetector {
+public:
+    void analyze(
+        const hotspots::HotspotTracker& hotspots,
+        const optiweave::statistics::OperationCounters& stats,
+        const std::vector<LoopInfo>& loop_info,
+        const core::RuleConfig& config
+    ) override;
+
+    std::vector<OptimizationPattern> get_patterns() const override {
+        return patterns_;
+    }
+
+    std::string name() const override {
+        return "Strength Reduction Detector";
+    }
+};
+
+/// Detector for small bounded loops that can benefit from unrolling
+class LoopUnrollHintDetector : public PatternDetector {
+public:
+    void analyze(
+        const hotspots::HotspotTracker& hotspots,
+        const optiweave::statistics::OperationCounters& stats,
+        const std::vector<LoopInfo>& loop_info,
+        const core::RuleConfig& config
+    ) override;
+
+    std::vector<OptimizationPattern> get_patterns() const override {
+        return patterns_;
+    }
+
+    std::string name() const override {
+        return "Loop Unroll Hint Detector";
+    }
+};
+
+/// Detector for prefetch hint opportunities (strided single-level loops)
+class PrefetchHintDetector : public PatternDetector {
+public:
+    void analyze(
+        const hotspots::HotspotTracker& hotspots,
+        const optiweave::statistics::OperationCounters& stats,
+        const std::vector<LoopInfo>& loop_info,
+        const core::RuleConfig& config
+    ) override;
+
+    std::vector<OptimizationPattern> get_patterns() const override {
+        return patterns_;
+    }
+
+    std::string name() const override {
+        return "Prefetch Hint Detector";
+    }
+};
+
+/// Detector for restrict qualifier opportunities (functions with 2+ pointer params)
+class RestrictQualifierDetector : public PatternDetector {
+public:
+    void analyze(
+        const hotspots::HotspotTracker& hotspots,
+        const optiweave::statistics::OperationCounters& stats,
+        const std::vector<LoopInfo>& loop_info,
+        const core::RuleConfig& config
+    ) override;
+
+    std::vector<OptimizationPattern> get_patterns() const override {
+        return patterns_;
+    }
+
+    std::string name() const override {
+        return "Restrict Qualifier Detector";
+    }
 };
 
 } // namespace analysis

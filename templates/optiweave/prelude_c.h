@@ -119,22 +119,22 @@ static inline void __optiweave_record_subscript(const char *file, int line, cons
 #ifdef OPTIWEAVE_ENABLE_STATS
 
 #define ow_eq(lhs, rhs) \
-  (optiweave_increment_comparison(), (lhs) == (rhs))
+  (optiweave_increment_equal(), (lhs) == (rhs))
 
 #define ow_ne(lhs, rhs) \
-  (optiweave_increment_comparison(), (lhs) != (rhs))
+  (optiweave_increment_not_equal(), (lhs) != (rhs))
 
 #define ow_lt(lhs, rhs) \
-  (optiweave_increment_comparison(), (lhs) < (rhs))
+  (optiweave_increment_less_than(), (lhs) < (rhs))
 
 #define ow_le(lhs, rhs) \
-  (optiweave_increment_comparison(), (lhs) <= (rhs))
+  (optiweave_increment_less_equal(), (lhs) <= (rhs))
 
 #define ow_gt(lhs, rhs) \
-  (optiweave_increment_comparison(), (lhs) > (rhs))
+  (optiweave_increment_greater_than(), (lhs) > (rhs))
 
 #define ow_ge(lhs, rhs) \
-  (optiweave_increment_comparison(), (lhs) >= (rhs))
+  (optiweave_increment_greater_equal(), (lhs) >= (rhs))
 
 #else
 
@@ -154,16 +154,16 @@ static inline void __optiweave_record_subscript(const char *file, int line, cons
   (optiweave_increment_assignment(), ((lhs) = (rhs)))
 
 #define ow_add_assign(lhs, rhs) \
-  (optiweave_increment_compound_assignment(), ((lhs) += (rhs)))
+  (optiweave_increment_add_assign(), ((lhs) += (rhs)))
 
 #define ow_sub_assign(lhs, rhs) \
-  (optiweave_increment_compound_assignment(), ((lhs) -= (rhs)))
+  (optiweave_increment_sub_assign(), ((lhs) -= (rhs)))
 
 #define ow_mul_assign(lhs, rhs) \
-  (optiweave_increment_compound_assignment(), ((lhs) *= (rhs)))
+  (optiweave_increment_mul_assign(), ((lhs) *= (rhs)))
 
 #define ow_div_assign(lhs, rhs) \
-  (optiweave_increment_compound_assignment(), ((lhs) /= (rhs)))
+  (optiweave_increment_div_assign(), ((lhs) /= (rhs)))
 
 #else
 
