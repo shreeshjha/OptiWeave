@@ -1,0 +1,462 @@
+{
+  "runtime": {
+    "tinyexpr": {
+      "baseline": {
+        "time": {
+          "n": 40,
+          "mean": 52,
+          "median": 50.0,
+          "min": 50,
+          "max": 90,
+          "stddev": 7.9,
+          "p5": 50,
+          "p95": 80
+        },
+        "rss": {
+          "n": 40,
+          "mean": 2236.8,
+          "median": 2176.0,
+          "min": 2176,
+          "max": 2304,
+          "stddev": 64.7,
+          "p5": 2176,
+          "p95": 2304
+        }
+      },
+      "gprof": {
+        "time": {
+          "n": 40,
+          "mean": 228.2,
+          "median": 230.0,
+          "min": 220,
+          "max": 260,
+          "stddev": 9.0,
+          "p5": 220,
+          "p95": 250
+        },
+        "rss": {
+          "n": 40,
+          "mean": 2342.4,
+          "median": 2304.0,
+          "min": 2304,
+          "max": 2432,
+          "stddev": 59.4,
+          "p5": 2304,
+          "p95": 2432
+        }
+      },
+      "asan": {
+        "time": {
+          "n": 40,
+          "mean": 73,
+          "median": 70.0,
+          "min": 70,
+          "max": 100,
+          "stddev": 6.5,
+          "p5": 70,
+          "p95": 90
+        },
+        "rss": {
+          "n": 40,
+          "mean": 6150.4,
+          "median": 6144.0,
+          "min": 6144,
+          "max": 6272,
+          "stddev": 28.3,
+          "p5": 6144,
+          "p95": 6272
+        }
+      },
+      "valgrind": {
+        "time": {
+          "n": 5,
+          "mean": 4086,
+          "median": 4060,
+          "min": 4060,
+          "max": 4160,
+          "stddev": 43.4,
+          "p5": 4060,
+          "p95": 4160
+        },
+        "rss": {
+          "n": 5,
+          "mean": 55272.8,
+          "median": 55272,
+          "min": 55272,
+          "max": 55276,
+          "stddev": 1.8,
+          "p5": 55272,
+          "p95": 55276
+        }
+      }
+    },
+    "lz4": {
+      "baseline": {
+        "time": {
+          "n": 40,
+          "mean": 30,
+          "median": 30.0,
+          "min": 30,
+          "max": 30,
+          "stddev": 0.0,
+          "p5": 30,
+          "p95": 30
+        },
+        "rss": {
+          "n": 40,
+          "mean": 1408,
+          "median": 1408.0,
+          "min": 1408,
+          "max": 1408,
+          "stddev": 0.0,
+          "p5": 1408,
+          "p95": 1408
+        }
+      },
+      "gprof": {
+        "time": {
+          "n": 40,
+          "mean": 30.2,
+          "median": 30.0,
+          "min": 30,
+          "max": 40,
+          "stddev": 1.6,
+          "p5": 30,
+          "p95": 30
+        },
+        "rss": {
+          "n": 40,
+          "mean": 1664,
+          "median": 1664.0,
+          "min": 1664,
+          "max": 1664,
+          "stddev": 0.0,
+          "p5": 1664,
+          "p95": 1664
+        }
+      },
+      "asan": {
+        "time": {
+          "n": 40,
+          "mean": 242.2,
+          "median": 240.0,
+          "min": 240,
+          "max": 260,
+          "stddev": 4.8,
+          "p5": 240,
+          "p95": 250
+        },
+        "rss": {
+          "n": 40,
+          "mean": 7177.6,
+          "median": 7168.0,
+          "min": 7040,
+          "max": 7296,
+          "stddev": 44.8,
+          "p5": 7168,
+          "p95": 7296
+        }
+      },
+      "valgrind": {
+        "time": {
+          "n": 5,
+          "mean": 3098,
+          "median": 3090,
+          "min": 3060,
+          "max": 3180,
+          "stddev": 49.2,
+          "p5": 3060,
+          "p95": 3180
+        },
+        "rss": {
+          "n": 5,
+          "mean": 54680,
+          "median": 54680,
+          "min": 54680,
+          "max": 54680,
+          "stddev": 0.0,
+          "p5": 54680,
+          "p95": 54680
+        }
+      }
+    },
+    "xxhash": {
+      "baseline": {
+        "time": {
+          "n": 40,
+          "mean": 630,
+          "median": 630.0,
+          "min": 620,
+          "max": 690,
+          "stddev": 16.2,
+          "p5": 620,
+          "p95": 680
+        },
+        "rss": {
+          "n": 40,
+          "mean": 1664,
+          "median": 1664.0,
+          "min": 1664,
+          "max": 1664,
+          "stddev": 0.0,
+          "p5": 1664,
+          "p95": 1664
+        }
+      },
+      "gprof": {
+        "time": {
+          "n": 40,
+          "mean": 682.2,
+          "median": 670.0,
+          "min": 670,
+          "max": 850,
+          "stddev": 32.1,
+          "p5": 670,
+          "p95": 770
+        },
+        "rss": {
+          "n": 40,
+          "mean": 1664,
+          "median": 1664.0,
+          "min": 1664,
+          "max": 1664,
+          "stddev": 0.0,
+          "p5": 1664,
+          "p95": 1664
+        }
+      },
+      "asan": {
+        "time": {
+          "n": 40,
+          "mean": 1185.5,
+          "median": 1180.0,
+          "min": 1170,
+          "max": 1240,
+          "stddev": 21.1,
+          "p5": 1170,
+          "p95": 1240
+        },
+        "rss": {
+          "n": 40,
+          "mean": 7004.8,
+          "median": 7040.0,
+          "min": 6912,
+          "max": 7168,
+          "stddev": 76.6,
+          "p5": 6912,
+          "p95": 7168
+        }
+      },
+      "valgrind": {
+        "time": {
+          "n": 5,
+          "mean": 25388,
+          "median": 25320,
+          "min": 25260,
+          "max": 25590,
+          "stddev": 148.6,
+          "p5": 25260,
+          "p95": 25590
+        },
+        "rss": {
+          "n": 5,
+          "mean": 54656,
+          "median": 54656,
+          "min": 54656,
+          "max": 54656,
+          "stddev": 0.0,
+          "p5": 54656,
+          "p95": 54656
+        }
+      }
+    },
+    "lua": {
+      "baseline": {
+        "time": {
+          "n": 40,
+          "mean": 51.5,
+          "median": 50.0,
+          "min": 50,
+          "max": 60,
+          "stddev": 3.6,
+          "p5": 50,
+          "p95": 60
+        },
+        "rss": {
+          "n": 40,
+          "mean": 3500.6,
+          "median": 3472.0,
+          "min": 3472,
+          "max": 3604,
+          "stddev": 52.3,
+          "p5": 3472,
+          "p95": 3600
+        }
+      },
+      "gprof": {
+        "time": {
+          "n": 40,
+          "mean": 59.8,
+          "median": 60.0,
+          "min": 50,
+          "max": 60,
+          "stddev": 1.6,
+          "p5": 60,
+          "p95": 60
+        },
+        "rss": {
+          "n": 40,
+          "mean": 3763.4,
+          "median": 3732.0,
+          "min": 3728,
+          "max": 3868,
+          "stddev": 53.2,
+          "p5": 3728,
+          "p95": 3864
+        }
+      },
+      "asan": {
+        "time": {
+          "n": 40,
+          "mean": 171.2,
+          "median": 170.0,
+          "min": 170,
+          "max": 190,
+          "stddev": 4.0,
+          "p5": 170,
+          "p95": 180
+        },
+        "rss": {
+          "n": 40,
+          "mean": 16908.8,
+          "median": 16896.0,
+          "min": 16896,
+          "max": 17024,
+          "stddev": 38.9,
+          "p5": 16896,
+          "p95": 17024
+        }
+      },
+      "valgrind": {
+        "time": {
+          "n": 5,
+          "mean": 1976,
+          "median": 1980,
+          "min": 1960,
+          "max": 1990,
+          "stddev": 11.4,
+          "p5": 1960,
+          "p95": 1990
+        },
+        "rss": {
+          "n": 5,
+          "mean": 56144,
+          "median": 56144,
+          "min": 56144,
+          "max": 56144,
+          "stddev": 0.0,
+          "p5": 56144,
+          "p95": 56144
+        }
+      }
+    }
+  },
+  "detection": [
+    {
+      "project": "tinyexpr",
+      "loc": 1747,
+      "files": 7,
+      "ow_overflow": 136,
+      "ow_critical": 91,
+      "ow_warning": 45,
+      "ow_fp": 71,
+      "ow_uninit": 8,
+      "ow_unused": 1,
+      "ow_time_ms": 449,
+      "ct_warnings": 29,
+      "ct_time_ms": 7157,
+      "cc_total": 0,
+      "cc_time_ms": 2637
+    },
+    {
+      "project": "cJSON",
+      "loc": 9477,
+      "files": 28,
+      "ow_overflow": 3758,
+      "ow_critical": 1805,
+      "ow_warning": 1953,
+      "ow_fp": 60,
+      "ow_uninit": 12,
+      "ow_unused": 15,
+      "ow_time_ms": 5120,
+      "ct_warnings": 112,
+      "ct_time_ms": 88009,
+      "cc_total": 0,
+      "cc_time_ms": 60008
+    },
+    {
+      "project": "hashmap_c",
+      "loc": 1154,
+      "files": 2,
+      "ow_overflow": 70,
+      "ow_critical": 28,
+      "ow_warning": 42,
+      "ow_fp": 11,
+      "ow_uninit": 2,
+      "ow_unused": 1,
+      "ow_time_ms": 138,
+      "ct_warnings": 54,
+      "ct_time_ms": 4017,
+      "cc_total": 0,
+      "cc_time_ms": 1097
+    },
+    {
+      "project": "lz4",
+      "loc": 24262,
+      "files": 48,
+      "ow_overflow": 2612,
+      "ow_critical": 1000,
+      "ow_warning": 1612,
+      "ow_fp": 120,
+      "ow_uninit": 95,
+      "ow_unused": 91,
+      "ow_time_ms": 2934,
+      "ct_warnings": 1292,
+      "ct_time_ms": 46842,
+      "cc_total": 0,
+      "cc_time_ms": 60007
+    },
+    {
+      "project": "xxHash",
+      "loc": 5995,
+      "files": 15,
+      "ow_overflow": 2642,
+      "ow_critical": 250,
+      "ow_warning": 2392,
+      "ow_fp": 37,
+      "ow_uninit": 22,
+      "ow_unused": 27,
+      "ow_time_ms": 6100,
+      "ct_warnings": 193,
+      "ct_time_ms": 50405,
+      "cc_total": 0,
+      "cc_time_ms": 60008
+    },
+    {
+      "project": "lua",
+      "loc": 27922,
+      "files": 34,
+      "ow_overflow": 4214,
+      "ow_critical": 2484,
+      "ow_warning": 1730,
+      "ow_fp": 31,
+      "ow_uninit": 57,
+      "ow_unused": 19,
+      "ow_time_ms": 3609,
+      "ct_warnings": 346,
+      "ct_time_ms": 96874,
+      "cc_total": 0,
+      "cc_time_ms": 60009
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+{"project":"tinyexpr","transform_ms":205,"total_transforms":423,"original_bytes":46346,"transformed_bytes":54356,"size_increase_pct":17}
+{"project":"cJSON","transform_ms":4768,"total_transforms":18520,"original_bytes":277924,"transformed_bytes":309422,"size_increase_pct":11}
+{"project":"hashmap_c","transform_ms":109,"total_transforms":304,"original_bytes":37315,"transformed_bytes":42681,"size_increase_pct":14}
+{"project":"lz4","transform_ms":2630,"total_transforms":7889,"original_bytes":962136,"transformed_bytes":1046433,"size_increase_pct":8}
+{"project":"xxHash","transform_ms":4978,"total_transforms":4799,"original_bytes":214294,"transformed_bytes":232416,"size_increase_pct":8}
+{"project":"lua","transform_ms":1574,"total_transforms":4382,"original_bytes":821706,"transformed_bytes":875464,"size_increase_pct":6}

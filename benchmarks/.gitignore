@@ -1,0 +1,31 @@
+# Cloned third-party benchmark projects (each has its own upstream git history)
+projects/
+
+# Stray analysis output written to working dir by OptiWeave
+overflow.txt
+fp_precision.txt
+dataflow.txt
+callgraph.dot
+dependencies.dot
+complexity.json
+*.optiweave_loop_info.bin
+
+# Intermediate per-iteration data files (raw timing measurements)
+results/*/binaries/
+results/*/work/
+results/**/*.dat
+results/**/*.txt
+results/**/*.log
+results/**/*_perf.txt
+results/**/transformed/
+results/**/instrumented/
+results/**/optiweave/
+results/**/clang-tidy/
+results/**/cppcheck/
+results/**/overhead/
+
+# Keep only the structured summary files
+!results/**/summary.json
+!results/**/metrics.jsonl
+!results/**/detection.jsonl
+!results/**/overhead.jsonl

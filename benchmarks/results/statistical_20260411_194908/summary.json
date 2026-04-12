@@ -1,0 +1,462 @@
+{
+  "runtime": {
+    "tinyexpr": {
+      "baseline": {
+        "time": {
+          "n": 40,
+          "mean": 0,
+          "median": 0.0,
+          "min": 0,
+          "max": 0,
+          "stddev": 0.0,
+          "p5": 0,
+          "p95": 0
+        },
+        "rss": {
+          "n": 40,
+          "mean": 0,
+          "median": 0.0,
+          "min": 0,
+          "max": 0,
+          "stddev": 0.0,
+          "p5": 0,
+          "p95": 0
+        }
+      },
+      "gprof": {
+        "time": {
+          "n": 40,
+          "mean": 0,
+          "median": 0.0,
+          "min": 0,
+          "max": 0,
+          "stddev": 0.0,
+          "p5": 0,
+          "p95": 0
+        },
+        "rss": {
+          "n": 40,
+          "mean": 0,
+          "median": 0.0,
+          "min": 0,
+          "max": 0,
+          "stddev": 0.0,
+          "p5": 0,
+          "p95": 0
+        }
+      },
+      "asan": {
+        "time": {
+          "n": 40,
+          "mean": 0,
+          "median": 0.0,
+          "min": 0,
+          "max": 0,
+          "stddev": 0.0,
+          "p5": 0,
+          "p95": 0
+        },
+        "rss": {
+          "n": 40,
+          "mean": 0,
+          "median": 0.0,
+          "min": 0,
+          "max": 0,
+          "stddev": 0.0,
+          "p5": 0,
+          "p95": 0
+        }
+      },
+      "valgrind": {
+        "time": {
+          "n": 10,
+          "mean": 0,
+          "median": 0.0,
+          "min": 0,
+          "max": 0,
+          "stddev": 0.0,
+          "p5": 0,
+          "p95": 0
+        },
+        "rss": {
+          "n": 10,
+          "mean": 0,
+          "median": 0.0,
+          "min": 0,
+          "max": 0,
+          "stddev": 0.0,
+          "p5": 0,
+          "p95": 0
+        }
+      }
+    },
+    "lz4": {
+      "baseline": {
+        "time": {
+          "n": 40,
+          "mean": 0,
+          "median": 0.0,
+          "min": 0,
+          "max": 0,
+          "stddev": 0.0,
+          "p5": 0,
+          "p95": 0
+        },
+        "rss": {
+          "n": 40,
+          "mean": 0,
+          "median": 0.0,
+          "min": 0,
+          "max": 0,
+          "stddev": 0.0,
+          "p5": 0,
+          "p95": 0
+        }
+      },
+      "gprof": {
+        "time": {
+          "n": 40,
+          "mean": 0,
+          "median": 0.0,
+          "min": 0,
+          "max": 0,
+          "stddev": 0.0,
+          "p5": 0,
+          "p95": 0
+        },
+        "rss": {
+          "n": 40,
+          "mean": 0,
+          "median": 0.0,
+          "min": 0,
+          "max": 0,
+          "stddev": 0.0,
+          "p5": 0,
+          "p95": 0
+        }
+      },
+      "asan": {
+        "time": {
+          "n": 40,
+          "mean": 0,
+          "median": 0.0,
+          "min": 0,
+          "max": 0,
+          "stddev": 0.0,
+          "p5": 0,
+          "p95": 0
+        },
+        "rss": {
+          "n": 40,
+          "mean": 0,
+          "median": 0.0,
+          "min": 0,
+          "max": 0,
+          "stddev": 0.0,
+          "p5": 0,
+          "p95": 0
+        }
+      },
+      "valgrind": {
+        "time": {
+          "n": 10,
+          "mean": 0,
+          "median": 0.0,
+          "min": 0,
+          "max": 0,
+          "stddev": 0.0,
+          "p5": 0,
+          "p95": 0
+        },
+        "rss": {
+          "n": 10,
+          "mean": 0,
+          "median": 0.0,
+          "min": 0,
+          "max": 0,
+          "stddev": 0.0,
+          "p5": 0,
+          "p95": 0
+        }
+      }
+    },
+    "xxhash": {
+      "baseline": {
+        "time": {
+          "n": 40,
+          "mean": 0,
+          "median": 0.0,
+          "min": 0,
+          "max": 0,
+          "stddev": 0.0,
+          "p5": 0,
+          "p95": 0
+        },
+        "rss": {
+          "n": 40,
+          "mean": 0,
+          "median": 0.0,
+          "min": 0,
+          "max": 0,
+          "stddev": 0.0,
+          "p5": 0,
+          "p95": 0
+        }
+      },
+      "gprof": {
+        "time": {
+          "n": 40,
+          "mean": 0,
+          "median": 0.0,
+          "min": 0,
+          "max": 0,
+          "stddev": 0.0,
+          "p5": 0,
+          "p95": 0
+        },
+        "rss": {
+          "n": 40,
+          "mean": 0,
+          "median": 0.0,
+          "min": 0,
+          "max": 0,
+          "stddev": 0.0,
+          "p5": 0,
+          "p95": 0
+        }
+      },
+      "asan": {
+        "time": {
+          "n": 40,
+          "mean": 0,
+          "median": 0.0,
+          "min": 0,
+          "max": 0,
+          "stddev": 0.0,
+          "p5": 0,
+          "p95": 0
+        },
+        "rss": {
+          "n": 40,
+          "mean": 0,
+          "median": 0.0,
+          "min": 0,
+          "max": 0,
+          "stddev": 0.0,
+          "p5": 0,
+          "p95": 0
+        }
+      },
+      "valgrind": {
+        "time": {
+          "n": 10,
+          "mean": 0,
+          "median": 0.0,
+          "min": 0,
+          "max": 0,
+          "stddev": 0.0,
+          "p5": 0,
+          "p95": 0
+        },
+        "rss": {
+          "n": 10,
+          "mean": 0,
+          "median": 0.0,
+          "min": 0,
+          "max": 0,
+          "stddev": 0.0,
+          "p5": 0,
+          "p95": 0
+        }
+      }
+    },
+    "lua": {
+      "baseline": {
+        "time": {
+          "n": 40,
+          "mean": 0,
+          "median": 0.0,
+          "min": 0,
+          "max": 0,
+          "stddev": 0.0,
+          "p5": 0,
+          "p95": 0
+        },
+        "rss": {
+          "n": 40,
+          "mean": 0,
+          "median": 0.0,
+          "min": 0,
+          "max": 0,
+          "stddev": 0.0,
+          "p5": 0,
+          "p95": 0
+        }
+      },
+      "gprof": {
+        "time": {
+          "n": 40,
+          "mean": 0,
+          "median": 0.0,
+          "min": 0,
+          "max": 0,
+          "stddev": 0.0,
+          "p5": 0,
+          "p95": 0
+        },
+        "rss": {
+          "n": 40,
+          "mean": 0,
+          "median": 0.0,
+          "min": 0,
+          "max": 0,
+          "stddev": 0.0,
+          "p5": 0,
+          "p95": 0
+        }
+      },
+      "asan": {
+        "time": {
+          "n": 40,
+          "mean": 0,
+          "median": 0.0,
+          "min": 0,
+          "max": 0,
+          "stddev": 0.0,
+          "p5": 0,
+          "p95": 0
+        },
+        "rss": {
+          "n": 40,
+          "mean": 0,
+          "median": 0.0,
+          "min": 0,
+          "max": 0,
+          "stddev": 0.0,
+          "p5": 0,
+          "p95": 0
+        }
+      },
+      "valgrind": {
+        "time": {
+          "n": 10,
+          "mean": 0,
+          "median": 0.0,
+          "min": 0,
+          "max": 0,
+          "stddev": 0.0,
+          "p5": 0,
+          "p95": 0
+        },
+        "rss": {
+          "n": 10,
+          "mean": 0,
+          "median": 0.0,
+          "min": 0,
+          "max": 0,
+          "stddev": 0.0,
+          "p5": 0,
+          "p95": 0
+        }
+      }
+    }
+  },
+  "detection": [
+    {
+      "project": "tinyexpr",
+      "loc": 1747,
+      "files": 7,
+      "ow_overflow": 136,
+      "ow_critical": 91,
+      "ow_warning": 45,
+      "ow_fp": 71,
+      "ow_uninit": 8,
+      "ow_unused": 1,
+      "ow_time_ms": 482,
+      "ct_warnings": 29,
+      "ct_time_ms": 6853,
+      "cc_total": 0,
+      "cc_time_ms": 2684
+    },
+    {
+      "project": "cJSON",
+      "loc": 9477,
+      "files": 28,
+      "ow_overflow": 3758,
+      "ow_critical": 1805,
+      "ow_warning": 1953,
+      "ow_fp": 60,
+      "ow_uninit": 12,
+      "ow_unused": 15,
+      "ow_time_ms": 4597,
+      "ct_warnings": 112,
+      "ct_time_ms": 84876,
+      "cc_total": 0,
+      "cc_time_ms": 60007
+    },
+    {
+      "project": "hashmap_c",
+      "loc": 1154,
+      "files": 2,
+      "ow_overflow": 70,
+      "ow_critical": 28,
+      "ow_warning": 42,
+      "ow_fp": 11,
+      "ow_uninit": 2,
+      "ow_unused": 1,
+      "ow_time_ms": 141,
+      "ct_warnings": 54,
+      "ct_time_ms": 4046,
+      "cc_total": 0,
+      "cc_time_ms": 1161
+    },
+    {
+      "project": "lz4",
+      "loc": 24262,
+      "files": 48,
+      "ow_overflow": 2612,
+      "ow_critical": 1000,
+      "ow_warning": 1612,
+      "ow_fp": 120,
+      "ow_uninit": 95,
+      "ow_unused": 91,
+      "ow_time_ms": 2899,
+      "ct_warnings": 1292,
+      "ct_time_ms": 46256,
+      "cc_total": 0,
+      "cc_time_ms": 60008
+    },
+    {
+      "project": "xxHash",
+      "loc": 5995,
+      "files": 15,
+      "ow_overflow": 2642,
+      "ow_critical": 250,
+      "ow_warning": 2392,
+      "ow_fp": 37,
+      "ow_uninit": 22,
+      "ow_unused": 27,
+      "ow_time_ms": 5895,
+      "ct_warnings": 193,
+      "ct_time_ms": 49175,
+      "cc_total": 0,
+      "cc_time_ms": 60008
+    },
+    {
+      "project": "lua",
+      "loc": 27922,
+      "files": 34,
+      "ow_overflow": 4214,
+      "ow_critical": 2484,
+      "ow_warning": 1730,
+      "ow_fp": 31,
+      "ow_uninit": 57,
+      "ow_unused": 19,
+      "ow_time_ms": 3588,
+      "ct_warnings": 346,
+      "ct_time_ms": 100880,
+      "cc_total": 0,
+      "cc_time_ms": 60008
+    }
+  ]
+}

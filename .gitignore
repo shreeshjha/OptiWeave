@@ -351,3 +351,7 @@ examples/**/*.sh
 
 # Keep the main C runtime template
 !templates/optiweave/optiweave_runtime.c
+
+# Locally-extracted dev packages (not part of source)
+.local-deps/
+

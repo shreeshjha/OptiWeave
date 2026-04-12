@@ -1,0 +1,264 @@
+{
+  "detection": {
+    "tinyexpr/optiweave": {
+      "project": "tinyexpr",
+      "tool": "optiweave",
+      "loc": 1747,
+      "c_files": 7,
+      "overflow_total": 136,
+      "overflow_critical": 91,
+      "overflow_warning": 45,
+      "fp_issues": 71,
+      "uninit_vars": 8,
+      "unused_vars": 1,
+      "functions": 29,
+      "avg_cyclomatic": "0",
+      "detection_time_ms": 334
+    },
+    "tinyexpr/clang-tidy": {
+      "project": "tinyexpr",
+      "tool": "clang-tidy",
+      "warnings": 29,
+      "integer_issues": 9,
+      "null_deref": 0,
+      "security": 8,
+      "uninit": 0,
+      "time_ms": 6876
+    },
+    "tinyexpr/cppcheck": {
+      "project": "tinyexpr",
+      "tool": "cppcheck",
+      "errors": 0,
+      "warnings": 0,
+      "style": 0,
+      "performance": 0,
+      "total": 0,
+      "time_ms": 2627
+    },
+    "cJSON/optiweave": {
+      "project": "cJSON",
+      "tool": "optiweave",
+      "loc": 9477,
+      "c_files": 28,
+      "overflow_total": 3758,
+      "overflow_critical": 1805,
+      "overflow_warning": 1953,
+      "fp_issues": 60,
+      "uninit_vars": 12,
+      "unused_vars": 15,
+      "functions": 2,
+      "avg_cyclomatic": "0",
+      "detection_time_ms": 3589
+    },
+    "cJSON/clang-tidy": {
+      "project": "cJSON",
+      "tool": "clang-tidy",
+      "warnings": 112,
+      "integer_issues": 0,
+      "null_deref": 1,
+      "security": 65,
+      "uninit": 0,
+      "time_ms": 83773
+    },
+    "cJSON/cppcheck": {
+      "project": "cJSON",
+      "tool": "cppcheck",
+      "errors": 0,
+      "warnings": 0,
+      "style": 0,
+      "performance": 0,
+      "total": 0,
+      "time_ms": 60009
+    },
+    "hashmap_c/optiweave": {
+      "project": "hashmap_c",
+      "tool": "optiweave",
+      "loc": 1154,
+      "c_files": 2,
+      "overflow_total": 70,
+      "overflow_critical": 28,
+      "overflow_warning": 42,
+      "fp_issues": 11,
+      "uninit_vars": 2,
+      "unused_vars": 1,
+      "functions": 0,
+      "avg_cyclomatic": "0",
+      "detection_time_ms": 119
+    },
+    "hashmap_c/clang-tidy": {
+      "project": "hashmap_c",
+      "tool": "clang-tidy",
+      "warnings": 54,
+      "integer_issues": 14,
+      "null_deref": 0,
+      "security": 18,
+      "uninit": 0,
+      "time_ms": 3941
+    },
+    "hashmap_c/cppcheck": {
+      "project": "hashmap_c",
+      "tool": "cppcheck",
+      "errors": 0,
+      "warnings": 0,
+      "style": 0,
+      "performance": 0,
+      "total": 0,
+      "time_ms": 1108
+    },
+    "lz4/optiweave": {
+      "project": "lz4",
+      "tool": "optiweave",
+      "loc": 24262,
+      "c_files": 48,
+      "overflow_total": 2612,
+      "overflow_critical": 1000,
+      "overflow_warning": 1612,
+      "fp_issues": 120,
+      "uninit_vars": 95,
+      "unused_vars": 91,
+      "functions": 0,
+      "avg_cyclomatic": "0",
+      "detection_time_ms": 2053
+    },
+    "lz4/clang-tidy": {
+      "project": "lz4",
+      "tool": "clang-tidy",
+      "warnings": 1292,
+      "integer_issues": 42,
+      "null_deref": 2,
+      "security": 98,
+      "uninit": 0,
+      "time_ms": 44962
+    },
+    "lz4/cppcheck": {
+      "project": "lz4",
+      "tool": "cppcheck",
+      "errors": 0,
+      "warnings": 0,
+      "style": 0,
+      "performance": 0,
+      "total": 0,
+      "time_ms": 60008
+    },
+    "xxHash/optiweave": {
+      "project": "xxHash",
+      "tool": "optiweave",
+      "loc": 5995,
+      "c_files": 15,
+      "overflow_total": 2642,
+      "overflow_critical": 250,
+      "overflow_warning": 2392,
+      "fp_issues": 37,
+      "uninit_vars": 22,
+      "unused_vars": 27,
+      "functions": 0,
+      "avg_cyclomatic": "0",
+      "detection_time_ms": 3890
+    },
+    "xxHash/clang-tidy": {
+      "project": "xxHash",
+      "tool": "clang-tidy",
+      "warnings": 193,
+      "integer_issues": 0,
+      "null_deref": 0,
+      "security": 76,
+      "uninit": 0,
+      "time_ms": 49556
+    },
+    "xxHash/cppcheck": {
+      "project": "xxHash",
+      "tool": "cppcheck",
+      "errors": 0,
+      "warnings": 0,
+      "style": 0,
+      "performance": 0,
+      "total": 0,
+      "time_ms": 60008
+    },
+    "lua/optiweave": {
+      "project": "lua",
+      "tool": "optiweave",
+      "loc": 27922,
+      "c_files": 34,
+      "overflow_total": 4214,
+      "overflow_critical": 2484,
+      "overflow_warning": 1730,
+      "fp_issues": 31,
+      "uninit_vars": 57,
+      "unused_vars": 19,
+      "functions": 5,
+      "avg_cyclomatic": "0",
+      "detection_time_ms": 2439
+    },
+    "lua/clang-tidy": {
+      "project": "lua",
+      "tool": "clang-tidy",
+      "warnings": 347,
+      "integer_issues": 12,
+      "null_deref": 3,
+      "security": 64,
+      "uninit": 0,
+      "time_ms": 98133
+    },
+    "lua/cppcheck": {
+      "project": "lua",
+      "tool": "cppcheck",
+      "errors": 0,
+      "warnings": 0,
+      "style": 0,
+      "performance": 0,
+      "total": 0,
+      "time_ms": 60007
+    }
+  },
+  "overhead": {
+    "tinyexpr": {
+      "project": "tinyexpr",
+      "transform_ms": 205,
+      "total_transforms": 423,
+      "original_bytes": 46346,
+      "transformed_bytes": 54356,
+      "size_increase_pct": 17
+    },
+    "cJSON": {
+      "project": "cJSON",
+      "transform_ms": 4768,
+      "total_transforms": 18520,
+      "original_bytes": 277924,
+      "transformed_bytes": 309422,
+      "size_increase_pct": 11
+    },
+    "hashmap_c": {
+      "project": "hashmap_c",
+      "transform_ms": 109,
+      "total_transforms": 304,
+      "original_bytes": 37315,
+      "transformed_bytes": 42681,
+      "size_increase_pct": 14
+    },
+    "lz4": {
+      "project": "lz4",
+      "transform_ms": 2630,
+      "total_transforms": 7889,
+      "original_bytes": 962136,
+      "transformed_bytes": 1046433,
+      "size_increase_pct": 8
+    },
+    "xxHash": {
+      "project": "xxHash",
+      "transform_ms": 4978,
+      "total_transforms": 4799,
+      "original_bytes": 214294,
+      "transformed_bytes": 232416,
+      "size_increase_pct": 8
+    },
+    "lua": {
+      "project": "lua",
+      "transform_ms": 1574,
+      "total_transforms": 4382,
+      "original_bytes": 821706,
+      "transformed_bytes": 875464,
+      "size_increase_pct": 6
+    }
+  }
+}

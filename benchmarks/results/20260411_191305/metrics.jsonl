@@ -1,0 +1,6 @@
+{"project":"tinyexpr","tool":"optiweave","time_ms":176,"array_subscripts":59,"arithmetic_ops":374,"total_transforms":433,"templates_skipped":0,"errors":353,"loc":1747,"c_files":7}
+{"project":"tinyexpr","tool":"clang-tidy","time_ms":5959,"warnings":21,"errors":0,"notes":8,"integer_issues":9,"null_deref":0,"dead_code":0,"security":8}
+{"project":"tinyexpr","tool":"cppcheck","time_ms":2610,"errors":0,"warnings":0,"style":0,"performance":0,"portability":0,"information":0,"total_findings":0}
+{"project":"tinyexpr","tool":"optiweave-overhead","transform_time_ms":153,"original_bytes":46346,"transformed_bytes":50977,"size_increase_pct":9}
+{"project":"cJSON","tool":"optiweave","time_ms":1565,"array_subscripts":1418,"arithmetic_ops":17249,"total_transforms":18667,"templates_skipped":0,"errors":3978,"loc":9477,"c_files":28}
+{"project":"cJSON","tool":"clang-tidy","time_ms":75253,"warnings":68,"errors":0,"notes":162,"integer_issues":0,"null_deref":1,"dead_code":0,"security":65}
